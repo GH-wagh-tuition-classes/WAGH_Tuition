@@ -1,85 +1,12 @@
-const StudentApp = (() => {
-  let user, subjects = [], chapters = [], selectedSubject = null, selectedChapter = null;
-  function init() {
-    user = WTC_AUTH.requireRole('Student');
-    if (!user) return;
-    fillUser();
-    bindProfile();
-    loadSubjects();
-    loadProgress();
-  }
-  function fillUser() {
-    document.querySelectorAll('[data-user-name]').forEach(el => el.textContent = user.name || 'Student');
-    document.querySelectorAll('[data-user-avatar]').forEach(el => el.textContent = WTC_UI.initials(user.name));
-    document.getElementById('studentMeta').textContent = `${user.board || 'Board'} · ${user.className || user.class || 'Class'} · ${user.medium || 'Medium'}`;
-  }
-  function show(section) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.getElementById(section).classList.add('active');
-    document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('active', b.dataset.nav === section));
-  }
-  async function loadSubjects() {
-    const box = document.getElementById('subjectGrid');
-    box.innerHTML = '<div class="card">Loading subjects...</div>';
-    const data = await WTC_API.getSubjects({ board: user.board, className: user.className || user.class, medium: user.medium, studentId: user.id });
-    subjects = data.subjects || [];
-    if (!subjects.length) subjects = [{subjectId:'SCI',subjectName:'Science',icon:'🔬'},{subjectId:'MATH',subjectName:'Mathematics',icon:'➗'},{subjectId:'ENG',subjectName:'English',icon:'📘'}];
-    box.innerHTML = subjects.map(s => `<div class="card subject-card" onclick="StudentApp.openSubject('${s.subjectId || s.id || s.subjectName}')"><div class="subject-icon">${s.icon || '📚'}</div><h3>${s.subjectName || s.name}</h3><p class="muted">Open chapters</p></div>`).join('');
-  }
-  async function openSubject(id) {
-    selectedSubject = subjects.find(s => String(s.subjectId || s.id || s.subjectName) === String(id));
-    document.getElementById('chapterSubjectTitle').textContent = selectedSubject.subjectName || selectedSubject.name;
-    show('chaptersSection');
-    await loadChapters();
-  }
-  async function loadChapters() {
-    const box = document.getElementById('chapterGrid');
-    box.innerHTML = '<div class="card">Loading chapters...</div>';
-    const data = await WTC_API.getChapters({ board: user.board, className: user.className || user.class, medium: user.medium, subjectId: selectedSubject.subjectId || selectedSubject.id, subjectName: selectedSubject.subjectName || selectedSubject.name });
-    chapters = data.chapters || [];
-    box.innerHTML = chapters.length ? chapters.map(c => `<div class="card chapter-card" onclick="StudentApp.openChapter('${c.chapterId || c.id || c.chapterNo}')"><span class="pill">Chapter ${c.chapterNo || ''}</span><h3>${c.chapterName || c.name}</h3><p class="muted">${c.description || 'Open chapter features'}</p></div>`).join('') : '<div class="card">No chapters found for this subject yet.</div>';
-  }
-  async function openChapter(id) {
-    selectedChapter = chapters.find(c => String(c.chapterId || c.id || c.chapterNo) === String(id));
-    document.getElementById('featureChapterTitle').textContent = selectedChapter.chapterName || selectedChapter.name;
-    show('featuresSection');
-    const box = document.getElementById('featureGrid');
-    box.innerHTML = '<div class="card">Loading features...</div>';
-    const data = await WTC_API.getFeatures({ chapterId: selectedChapter.chapterId || selectedChapter.id, subjectId: selectedSubject.subjectId || selectedSubject.id });
-    const features = data.features && data.features.length ? data.features : selectedChapter.features || [];
-    box.innerHTML = features.length ? features.map(f => `<button class="feature-btn" onclick="StudentApp.openFeature('${f.url || '#'}','${f.featureName || f.name}')">${f.icon || '🔗'} ${f.featureName || f.name}<small>${f.type || 'Learning feature'}</small></button>`).join('') : '<div class="card">No feature buttons added yet.</div>';
-  }
-  function openFeature(url, name) {
-    WTC_API.logAccess({ userId:user.id, name:user.name, role:user.role, mobile:user.mobile, actionName:name, url }).catch(()=>{});
-    if (!url || url === '#') return WTC_UI.toast('This feature will be added soon.', 'error');
-    window.location.href = url;
-  }
-  async function loadProgress() {
-    try {
-      const data = await WTC_API.getProgress(user.id);
-      const p = Array.isArray(data.progress) ? data.progress[0] : data.progress;
-      const percent = Number(p?.percent || 0);
-      document.getElementById('progressPercent').textContent = percent + '%';
-      document.getElementById('progressFill').style.width = percent + '%';
-    } catch { document.getElementById('progressPercent').textContent = '0%'; }
-  }
-  function bindProfile() {
-    const form = document.getElementById('profileForm');
-    ['name','mobile','board','className','medium'].forEach(k => { if (form[k]) form[k].value = user[k] || user.class || ''; });
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const payload = Object.fromEntries(new FormData(form).entries());
-      payload.studentId = user.id;
-      try {
-        const data = await WTC_API.updateProfile(payload);
-        if (!data.success) return WTC_UI.toast(data.message || 'Profile update failed.', 'error');
-        user = { ...user, ...payload };
-        WTC_AUTH.setUser(user);
-        fillUser();
-        WTC_UI.toast('Profile saved successfully.', 'success');
-      } catch (err) { WTC_UI.toast(err.message, 'error'); }
-    });
-  }
-  return { init, show, openSubject, openChapter, openFeature };
-})();
-document.addEventListener('DOMContentLoaded', StudentApp.init);
+const StudentApp=(()=>{let user,subjects=[],chapters=[],selectedSubject=null,selectedChapter=null;
+function init(){user=WTC_AUTH.requireRole('Student'); if(!user)return; fillUser(); bindProfile(); loadSubjects(); loadProgress()}
+function fillUser(){document.querySelectorAll('[data-user-name]').forEach(e=>e.textContent=user.name||'Student');document.querySelectorAll('[data-user-avatar]').forEach(e=>e.textContent=WTC_UI.initials(user.name));document.getElementById('studentMeta').textContent=`${user.board||'Board'} · ${user.className||user.class||'Class'} · ${user.medium||'Medium'}`}
+function show(id){document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id))}
+async function loadSubjects(){const box=document.getElementById('subjectGrid');WTC_UI.setLoading(box,'Loading subjects...');try{const d=await WTC_API.getSubjects({board:user.board,className:user.className||user.class,medium:user.medium,studentId:user.id});subjects=d.subjects||[];document.getElementById('subjectCount').textContent=subjects.length;box.innerHTML=subjects.length?subjects.map(s=>`<div class="card subject-card" onclick="StudentApp.openSubject('${WTC_UI.escape(s.subjectId||s.id||s.subjectName)}')"><div class="subject-icon">${s.icon||'📚'}</div><h3>${WTC_UI.escape(s.subjectName||s.name)}</h3><p class="muted">${WTC_UI.escape(s.description||'Open chapters')}</p></div>`).join(''):'<div class="empty-card">No subject found. Add records in SUBJECT_MASTER.</div>'}catch(e){box.innerHTML=`<div class="empty-card">${e.message}</div>`}}
+async function openSubject(id){selectedSubject=subjects.find(s=>String(s.subjectId||s.id||s.subjectName)===String(id)); if(!selectedSubject)return;document.getElementById('chapterSubjectTitle').textContent=selectedSubject.subjectName||selectedSubject.name;show('chaptersSection');await loadChapters()}
+async function loadChapters(){const box=document.getElementById('chapterGrid');WTC_UI.setLoading(box,'Loading chapters...');const d=await WTC_API.getChapters({board:user.board,className:user.className||user.class,medium:user.medium,subjectId:selectedSubject.subjectId||selectedSubject.id,subjectName:selectedSubject.subjectName||selectedSubject.name});chapters=d.chapters||[];document.getElementById('chapterCount').textContent=chapters.length;box.innerHTML=chapters.length?chapters.map(c=>`<div class="card chapter-card" onclick="StudentApp.openChapter('${WTC_UI.escape(c.chapterId||c.id||c.chapterNo)}')"><span class="pill">Chapter ${c.chapterNo||''}</span><h3>${WTC_UI.escape(c.chapterName||c.name)}</h3><p class="muted">${WTC_UI.escape(c.description||'Open chapter features')}</p></div>`).join(''):'<div class="empty-card">No chapters found. Add records in CHAPTER_MASTER.</div>'}
+async function openChapter(id){selectedChapter=chapters.find(c=>String(c.chapterId||c.id||c.chapterNo)===String(id)); if(!selectedChapter)return;document.getElementById('featureChapterTitle').textContent=selectedChapter.chapterName||selectedChapter.name;show('featuresSection');const box=document.getElementById('featureGrid');WTC_UI.setLoading(box,'Loading features...');const d=await WTC_API.getFeatures({chapterId:selectedChapter.chapterId||selectedChapter.id,subjectId:selectedSubject.subjectId||selectedSubject.id});const fs=d.features||[];box.innerHTML=fs.length?fs.map(f=>`<button class="feature-btn" onclick="StudentApp.openFeature('${WTC_UI.escape(f.url||'#')}','${WTC_UI.escape(f.featureName||f.name)}')">${f.icon||'🔗'} ${WTC_UI.escape(f.featureName||f.name)}<small>${WTC_UI.escape(f.type||'Learning feature')}</small></button>`).join(''):'<div class="empty-card">No feature buttons yet. Add records in CHAPTER_LIST.</div>'}
+function openFeature(url,name){WTC_API.logAccess({userId:user.id,name:user.name,role:user.role,mobile:user.mobile,actionName:name,url}).catch(()=>{}); if(!url||url==='#')return WTC_UI.toast('Feature URL not added yet.','error'); location.href=url}
+async function loadProgress(){try{const d=await WTC_API.getProgress(user.id);const p=Array.isArray(d.progress)?d.progress[0]:d.progress;const percent=Number(p?.percent||p?.overallPercent||0);document.getElementById('progressPercent').textContent=percent+'%';document.getElementById('progressFill').style.width=percent+'%';document.getElementById('progressFill2').style.width=percent+'%';document.getElementById('progressText').textContent=`Overall progress: ${percent}%`; }catch{}}
+function bindProfile(){const f=document.getElementById('profileForm');['name','mobile','board','className','medium'].forEach(k=>{if(f[k])f[k].value=user[k]||user.class||''});f.addEventListener('submit',async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(f).entries());p.studentId=user.id;try{const d=await WTC_API.updateProfile(p);if(!d.success)return WTC_UI.toast(d.message||'Profile failed.','error');user={...user,...p};delete user.password;WTC_AUTH.setUser(user);fillUser();WTC_UI.toast('Profile saved.','success');loadSubjects()}catch(err){WTC_UI.toast(err.message,'error')}})}
+return{init,show,loadSubjects,openSubject,openChapter,openFeature}})();document.addEventListener('DOMContentLoaded',StudentApp.init);

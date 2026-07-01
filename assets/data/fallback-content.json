@@ -1,0 +1,20 @@
+{
+  "subjects": [
+    {"subjectId":"SCI","subjectName":"Science","icon":"🔬"},
+    {"subjectId":"MATH","subjectName":"Mathematics","icon":"➗"},
+    {"subjectId":"ENG","subjectName":"English","icon":"📘"},
+    {"subjectId":"SST","subjectName":"Social Science","icon":"🌍"}
+  ],
+  "chapters": [
+    {"chapterId":"SCI-10-1","subjectId":"SCI","chapterNo":1,"chapterName":"Chemical Reactions and Equations","description":"Class 10 Science","features":[{"featureName":"Lesson","icon":"📖","url":"#"},{"featureName":"MCQ Test","icon":"📝","url":"#"},{"featureName":"Notes","icon":"📚","url":"#"}]},
+    {"chapterId":"MATH-9-1","subjectId":"MATH","chapterNo":1,"chapterName":"Number System","description":"Class 9 Mathematics","features":[{"featureName":"Solution","icon":"✅","url":"#"},{"featureName":"Worksheet","icon":"📄","url":"#"}]}
+  ],
+  "features": [
+    {"featureName":"Lesson","icon":"📖","type":"Read","url":"#"},
+    {"featureName":"Notes","icon":"📚","type":"Study","url":"#"},
+    {"featureName":"MCQ Test","icon":"📝","type":"Practice","url":"#"},
+    {"featureName":"Answer Writing","icon":"✍️","type":"Practice","url":"#"},
+    {"featureName":"Worksheet","icon":"📄","type":"Print","url":"#"}
+  ],
+  "progress": {"percent":0}
+}

@@ -1,6 +1,30 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WAGH Tuition Classes</title><meta name="description" content="Dynamic tuition website and learning portal for WAGH Tuition Classes."><link rel="icon" href="assets/images/favicon.png"><link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/main.css"></head><body>
-<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><img src="assets/images/logo.png" alt="WTC"><span>WAGH Tuition Classes</span></a><nav class="public-nav"><a href="#courses">Courses</a><a href="#login">Login</a><a href="#signup">Signup</a><a href="#contact">Contact</a></nav><button class="btn outline mobile-menu" onclick="document.getElementById('login').scrollIntoView()">Login</button></div></header>
-<main><section class="hero"><div class="container hero-grid"><div><span class="pill">CBSE · GSEB · Dynamic Learning Portal</span><h1>Learn smarter with <b>WAGH Tuition Classes</b></h1><p class="lead">Student portal, teacher dashboard, admin control, dynamic subjects, chapters, tests and progress tracking powered by Google Apps Script API.</p><a class="btn" href="#login">Student Login</a> <a class="btn outline" href="#courses">Browse Courses</a></div><img class="hero-img" src="assets/images/logo.png" alt="WAGH Tuition Classes logo"></div></section>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><div class="hero-visual">
+   <img src="assets/images/hero-study.jpg" alt="Students studying">
+</div><span>WAGH Tuition Classes</span></a><nav class="public-nav"><a href="#courses">Courses</a><a href="#login">Login</a><a href="#signup">Signup</a><a href="#contact">Contact</a></nav><button class="btn outline mobile-menu" onclick="document.getElementById('login').scrollIntoView()">Login</button></div></header>
+<main><section class="hero"><div class="container hero-grid">
+
+  <div class="hero-left">
+      <span class="badge">CBSE · GSEB · Class 5 to 10</span>
+
+      <h1>Learn smarter with <b>WAGH Tuition Classes</b></h1>
+
+      <p class="lead">
+      Personalized learning portal for school students.
+      Notes, tests, chapters and progress tracking.
+      </p>
+
+      <a class="btn" href="#login">Student Login</a>
+
+      <a class="btn outline" href="#features">Explore Courses</a>
+  </div>
+
+  <div class="hero-right">
+      <img src="assets/images/hero-study.jpg"
+      alt="Students studying">
+  </div>
+
+</div></section>
 <section id="courses"><div class="container"><div class="section-head"><div><h2>Dynamic Course Library</h2><p class="muted">Public preview. Full access opens after login.</p></div></div><div id="publicCourseGrid" class="grid grid-3"><div class="empty-card">Loading courses...</div></div></div></section>
 <section id="login" class="soft"><div class="container auth-panel"><div class="auth-card"><h3>Login</h3><p class="muted">Select role and login to your portal.</p><form id="loginForm" onsubmit="event.preventDefault();WTC_AUTH.handleLogin('loginForm')"><div class="field"><label>Role</label><select name="role"><option>Student</option><option>Teacher</option><option>Admin</option><option>Parent</option></select></div><div class="field"><label>Mobile</label><input name="mobile" inputmode="numeric" placeholder="Enter mobile"></div><div class="field"><label>Password</label><input name="password" type="password" placeholder="Enter password"></div><button class="btn" type="submit">Login Now →</button></form></div>
 <div id="signup" class="auth-card"><h3>Student Signup</h3><p class="muted">Create student account. Admin can later manage access.</p><form id="signupForm" onsubmit="event.preventDefault();WTC_AUTH.handleSignup('signupForm')"><div class="field"><label>Name</label><input name="name" placeholder="Student name"></div><div class="field"><label>Mobile</label><input name="mobile" inputmode="numeric" placeholder="Mobile"></div><div class="field"><label>Password</label><input name="password" type="password" placeholder="Create password"></div><div class="grid grid-3"><select name="board"><option>CBSE</option><option>GSEB</option></select><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select></div><button class="btn success" type="submit">Create Account</button></form></div></div></section>

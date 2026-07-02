@@ -7,26 +7,20 @@ const WTC_UI = (() => {
       box.className = 'toast-box';
       document.body.appendChild(box);
     }
-    const item = document.createElement('div');
-    item.className = `toast ${type}`;
-    item.textContent = message;
-    box.appendChild(item);
-    setTimeout(() => item.remove(), 3200);
-  }
-  function setLoading(target, isLoading, text = 'Loading...') {
-    const el = typeof target === 'string' ? document.querySelector(target) : target;
-    if (!el) return;
-    if (isLoading) {
-      el.dataset.oldText = el.textContent;
-      el.textContent = text;
-      el.disabled = true;
-    } else {
-      el.textContent = el.dataset.oldText || el.textContent;
-      el.disabled = false;
-    }
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = message;
+    box.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
   }
   function initials(name = 'User') {
-    return String(name).trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase() || 'U';
+    return String(name).trim().split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase() || 'U';
   }
-  return { toast, setLoading, initials };
+  function escape(v = '') {
+    return String(v).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+  }
+  function loadingHTML(text = 'Loading...') {
+    return `<div class="empty-state">${escape(text)}</div>`;
+  }
+  return { toast, initials, escape, loadingHTML };
 })();

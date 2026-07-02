@@ -3,6 +3,5 @@ const WTC_CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyVUDCOS_5F3IgARm6vKBWweYc4R4ad2qScwYklHhMbexxs8QqQWZvWXDjAxqJaQ9w/exec',
   STORAGE_KEY: 'wtcUser',
   DEVICE_KEY: 'wtcDeviceId',
-  DEFAULT_ROLE: 'Student',
   FALLBACK_CONTENT_URL: 'assets/data/fallback-content.json'
 };

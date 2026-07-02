@@ -1,121 +1,21 @@
-const SHEET_NAME = 'WTC_CONTENT_ENGINE';
-const IST = 'Asia/Kolkata';
-
-function doGet() {
-  return json({ ok: true, app: 'WAGH Tuition Classes API v1.0' });
-}
-
-function doPost(e) {
-  try {
-    const d = JSON.parse(e.postData.contents || '{}');
-    const action = d.action;
-    const map = {
-      login, signupStudent, updateStudentProfile, getSubjects, getChapters,
-      getChapterFeatures, getStudentProgress, logAccess, adminDashboard
-    };
-    if (!map[action]) return json({ success: false, message: 'Unknown action: ' + action });
-    return json(map[action](d));
-  } catch (err) {
-    return json({ success: false, message: err.message });
-  }
-}
-
-function json(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-function ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
-function sh(name) { return ss().getSheetByName(name); }
-function nowIst() { return Utilities.formatDate(new Date(), IST, 'yyyy-MM-dd HH:mm:ss'); }
-function rows(name) {
-  const s = sh(name); if (!s) return [];
-  const values = s.getDataRange().getValues(); if (values.length < 2) return [];
-  const headers = values[0].map(String);
-  return values.slice(1).filter(r => r.join('') !== '').map((r, i) => {
-    const o = { _row: i + 2 };
-    headers.forEach((h, j) => o[h] = r[j]);
-    return o;
-  });
-}
-function append(name, obj) {
-  const s = sh(name); if (!s) throw new Error('Missing sheet: ' + name);
-  const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(String);
-  s.appendRow(headers.map(h => obj[h] || ''));
-}
-function updateRow(name, row, obj) {
-  const s = sh(name); const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(String);
-  headers.forEach((h, i) => { if (obj[h] !== undefined) s.getRange(row, i + 1).setValue(obj[h]); });
-}
-
-function login(d) {
-  const mobile = String(d.mobile || '').trim();
-  const password = String(d.password || '').trim();
-  const pools = [
-    { sheet: 'STUDENT_MASTER', role: 'Student', id: 'studentId' },
-    { sheet: 'TEACHER_MASTER', role: 'Teacher', id: 'teacherId' },
-    { sheet: 'ADMIN_MASTER', role: 'Admin', id: 'adminId' },
-    { sheet: 'PARENT_ACCESS', role: 'Parent', id: 'parentId' }
-  ];
-  for (const p of pools) {
-    const found = rows(p.sheet).find(x => String(x.mobile) === mobile && String(x.password) === password);
-    if (found) {
-      if (String(found.status || 'Active') !== 'Active') return { success:false, message:'Account is not active.' };
-      const user = {
-        id: found[p.id] || found.id || mobile,
-        name: found.name || found.studentName || found.teacherName || 'User',
-        mobile, role: p.role, board: found.board || '', className: found.className || found.class || '', medium: found.medium || '', status: found.status || 'Active'
-      };
-      logAccess({ userId:user.id, name:user.name, role:user.role, mobile, actionName:'Login', url:'index.html', deviceId:d.deviceId });
-      return { success:true, user };
-    }
-  }
-  return { success:false, message:'Invalid mobile or password.' };
-}
-
-function signupStudent(d) {
-  const mobile = String(d.mobile || '').trim();
-  if (rows('STUDENT_MASTER').some(x => String(x.mobile) === mobile)) return { success:false, message:'Mobile already registered.' };
-  const id = 'STU-' + Date.now();
-  append('STUDENT_MASTER', { studentId:id, name:d.name, mobile, password:d.password, board:d.board, className:d.className, medium:d.medium, status:'Active', deviceId:d.deviceId, createdAt:nowIst() });
-  const user = { id, name:d.name, mobile, role:'Student', board:d.board, className:d.className, medium:d.medium, status:'Active' };
-  logAccess({ userId:id, name:d.name, role:'Student', mobile, actionName:'Signup', url:'index.html', deviceId:d.deviceId });
-  return { success:true, user };
-}
-
-function updateStudentProfile(d) {
-  const list = rows('STUDENT_MASTER');
-  const found = list.find(x => String(x.studentId || x.id) === String(d.studentId));
-  if (!found) return { success:false, message:'Student not found.' };
-  updateRow('STUDENT_MASTER', found._row, { name:d.name, mobile:d.mobile, board:d.board, className:d.className, medium:d.medium, password:d.password || found.password, updatedAt:nowIst() });
-  return { success:true, message:'Profile updated.' };
-}
-
-function getSubjects(d) {
-  const all = rows('SUBJECT_MASTER').filter(x => active(x) && match(x, d));
-  return { success:true, subjects: all.map(x => ({ subjectId:x.subjectId || x.id, subjectName:x.subjectName || x.name, icon:x.icon || '📚' })) };
-}
-function getChapters(d) {
-  const all = rows('CHAPTER_MASTER').filter(x => active(x) && match(x, d) && (!d.subjectId || String(x.subjectId) === String(d.subjectId) || String(x.subjectName) === String(d.subjectName)));
-  return { success:true, chapters: all.map(x => ({ chapterId:x.chapterId || x.id, subjectId:x.subjectId, chapterNo:x.chapterNo, chapterName:x.chapterName || x.name, description:x.description })) };
-}
-function getChapterFeatures(d) {
-  const all = rows('CHAPTER_LIST').filter(x => active(x) && String(x.chapterId) === String(d.chapterId));
-  const features = [];
-  const keys = [['lessonUrl','Lesson','📖'],['notesUrl','Notes','📚'],['mcqUrl','MCQ Test','📝'],['worksheetUrl','Worksheet','📄'],['answerWritingUrl','Answer Writing','✍️'],['videoUrl','Video','🎬'],['revisionUrl','Revision','🔁']];
-  all.forEach(r => keys.forEach(k => { if (r[k[0]]) features.push({ featureName:k[1], icon:k[2], url:r[k[0]], type:k[1] }); }));
-  return { success:true, features };
-}
-function getStudentProgress(d) {
-  const p = rows('PROGRESS_TRACKER').find(x => String(x.studentId) === String(d.studentId));
-  return { success:true, progress: p || { percent:0 } };
-}
-function logAccess(d) {
-  try { append('ACCESS_LOGS', { logId:'LOG-' + Date.now(), timestamp:nowIst(), userId:d.userId, name:d.name, role:d.role, mobile:d.mobile, action:d.actionName || d.action, page:d.url, deviceId:d.deviceId }); } catch(e) {}
-  return { success:true };
-}
-function adminDashboard() {
-  return { success:true, totalStudents:rows('STUDENT_MASTER').length, totalTeachers:rows('TEACHER_MASTER').length, totalLogs:rows('ACCESS_LOGS').length };
-}
-function active(x) { return String(x.status || x.isActive || 'Active').toLowerCase() !== 'inactive' && String(x.status || '').toLowerCase() !== 'blocked'; }
-function match(x, d) {
-  return (!x.board || !d.board || String(x.board) === String(d.board)) && (!x.className || !d.className || String(x.className) === String(d.className)) && (!x.medium || !d.medium || String(x.medium) === String(d.medium));
-}
+const WTC_SHEETS={STUDENT_MASTER:['studentId','name','mobile','password','board','className','medium','status','deviceId','createdAt','updatedAt'],TEACHER_MASTER:['teacherId','name','mobile','password','subject','className','status','createdAt','updatedAt'],ADMIN_MASTER:['adminId','name','mobile','password','status','createdAt'],SUBJECT_MASTER:['subjectId','subjectName','icon','board','className','medium','description','status','sortOrder'],CHAPTER_MASTER:['chapterId','subjectId','chapterNo','chapterName','board','className','medium','description','status','sortOrder'],CHAPTER_LIST:['chapterId','lessonUrl','notesUrl','mcqUrl','worksheetUrl','answerWritingUrl','videoUrl','revisionUrl','status','updatedAt'],ACCESS_LOGS:['logId','timestamp','userId','name','role','mobile','action','page','deviceId'],TEST_RESULTS:['resultId','studentId','chapterId','testType','score','total','percent','createdAt'],PROGRESS_TRACKER:['studentId','percent','lastSubjectId','lastChapterId','updatedAt'],PARENT_ACCESS:['parentId','name','mobile','password','studentId','status','createdAt'],GAMIFICATION_DATA:['studentId','xp','level','badges','streak','updatedAt']};
+const IST='Asia/Kolkata';
+function doGet(){return json({ok:true,app:'WAGH Tuition Classes API v1.0',message:'API is live'});}
+function doPost(e){try{const d=JSON.parse((e.postData&&e.postData.contents)||'{}');const map={login,signupStudent,updateStudentProfile,getSubjects,getChapters,getChapterFeatures,getStudentProgress,logAccess,adminDashboard};if(!map[d.action])return json({success:false,message:'Unknown action: '+d.action});return json(map[d.action](d));}catch(err){return json({success:false,message:err.message});}}
+function setupWTCContentEngine(){const ss=SpreadsheetApp.getActiveSpreadsheet();Object.keys(WTC_SHEETS).forEach(name=>{let s=ss.getSheetByName(name);if(!s)s=ss.insertSheet(name);s.clear();s.getRange(1,1,1,WTC_SHEETS[name].length).setValues([WTC_SHEETS[name]]).setFontWeight('bold').setBackground('#0f172a').setFontColor('#ffffff');s.setFrozenRows(1);s.autoResizeColumns(1,WTC_SHEETS[name].length);});seedSampleData();}
+function seedSampleData(){append('ADMIN_MASTER',{adminId:'ADM001',name:'Admin',mobile:'9999999999',password:'admin123',status:'Active',createdAt:now()});append('TEACHER_MASTER',{teacherId:'TCH001',name:'Demo Teacher',mobile:'8888888888',password:'teacher123',subject:'Science',className:'Class 10',status:'Active',createdAt:now()});append('STUDENT_MASTER',{studentId:'STU001',name:'Demo Student',mobile:'7777777777',password:'student123',board:'CBSE',className:'Class 10',medium:'English Medium',status:'Active',createdAt:now()});append('SUBJECT_MASTER',{subjectId:'SCI10',subjectName:'Science',icon:'🔬',board:'CBSE',className:'Class 10',medium:'English Medium',description:'Science chapters',status:'Active',sortOrder:1});append('SUBJECT_MASTER',{subjectId:'MATH10',subjectName:'Mathematics',icon:'➗',board:'CBSE',className:'Class 10',medium:'English Medium',description:'Mathematics chapters',status:'Active',sortOrder:2});append('CHAPTER_MASTER',{chapterId:'SCI10CH1',subjectId:'SCI10',chapterNo:'1',chapterName:'Chemical Reactions and Equations',board:'CBSE',className:'Class 10',medium:'English Medium',description:'Class 10 Science Chapter 1',status:'Active',sortOrder:1});append('CHAPTER_LIST',{chapterId:'SCI10CH1',lessonUrl:'chapters/cbse/sci10-ch1.html',notesUrl:'notes/pdf/sci10-ch1.pdf',mcqUrl:'tests/mcq/sci10-ch1.html',worksheetUrl:'tests/online-test/sci10-ch1.html',answerWritingUrl:'tests/answer-writing/sci10-ch1.html',videoUrl:'',revisionUrl:'',status:'Active',updatedAt:now()});append('PROGRESS_TRACKER',{studentId:'STU001',percent:25,lastSubjectId:'SCI10',lastChapterId:'SCI10CH1',updatedAt:now()});}
+function json(o){return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);}function ss(){return SpreadsheetApp.getActiveSpreadsheet();}function sh(n){let s=ss().getSheetByName(n);if(!s)throw new Error('Missing sheet: '+n);return s;}function now(){return Utilities.formatDate(new Date(),IST,'yyyy-MM-dd HH:mm:ss');}
+function rows(n){const s=sh(n);const v=s.getDataRange().getValues();if(v.length<2)return[];const h=v[0].map(String);return v.slice(1).filter(r=>r.join('')!=='').map((r,i)=>{const o={_row:i+2};h.forEach((k,j)=>o[k]=r[j]);return o;});}
+function append(n,obj){const s=sh(n),h=s.getRange(1,1,1,s.getLastColumn()).getValues()[0].map(String);s.appendRow(h.map(k=>obj[k]!==undefined?obj[k]:''));}
+function updateRow(n,row,obj){const s=sh(n),h=s.getRange(1,1,1,s.getLastColumn()).getValues()[0].map(String);h.forEach((k,i)=>{if(obj[k]!==undefined)s.getRange(row,i+1).setValue(obj[k]);});}
+function norm(v){return String(v||'').trim();}function active(x){return !['blocked','inactive','no','false'].includes(String(x.status||x.isActive||'Active').toLowerCase());}function match(x,d){return(!x.board||!d.board||norm(x.board)===norm(d.board))&&(!x.className||!d.className||norm(x.className)===norm(d.className))&&(!x.medium||!d.medium||norm(x.medium)===norm(d.medium));}
+function publicUser(u,role,idKey){return{id:u[idKey]||u.id||u.mobile,studentId:u.studentId||'',teacherId:u.teacherId||'',adminId:u.adminId||'',name:u.name||u.studentName||u.teacherName||'User',mobile:u.mobile,role,board:u.board||'',className:u.className||u.class||'',medium:u.medium||'',status:u.status||'Active'};}
+function login(d){const mobile=norm(d.mobile),password=norm(d.password),role=norm(d.role||'Student');const pools={Student:['STUDENT_MASTER','studentId'],Teacher:['TEACHER_MASTER','teacherId'],Admin:['ADMIN_MASTER','adminId'],Parent:['PARENT_ACCESS','parentId']};const p=pools[role]||pools.Student;const found=rows(p[0]).find(x=>norm(x.mobile)===mobile&&norm(x.password)===password);if(!found)return{success:false,message:'Invalid '+role+' mobile or password.'};if(!active(found))return{success:false,message:'Account is not active.'};const user=publicUser(found,role,p[1]);logAccess({userId:user.id,name:user.name,role:user.role,mobile:user.mobile,actionName:'Login',url:role+' portal',deviceId:d.deviceId});return{success:true,user};}
+function signupStudent(d){const mobile=norm(d.mobile);if(rows('STUDENT_MASTER').some(x=>norm(x.mobile)===mobile))return{success:false,message:'Mobile already registered.'};const id='STU'+Date.now();append('STUDENT_MASTER',{studentId:id,name:d.name,mobile,password:d.password,board:d.board,className:d.className,medium:d.medium,status:'Active',deviceId:d.deviceId,createdAt:now()});append('PROGRESS_TRACKER',{studentId:id,percent:0,updatedAt:now()});const user={id,studentId:id,name:d.name,mobile,role:'Student',board:d.board,className:d.className,medium:d.medium,status:'Active'};logAccess({userId:id,name:d.name,role:'Student',mobile,actionName:'Signup',url:'index.html',deviceId:d.deviceId});return{success:true,user};}
+function updateStudentProfile(d){const found=rows('STUDENT_MASTER').find(x=>norm(x.studentId)===norm(d.studentId));if(!found)return{success:false,message:'Student not found.'};const obj={name:d.name,mobile:d.mobile,board:d.board,className:d.className,medium:d.medium,updatedAt:now()};if(d.password)obj.password=d.password;updateRow('STUDENT_MASTER',found._row,obj);return{success:true,message:'Profile updated.'};}
+function getSubjects(d){const list=rows('SUBJECT_MASTER').filter(x=>active(x)&&match(x,d)).sort((a,b)=>(Number(a.sortOrder)||99)-(Number(b.sortOrder)||99));return{success:true,subjects:list};}
+function getChapters(d){const list=rows('CHAPTER_MASTER').filter(x=>active(x)&&match(x,d)&&(!d.subjectId||norm(x.subjectId)===norm(d.subjectId))).sort((a,b)=>(Number(a.sortOrder)||99)-(Number(b.sortOrder)||99));return{success:true,chapters:list};}
+function getChapterFeatures(d){const rs=rows('CHAPTER_LIST').filter(x=>active(x)&&norm(x.chapterId)===norm(d.chapterId));const names=[['lessonUrl','Lesson','📖','Lesson'],['notesUrl','Notes','📚','Notes'],['mcqUrl','MCQ Test','📝','Test'],['worksheetUrl','Worksheet','📄','Worksheet'],['answerWritingUrl','Answer Writing','✍️','Practice'],['videoUrl','Video','🎬','Video'],['revisionUrl','Revision','🔁','Revision']];const features=[];rs.forEach(r=>names.forEach(n=>{if(r[n[0]])features.push({featureName:n[1],icon:n[2],type:n[3],url:r[n[0]]});}));return{success:true,features};}
+function getStudentProgress(d){const p=rows('PROGRESS_TRACKER').find(x=>norm(x.studentId)===norm(d.studentId));return{success:true,progress:p||{percent:0}};}
+function logAccess(d){try{append('ACCESS_LOGS',{logId:'LOG'+Date.now(),timestamp:now(),userId:d.userId,name:d.name,role:d.role,mobile:d.mobile,action:d.actionName||d.action,page:d.url||d.page,deviceId:d.deviceId});}catch(e){}return{success:true};}
+function adminDashboard(){return{success:true,totalStudents:rows('STUDENT_MASTER').length,totalTeachers:rows('TEACHER_MASTER').length,totalLogs:rows('ACCESS_LOGS').length};}

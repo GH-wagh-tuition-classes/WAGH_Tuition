@@ -1,2 +1,1 @@
 document.addEventListener('DOMContentLoaded',()=>{const u=WTC_AUTH.requireRole('Teacher');if(!u)return;document.querySelectorAll('[data-user-name]').forEach(e=>e.textContent=u.name||'Teacher');document.querySelectorAll('[data-user-avatar]').forEach(e=>e.textContent=WTC_UI.initials(u.name));});
-function showTeacherSection(id){document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));}

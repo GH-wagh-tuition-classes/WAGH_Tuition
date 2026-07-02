@@ -1,5 +1,2 @@
-# WAGH Tuition Classes Architecture
-
-Status: LOCKED v1.0
-
-This project is separate from WTC Learn and ScoreBadhao.
+# WAGH Tuition Classes
+Architecture LOCKED v1.0. Separate from WTC Learn and ScoreBadhao.

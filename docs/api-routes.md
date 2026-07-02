@@ -1,11 +1,1 @@
-# API Routes
-
-- login
-- signupStudent
-- updateStudentProfile
-- getSubjects
-- getChapters
-- getChapterFeatures
-- getStudentProgress
-- logAccess
-- adminDashboard
+login, signupStudent, updateStudentProfile, getSubjects, getChapters, getChapterFeatures, getStudentProgress, logAccess, adminDashboard

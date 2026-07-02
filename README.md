@@ -1,8 +1,11 @@
-# WAGH Tuition Classes Website
+# WAGH Tuition Classes Complete v1
+Upload all files to GitHub preserving folder paths.
 
-GitHub-ready rebuild for locked architecture v1.0.
+Google Sheet: Use included WTC_CONTENT_ENGINE.xlsx OR run setupWTCContentEngine() in Apps Script.
 
-Upload all folders/files exactly as included.
+Demo logins after sheet setup:
+Student: 7777777777 / student123
+Teacher: 8888888888 / teacher123
+Admin: 9999999999 / admin123
 
-Set your Apps Script Web App URL in:
-assets/js/config.js
+After deploying Apps Script, paste Web App URL in assets/js/config.js.

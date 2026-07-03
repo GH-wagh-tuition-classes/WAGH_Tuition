@@ -51,7 +51,53 @@
 
   </div>
 </div>
+<!-- Paste this inside admin.html where your AI Content Engine panel should appear. -->
+<section id="aiContentEnginePanel" class="panel">
+  <div class="ai-engine-panel">
+    <div class="ai-hero">
+      <h2>🤖 AI Chapter Extraction Engine</h2>
+      <p>Upload PDF/image or paste chapter text. The system extracts OCR text, detects chapter structure, separates inside-chapter and end-exercise questions, then generates Lesson, MCQ, Worksheet and Solutions.</p>
+    </div>
+
+    <div class="ai-card">
+      <h3>1. Upload / Paste Chapter Source</h3>
+      <div class="ai-grid">
+        <div><label>Source Type</label><select id="aiSourceType"><option value="text">Pasted Text</option><option value="pdf">PDF</option><option value="image">Image / Scan</option></select></div>
+        <div><label>Board</label><select id="aiBoard"><option>CBSE</option><option>GSEB</option></select></div>
+        <div><label>Class</label><select id="aiClassName"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
+        <div><label>Medium</label><select id="aiMedium"><option>English Medium</option><option>Gujarati Medium</option></select></div>
+        <div><label>Subject ID</label><input id="aiSubjectId" placeholder="SCI10 / MATH9"></div>
+        <div><label>Chapter ID</label><input id="aiChapterId" placeholder="SCI10CH1"></div>
+      </div>
+      <label>Upload PDF / Image / Scan</label>
+      <input id="aiFileInput" type="file" accept=".pdf,image/*">
+      <div id="aiFileName" class="ai-file-name">No file selected</div>
+      <label>Or Paste Extracted Chapter Text</label>
+      <textarea id="aiRawContent" placeholder="Paste chapter text here..."></textarea>
+      <input id="currentUploadId" type="hidden">
+      <div class="ai-action-row">
+        <button class="ai-btn" onclick="WTC_AI_CONTENT_ADMIN.submitInput()">Save to AI Queue</button>
+        <button class="ai-btn secondary" onclick="WTC_AI_CONTENT_ADMIN.runOCR()">Run OCR / Text Extraction</button>
+        <button class="ai-btn warning" onclick="WTC_AI_CONTENT_ADMIN.parseChapter()">Analyze Chapter</button>
+        <button class="ai-btn outline" onclick="WTC_AI_CONTENT_ADMIN.detectQuestions()">Detect Questions</button>
+        <button class="ai-btn success" onclick="WTC_AI_CONTENT_ADMIN.generateContent()">Generate Content</button>
+        <button class="ai-btn success" onclick="WTC_AI_CONTENT_ADMIN.fullPipeline()">Run Full Pipeline</button>
+      </div>
+    </div>
+
+    <div id="aiStatus" class="ai-status info">Ready.</div>
+
+    <div class="ai-card">
+      <h3>2. AI Queue</h3>
+      <button class="ai-btn outline" onclick="WTC_AI_CONTENT_ADMIN.refreshQueue()">Refresh Queue</button>
+      <div id="aiQueueTable" class="ai-table-wrap" style="margin-top:12px"></div>
+    </div>
+
+    <div id="aiPreview" class="ai-preview"><h3>Preview</h3><pre>OCR / metadata / generation result will appear here.</pre></div>
+  </div>
+</section>
   
+
 
   <br>
 

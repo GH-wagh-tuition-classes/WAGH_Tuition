@@ -1,1 +1,31 @@
-document.addEventListener('DOMContentLoaded',async()=>{const u=WTC_AUTH.requireRole('Admin');if(!u)return;document.querySelectorAll('[data-user-name]').forEach(e=>e.textContent=u.name||'Admin');document.querySelectorAll('[data-user-avatar]').forEach(e=>e.textContent=WTC_UI.initials(u.name));try{const d=await WTC_API.call({action:'adminDashboard'});studentTotal.textContent=d.totalStudents||0;teacherTotal.textContent=d.totalTeachers||0;logTotal.textContent=d.totalLogs||0;}catch(e){WTC_UI.toast(e.message,'error')}});
+document.addEventListener('DOMContentLoaded', initAdminDashboard);
+
+async function initAdminDashboard() {
+  const user = WTC_AUTH.requireRole('Admin');
+  if (!user) return;
+
+  fillAdminHeader(user);
+  await loadAdminDashboardStats();
+}
+
+function fillAdminHeader(user) {
+  document.querySelectorAll('[data-user-name]').forEach(el => {
+    el.textContent = user.name || 'Admin';
+  });
+
+  document.querySelectorAll('[data-user-avatar]').forEach(el => {
+    el.textContent = WTC_UI.initials(user.name || 'Admin');
+  });
+}
+
+async function loadAdminDashboardStats() {
+  try {
+    const data = await WTC_API.call({ action: 'adminDashboard' });
+
+    document.getElementById('studentTotal').textContent = data.totalStudents || 0;
+    document.getElementById('teacherTotal').textContent = data.totalTeachers || 0;
+    document.getElementById('logTotal').textContent = data.totalLogs || 0;
+  } catch (err) {
+    WTC_UI.toast(err.message || 'Admin dashboard failed to load.', 'error');
+  }
+}

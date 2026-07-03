@@ -101,69 +101,6 @@
 
   <br>
 
-  <section id="aiContentEngine" class="ai-engine-shell">
-    <div class="ai-engine-header">
-      <div>
-        <span class="pill">AI Content Engine v1.3</span>
-        <h2>Upload Chapter → Generate Student Content</h2>
-        <p class="muted">AI must detect inside-chapter questions and end-exercise questions separately before publishing.</p>
-      </div>
-      <button class="btn outline" type="button" onclick="AdminApp.loadAIQueue()">Refresh Queue</button>
-    </div>
-
-    <div class="ai-engine-grid">
-      <div class="card ai-card">
-        <h3>1. Upload / Paste Chapter Source</h3>
-        <form id="aiInputForm">
-          <div class="ai-form-grid">
-            <div class="field">
-              <label>Source Type</label>
-              <select name="sourceType">
-                <option value="text">Pasted Text</option>
-                <option value="pdf">PDF</option>
-                <option value="image">Image / Scan</option>
-              </select>
-            </div>
-            <div class="field"><label>Board</label><select name="board"><option>CBSE</option><option>GSEB</option></select></div>
-            <div class="field"><label>Class</label><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
-            <div class="field"><label>Medium</label><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select></div>
-            <div class="field"><label>Subject ID</label><input name="subjectId" placeholder="Example: SCI10"></div>
-            <div class="field"><label>Chapter ID</label><input name="chapterId" placeholder="Example: SCI10CH1" required></div>
-            <div class="field"><label>Chapter Name</label><input name="chapterName" placeholder="Chapter title"></div>
-            <div class="field"><label>Optional File</label><input id="aiSourceFile" type="file" accept=".txt,.pdf,image/*"></div>
-          </div>
-          <div class="field">
-            <label>Raw Chapter Text</label>
-            <textarea name="rawContent" rows="10" placeholder="Paste extracted chapter text here. For PDF/image, paste OCR/extracted text here until automatic extraction is connected." required></textarea>
-          </div>
-          <button class="btn success" type="submit">Save to AI Input Queue</button>
-        </form>
-      </div>
-
-      <div class="card ai-card">
-        <h3>2. AI Rules for Solution Button</h3>
-        <div class="ai-rule-box">
-          <h4>Inside Chapter Questions</h4>
-          <p>Solved Examples, Activities, Try These, Checkpoints, In-text Questions, Numericals.</p>
-        </div>
-        <div class="ai-rule-box">
-          <h4>End Exercise Questions</h4>
-          <p>Exercise Q1, Q2, Q3, short answers, long answers, review questions, board-style questions.</p>
-        </div>
-        <p class="muted">Students will see neat content only after admin review and publish.</p>
-      </div>
-    </div>
-
-    <div class="card ai-card">
-      <div class="ai-engine-header compact">
-        <div>
-          <h3>AI Input Queue</h3>
-          <p class="muted">Generate → Format → Review → Publish</p>
-        </div>
-      </div>
-      <div id="aiQueueBox" class="ai-queue-box">Loading queue...</div>
-    </div>
-  </section>
 </main>
 
 <script src="assets/js/config.js"></script>

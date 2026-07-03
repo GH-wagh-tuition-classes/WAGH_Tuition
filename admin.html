@@ -3,168 +3,114 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | WTC</title>
+  <title>Admin Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css">
   <link rel="stylesheet" href="assets/css/admin-ai.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="admin.html">
-        <img src="assets/images/logo.png" alt="WTC">
-        <span>Admin Dashboard</span>
-      </a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="admin.html">
+      <img src="assets/images/logo.png" alt="WTC">
+      <span>Admin Dashboard</span>
+    </a>
+    <div class="top-actions">
+      <span data-user-name>Admin</span>
+      <span class="avatar" data-user-avatar>A</span>
+      <button class="btn danger small" onclick="WTC_AUTH.logout()">Logout</button>
+    </div>
+  </div>
+</header>
 
-      <div class="top-actions">
-        <span data-user-name>Admin</span>
-        <span class="avatar" data-user-avatar>A</span>
-        <button class="btn danger small" onclick="WTC_AUTH.logout()">Logout</button>
+<main class="main-area">
+  <section class="hero-card">
+    <h1>Admin Dashboard</h1>
+    <p class="muted">Manage platform data from WTC_CONTENT_ENGINE and AI content from WTC_AI_CONTENT_ENGINE.</p>
+  </section>
+
+  <br>
+
+  <section class="grid grid-3">
+    <div class="card"><h3>Students</h3><p id="studentTotal">Loading...</p></div>
+    <div class="card"><h3>Teachers</h3><p id="teacherTotal">Loading...</p></div>
+    <div class="card"><h3>Logs</h3><p id="logTotal">Loading...</p></div>
+  </section>
+
+  <br>
+
+  <section id="aiContentEngine" class="ai-engine-shell">
+    <div class="ai-engine-header">
+      <div>
+        <span class="pill">AI Content Engine v1.3</span>
+        <h2>Upload Chapter → Generate Student Content</h2>
+        <p class="muted">AI must detect inside-chapter questions and end-exercise questions separately before publishing.</p>
+      </div>
+      <button class="btn outline" type="button" onclick="AdminApp.loadAIQueue()">Refresh Queue</button>
+    </div>
+
+    <div class="ai-engine-grid">
+      <div class="card ai-card">
+        <h3>1. Upload / Paste Chapter Source</h3>
+        <form id="aiInputForm">
+          <div class="ai-form-grid">
+            <div class="field">
+              <label>Source Type</label>
+              <select name="sourceType">
+                <option value="text">Pasted Text</option>
+                <option value="pdf">PDF</option>
+                <option value="image">Image / Scan</option>
+              </select>
+            </div>
+            <div class="field"><label>Board</label><select name="board"><option>CBSE</option><option>GSEB</option></select></div>
+            <div class="field"><label>Class</label><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
+            <div class="field"><label>Medium</label><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select></div>
+            <div class="field"><label>Subject ID</label><input name="subjectId" placeholder="Example: SCI10"></div>
+            <div class="field"><label>Chapter ID</label><input name="chapterId" placeholder="Example: SCI10CH1" required></div>
+            <div class="field"><label>Chapter Name</label><input name="chapterName" placeholder="Chapter title"></div>
+            <div class="field"><label>Optional File</label><input id="aiSourceFile" type="file" accept=".txt,.pdf,image/*"></div>
+          </div>
+          <div class="field">
+            <label>Raw Chapter Text</label>
+            <textarea name="rawContent" rows="10" placeholder="Paste extracted chapter text here. For PDF/image, paste OCR/extracted text here until automatic extraction is connected." required></textarea>
+          </div>
+          <button class="btn success" type="submit">Save to AI Input Queue</button>
+        </form>
+      </div>
+
+      <div class="card ai-card">
+        <h3>2. AI Rules for Solution Button</h3>
+        <div class="ai-rule-box">
+          <h4>Inside Chapter Questions</h4>
+          <p>Solved Examples, Activities, Try These, Checkpoints, In-text Questions, Numericals.</p>
+        </div>
+        <div class="ai-rule-box">
+          <h4>End Exercise Questions</h4>
+          <p>Exercise Q1, Q2, Q3, short answers, long answers, review questions, board-style questions.</p>
+        </div>
+        <p class="muted">Students will see neat content only after admin review and publish.</p>
       </div>
     </div>
-  </header>
 
-  <main class="main-area">
-    <section class="hero-card">
-      <h1>Admin Dashboard</h1>
-      <p class="muted">Manage students, teachers, content, and AI-powered chapter extraction.</p>
-    </section>
-
-    <br>
-
-    <section class="grid grid-3">
-      <div class="card">
-        <h3>Students</h3>
-        <p id="studentTotal">Loading...</p>
-      </div>
-      <div class="card">
-        <h3>Teachers</h3>
-        <p id="teacherTotal">Loading...</p>
-      </div>
-      <div class="card">
-        <h3>Logs</h3>
-        <p id="logTotal">Loading...</p>
-      </div>
-    </section>
-
-    <br>
-
-    <!-- WTC AI CONTENT ENGINE v1.3 -->
-    <section id="aiContentEngine" class="ai-engine-section">
-      <div class="ai-engine-panel">
-        <div class="ai-hero">
-          <h2>🤖 AI Content Engine</h2>
-          <p>
-            Upload or paste chapter content. AI must extract inside-chapter questions and end-exercise questions,
-            then create clean student-ready Lesson, Solutions, MCQ, and Worksheet content.
-          </p>
-        </div>
-
-        <div id="aiEngineMsg" class="ai-msg">Ready.</div>
-
-        <div class="ai-grid">
-          <div class="ai-card">
-            <h3>1) Upload / Paste Chapter Source</h3>
-
-            <form id="wtcAiUploadForm">
-              <div class="ai-form-grid">
-                <select name="sourceType">
-                  <option>text</option>
-                  <option>pdf</option>
-                  <option>image</option>
-                  <option>scan</option>
-                </select>
-
-                <select name="board">
-                  <option>CBSE</option>
-                  <option>GSEB</option>
-                </select>
-
-                <select name="className">
-                  <option>Class 5</option>
-                  <option>Class 6</option>
-                  <option>Class 7</option>
-                  <option>Class 8</option>
-                  <option>Class 9</option>
-                  <option>Class 10</option>
-                </select>
-
-                <select name="medium">
-                  <option>English Medium</option>
-                  <option>Gujarati Medium</option>
-                </select>
-
-                <input name="subjectId" placeholder="Subject ID e.g. SCI10" required>
-                <input name="chapterId" placeholder="Chapter ID e.g. SCI10CH1" required>
-                <input name="chapterName" placeholder="Chapter Name" required>
-                <input id="aiFileName" name="fileName" placeholder="File name / source name">
-              </div>
-
-              <br>
-
-              <input id="aiSourceFile" type="file" accept=".txt,.md,.pdf,image/*">
-
-              <br><br>
-
-              <textarea
-                id="aiRawContent"
-                name="rawContent"
-                placeholder="Paste extracted chapter PDF/text here. AI will scan full content and identify: Solved Examples, Activities, Try These, In-text Questions, End Exercise Questions, MCQ, Worksheet and Solutions."
-                required></textarea>
-
-              <input name="uploadedBy" value="Admin" type="hidden">
-
-              <div class="ai-actions">
-                <button class="ai-btn" type="submit">Save to AI Queue</button>
-                <button type="button" class="ai-btn gray" onclick="WTC_AI_ADMIN.refreshQueue()">Refresh Queue</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="ai-card">
-            <h3>2) Generate → Format → Publish</h3>
-
-            <div class="ai-rule-box">
-              Solution button rule:<br>
-              ✅ Inside Chapter Questions<br>
-              ✅ End Exercise Questions<br>
-              ✅ Students see formatted content only
-            </div>
-
-            <p>Last Upload ID: <b id="lastUploadId"></b></p>
-            <p>Last Content ID: <b id="lastContentId"></b></p>
-
-            <input id="manualUploadId" placeholder="Or paste uploadId manually">
-            <br><br>
-            <input id="manualContentId" placeholder="Or paste contentId manually">
-
-            <div class="ai-actions">
-              <button class="ai-btn secondary" onclick="WTC_AI_ADMIN.generate()">Generate AI Content</button>
-              <button class="ai-btn" onclick="WTC_AI_ADMIN.format()">Format for Students</button>
-              <button class="ai-btn green" onclick="WTC_AI_ADMIN.approveAndPublish()">Approve + Publish</button>
-            </div>
-
-            <br>
-
-            <div id="aiCreatedIds" class="ai-id-box">Created IDs will appear here.</div>
-          </div>
-        </div>
-
-        <div class="ai-card">
-          <h3>Recent AI Queue</h3>
-          <div id="aiQueueBox"></div>
+    <div class="card ai-card">
+      <div class="ai-engine-header compact">
+        <div>
+          <h3>AI Input Queue</h3>
+          <p class="muted">Generate → Format → Review → Publish</p>
         </div>
       </div>
-    </section>
-  </main>
+      <div id="aiQueueBox" class="ai-queue-box">Loading queue...</div>
+    </div>
+  </section>
+</main>
 
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/ui.js"></script>
-  <script src="assets/js/auth.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/assessment-config.js"></script>
-  <script src="assets/js/assessment-api.js"></script>
-  <script src="assets/js/admin.js"></script>
-  <script src="assets/js/ai-content.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/assessment-config.js"></script>
+<script src="assets/js/assessment-api.js"></script>
+<script src="assets/js/ai-content.js"></script>
+<script src="assets/js/admin.js"></script>
 </body>
 </html>

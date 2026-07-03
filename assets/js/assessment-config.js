@@ -1,3 +1,3 @@
 const WTC_ASSESSMENT_CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzmnjLhsgnyfenpYI7vkih7Snk7FOymSj_Yp5ycU-4tP8QltaraYfAF_X8pj3DTwOeB2Q/exec'
+  API_URL: 'https://script.google.com/macros/s/AKfycbwewOj4Kp8veGTz_2SExtutMA-JPlLsLlqmPdIdPxWa5JSidMXnFR7ue3F0lCaXqmAkkg/exec'
 };

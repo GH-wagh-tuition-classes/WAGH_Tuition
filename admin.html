@@ -143,6 +143,40 @@
   <div id="chapterManagerList" style="margin-top:15px;">
     Chapters will appear here.
   </div>
+
+        <!-- features of chapter form for update to excel by admin -->
+
+    <div style="margin-top:18px;padding:15px;border-radius:14px;background:#f8fafc;">
+  <h3>Feature URL Manager</h3>
+
+  <form id="featureUrlManagerForm" style="display:grid;gap:10px;margin-top:12px;">
+    <input name="chapterId" placeholder="Chapter ID e.g. SCI10CH9" required>
+
+    <button class="btn small outline" type="button" onclick="AdminApp.loadChapterFeaturesManager()">
+      🔍 Load Feature URLs
+    </button>
+
+    <input name="lessonUrl" placeholder="Lesson URL">
+    <input name="notesUrl" placeholder="Notes URL">
+    <input name="mcqUrl" placeholder="MCQ Test URL">
+    <input name="worksheetUrl" placeholder="Worksheet URL">
+    <input name="answerWritingUrl" placeholder="Answer Writing URL">
+    <input name="videoUrl" placeholder="Video URL">
+    <input name="revisionUrl" placeholder="Revision URL">
+    <input name="solutionUrl" placeholder="Solution URL e.g. solutions/cbse/english/class-10/cbse_e_c10_sci_ch09_solution.html">
+
+    <select name="status">
+      <option>Active</option>
+      <option>Inactive</option>
+    </select>
+
+    <button class="btn" type="submit">💾 Save Feature URLs</button>
+  </form>
+
+  <div id="featureUrlManagerStatus" style="margin-top:15px;">
+    Enter Chapter ID and load or save feature URLs.
+  </div>
+</div>
       </div>
     </div>
   </section>

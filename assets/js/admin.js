@@ -27,6 +27,7 @@ const AdminApp = (() => {
     await loadDashboard();
     bindAIInputForm();
     await loadAIQueue();
+    bindSubjectManager(); //for subject manager 
   }
 
   function fillHeader() {
@@ -177,7 +178,76 @@ const AdminApp = (() => {
       WTC_UI.toast(err.message || 'Formatting/publish failed.', 'error');
     }
   }
+  
+  //subject manager code start here
+  
+function bindSubjectManager() {
+  const form = document.getElementById('subjectManagerForm');
+  if (!form) return;
 
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.action = 'adminSaveSubject';
+
+    try {
+      const data = await WTC_API.call(payload);
+      if (!data.success) return WTC_UI.toast(data.message || 'Subject save failed.', 'error');
+
+      WTC_UI.toast(data.message || 'Subject saved.', 'success');
+      form.reset();
+      await loadSubjectsManager();
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Subject save failed.', 'error');
+    }
+  });
+
+  loadSubjectsManager();
+}
+
+async function loadSubjectsManager() {
+  const box = document.getElementById('subjectManagerList');
+  if (!box) return;
+
+  box.innerHTML = 'Loading subjects...';
+
+  try {
+    const data = await WTC_API.call({ action: 'adminGetSubjects' });
+    const subjects = data.subjects || [];
+
+    if (!subjects.length) {
+      box.innerHTML = 'No subjects found.';
+      return;
+    }
+
+    box.innerHTML = subjects.map(s => `
+      <div class="card" style="margin-bottom:10px;">
+        <b>${escapeHTML(s.icon || '📚')} ${escapeHTML(s.subjectName || '')}</b>
+        <p class="muted">
+          ID: ${escapeHTML(s.subjectId || '')}<br>
+          ${escapeHTML(s.board || '')} · ${escapeHTML(s.className || '')} · ${escapeHTML(s.medium || '')}<br>
+          Status: ${escapeHTML(s.status || '')} · Sort: ${escapeHTML(s.sortOrder || '')}
+        </p>
+        <button class="btn small outline" onclick='AdminApp.editSubject(${JSON.stringify(s)})'>Edit</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    box.innerHTML = escapeHTML(err.message || 'Failed to load subjects.');
+  }
+}
+
+function editSubject(subject) {
+  const form = document.getElementById('subjectManagerForm');
+  if (!form) return;
+
+  Object.keys(subject).forEach(key => {
+    if (form[key]) form[key].value = subject[key] || '';
+  });
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+  //subject manager code end here
   function escapeHTML(value = '') {
     return String(value).replace(/[&<>\"]/g, char => ({
       '&': '&amp;',
@@ -192,7 +262,9 @@ const AdminApp = (() => {
     loadDashboard,
     loadAIQueue,
     generateAI,
-    formatLatest
+    formatLatest,
+    loadSubjectsManager, //loads subject to subject manager in admin 
+editSubject //edit subject master from admin panel 
   };
 })();
 

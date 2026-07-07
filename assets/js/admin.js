@@ -32,7 +32,8 @@ const AdminApp = (() => {
     await loadDashboard();
     bindAIInputForm();
     await loadAIQueue();
-    bindSubjectManager(); //for subject manager 
+    bindSubjectManager(); //for subject update to excel by admin 
+    bindChapterManager(); // for chapter update to excel by admin 
   }
 
   function fillHeader() {
@@ -253,6 +254,77 @@ function editSubject(subject) {
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
   //subject manager code end here
+
+  //chapter update to excel by admin start here
+
+  function bindChapterManager() {
+  const form = document.getElementById('chapterManagerForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.action = 'adminSaveChapter';
+
+    try {
+      const data = await WTC_API.call(payload);
+      if (!data.success) return WTC_UI.toast(data.message || 'Chapter save failed.', 'error');
+
+      WTC_UI.toast(data.message || 'Chapter saved.', 'success');
+      form.reset();
+      await loadChaptersManager();
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Chapter save failed.', 'error');
+    }
+  });
+
+  loadChaptersManager();
+}
+
+async function loadChaptersManager() {
+  const box = document.getElementById('chapterManagerList');
+  if (!box) return;
+
+  box.innerHTML = 'Loading chapters...';
+
+  try {
+    const data = await WTC_API.call({ action: 'adminGetChapters' });
+    const chapters = data.chapters || [];
+
+    if (!chapters.length) {
+      box.innerHTML = 'No chapters found.';
+      return;
+    }
+
+    box.innerHTML = chapters.map(ch => `
+      <div class="card" style="margin-bottom:10px;">
+        <b>Chapter ${escapeHTML(ch.chapterNo || '')}: ${escapeHTML(ch.chapterName || '')}</b>
+        <p class="muted">
+          Chapter ID: ${escapeHTML(ch.chapterId || '')}<br>
+          Subject ID: ${escapeHTML(ch.subjectId || '')}<br>
+          ${escapeHTML(ch.board || '')} · ${escapeHTML(ch.className || '')} · ${escapeHTML(ch.medium || '')}<br>
+          Status: ${escapeHTML(ch.status || '')} · Sort: ${escapeHTML(ch.sortOrder || '')}
+        </p>
+        <button class="btn small outline" onclick='AdminApp.editChapter(${JSON.stringify(ch)})'>Edit</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    box.innerHTML = escapeHTML(err.message || 'Failed to load chapters.');
+  }
+}
+
+function editChapter(chapter) {
+  const form = document.getElementById('chapterManagerForm');
+  if (!form) return;
+
+  Object.keys(chapter).forEach(key => {
+    if (form[key]) form[key].value = chapter[key] || '';
+  });
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+  // chapter update to excel by admin code end here
   function escapeHTML(value = '') {
     return String(value).replace(/[&<>\"]/g, char => ({
       '&': '&amp;',
@@ -269,7 +341,9 @@ function editSubject(subject) {
     generateAI,
     formatLatest,
     loadSubjectsManager, //loads subject to subject manager in admin 
-editSubject //edit subject master from admin panel 
+    editSubject, //edit subject master from admin panel 
+    loadChaptersManager, //load chapters to chapter manager in admin 
+    editChapter //edit chapters to excel by admin 
   };
 })();
 

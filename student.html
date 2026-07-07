@@ -75,7 +75,7 @@
     <section id="chaptersSection" class="page-section">
       <div class="section-head">
         <div><h2 id="chapterSubjectTitle">Subject</h2><p class="muted">Select a chapter.</p></div>
-        <button class="btn outline" onclick="StudentApp.show('subjectsSection')">← Subjects</button>
+        <button class="btn outline" onclick="StudentApp.backToSubjects()">← Subjects</button> // back button to subject 
       </div>
       <div id="chapterGrid" class="grid grid-3"></div>
     </section>
@@ -83,7 +83,7 @@
     <section id="featuresSection" class="page-section">
       <div class="section-head">
         <div><h2 id="featureChapterTitle">Chapter</h2><p class="muted">Open lesson, test, notes or answer writing.</p></div>
-        <button class="btn outline" onclick="StudentApp.show('chaptersSection')">← Chapters</button>
+        <button class="btn outline" onclick="StudentApp.backToChapters()">← Chapters</button> //back button to go chapter 
       </div>
       <div id="featureGrid" class="feature-grid"></div>
     </section>

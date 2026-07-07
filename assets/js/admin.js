@@ -34,6 +34,7 @@ const AdminApp = (() => {
     await loadAIQueue();
     bindSubjectManager(); //for subject update to excel by admin 
     bindChapterManager(); // for chapter update to excel by admin 
+    bindFeatureUrlManager(); // for chapter feature update to excel by admin 
   }
 
   function fillHeader() {
@@ -325,6 +326,73 @@ function editChapter(chapter) {
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
   // chapter update to excel by admin code end here
+
+// chapter feature update to excel by admin code start here 
+
+function bindFeatureUrlManager() {
+  const form = document.getElementById('featureUrlManagerForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.action = 'adminSaveChapterFeatures';
+
+    try {
+      const data = await WTC_API.call(payload);
+      if (!data.success) return WTC_UI.toast(data.message || 'Feature URL save failed.', 'error');
+
+      WTC_UI.toast(data.message || 'Feature URLs saved.', 'success');
+
+      const status = document.getElementById('featureUrlManagerStatus');
+      if (status) status.textContent = data.message || 'Feature URLs saved.';
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Feature URL save failed.', 'error');
+    }
+  });
+}
+
+async function loadChapterFeaturesManager() {
+  const form = document.getElementById('featureUrlManagerForm');
+  const status = document.getElementById('featureUrlManagerStatus');
+
+  if (!form) return;
+
+  const chapterId = form.chapterId.value.trim();
+
+  if (!chapterId) {
+    return WTC_UI.toast('Enter Chapter ID first.', 'error');
+  }
+
+  if (status) status.textContent = 'Loading feature URLs...';
+
+  try {
+    const data = await WTC_API.call({
+      action: 'adminGetChapterFeatures',
+      chapterId
+    });
+
+    if (!data.success) {
+      if (status) status.textContent = data.message || 'Could not load feature URLs.';
+      return WTC_UI.toast(data.message || 'Could not load feature URLs.', 'error');
+    }
+
+    const features = data.features || {};
+
+    Object.keys(features).forEach(key => {
+      if (form[key]) form[key].value = features[key] || '';
+    });
+
+    if (status) status.textContent = 'Feature URLs loaded.';
+    WTC_UI.toast('Feature URLs loaded.', 'success');
+  } catch (err) {
+    if (status) status.textContent = err.message || 'Feature URL load failed.';
+    WTC_UI.toast(err.message || 'Feature URL load failed.', 'error');
+  }
+}
+// feature chapter update to excel by admin code end here
+
   function escapeHTML(value = '') {
     return String(value).replace(/[&<>\"]/g, char => ({
       '&': '&amp;',
@@ -343,7 +411,8 @@ function editChapter(chapter) {
     loadSubjectsManager, //loads subject to subject manager in admin 
     editSubject, //edit subject master from admin panel 
     loadChaptersManager, //load chapters to chapter manager in admin 
-    editChapter //edit chapters to excel by admin 
+    editChapter, //edit chapters to excel by admin 
+    loadChapterFeaturesManager // feature chapter update to excel by admin 
   };
 })();
 

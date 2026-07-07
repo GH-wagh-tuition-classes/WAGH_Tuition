@@ -294,4 +294,19 @@ function backToChapters() {
   };
 })();
 
+// Mobile browser back button fix
+window.history.replaceState({ page: 'dashboard' }, '', window.location.href);
+
+window.addEventListener('popstate', function () {
+  const user = WTC_AUTH.getUser();
+
+  if (!user) {
+    show('loginSection');
+    return;
+  }
+
+  show('dashboardSection');
+
+  window.history.pushState({ page: 'dashboard' }, '', window.location.href);
+});
 document.addEventListener('DOMContentLoaded', StudentApp.init);

@@ -1,8 +1,26 @@
 const WTC_API = (() => {
   async function raw(payload) {
-    if (!WTC_CONFIG.API_URL || WTC_CONFIG.API_URL.includes('PASTE')) throw new Error('API URL is not set in assets/js/config.js');
-    const res = await fetch(WTC_CONFIG.API_URL, { method:'POST', body:JSON.stringify(payload) });
-    return await res.json();
+  if (!WTC_CONFIG.API_URL || WTC_CONFIG.API_URL.includes('PASTE')) {
+    throw new Error('API URL is not set in assets/js/config.js');
+  }
+
+  const res = await fetch(WTC_CONFIG.API_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('API returned non-JSON:', text);
+    throw new Error('API returned HTML instead of JSON. Check Apps Script deployment/version.');
+  }
   }
   async function fallback() { const res = await fetch(WTC_CONFIG.FALLBACK_CONTENT_URL); return await res.json(); }
   async function call(payload, fallbackKey=null) {

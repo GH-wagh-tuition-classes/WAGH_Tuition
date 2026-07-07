@@ -93,6 +93,57 @@
         <button class="btn small outline" onclick="AdminApp.loadSubjectsManager()">🔄 Refresh Subjects</button>
         <div id="subjectManagerList" style="margin-top:15px;">Subjects will appear here.</div>
       </div>
+
+      <!-- chapter update by admin -->
+
+      <div style="margin-top:18px;padding:15px;border-radius:14px;background:#f8fafc;">
+  <h3>Chapter Manager</h3>
+
+  <form id="chapterManagerForm" style="display:grid;gap:10px;margin-top:12px;">
+    <input name="chapterId" placeholder="Chapter ID e.g. SCI10CH9" required>
+    <input name="subjectId" placeholder="Subject ID e.g. SCI10" required>
+    <input name="chapterNo" placeholder="Chapter No e.g. 9">
+    <input name="chapterName" placeholder="Chapter Name e.g. Heredity and Evolution" required>
+
+    <select name="board">
+      <option>CBSE</option>
+      <option>GSEB</option>
+    </select>
+
+    <select name="className">
+      <option>Class 5</option>
+      <option>Class 6</option>
+      <option>Class 7</option>
+      <option>Class 8</option>
+      <option>Class 9</option>
+      <option>Class 10</option>
+    </select>
+
+    <select name="medium">
+      <option>English Medium</option>
+      <option>Gujarati Medium</option>
+    </select>
+
+    <input name="description" placeholder="Description e.g. Class 10 Science Chapter 9">
+
+    <select name="status">
+      <option>Active</option>
+      <option>Inactive</option>
+    </select>
+
+    <input name="sortOrder" type="number" placeholder="Sort Order e.g. 9">
+
+    <button class="btn" type="submit">💾 Save Chapter</button>
+  </form>
+
+  <br>
+
+  <button class="btn small outline" onclick="AdminApp.loadChaptersManager()">🔄 Refresh Chapters</button>
+
+  <div id="chapterManagerList" style="margin-top:15px;">
+    Chapters will appear here.
+  </div>
+      </div>
     </div>
   </section>
 

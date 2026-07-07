@@ -289,8 +289,8 @@ function backToChapters() {
     openChapter,
     openFeature,
     openFeatureByIndex,
-    backToSubjects,  // for navigation 
-backToChapters // for navigation 
+    backToSubjects, 
+    backToChapters
   };
 })();
 

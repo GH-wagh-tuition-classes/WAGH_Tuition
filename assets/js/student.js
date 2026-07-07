@@ -269,7 +269,18 @@ const StudentApp = (() => {
       }
     });
   }
+  /* smart navigation*/
+function backToSubjects() {
+  selectedChapter = null;
+  currentFeatures = [];
+  show('subjectsSection');
+}
 
+function backToChapters() {
+  selectedChapter = null;
+  currentFeatures = [];
+  show('chaptersSection');
+}
   return {
     init,
     show,
@@ -277,7 +288,9 @@ const StudentApp = (() => {
     openSubject,
     openChapter,
     openFeature,
-    openFeatureByIndex
+    openFeatureByIndex,
+    backToSubjects,  // for navigation 
+backToChapters // for navigation 
   };
 })();
 

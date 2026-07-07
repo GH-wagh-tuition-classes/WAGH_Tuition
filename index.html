@@ -6,24 +6,20 @@
 <section id="about"><div class="container"><div class="card"><h2>About WAGH Tuition Classes</h2><p class="lead">WAGH Tuition Classes provides structured learning support for school students with chapter-wise study material, tests and progress tracking.</p></div></div></section><section id="contact" class="soft"><div class="container"><div class="card"><h2>Contact</h2><p class="lead">Mobile: 9537036383</p></div></div></section></main>
 <footer><div class="footer-wrap"><div><h3>WAGH Tuition Classes</h3><p>Main tuition website and student learning ecosystem.</p></div><div><h3>Portal</h3><a href="student.html">Student</a><a href="teacher.html">Teacher</a><a href="admin.html">Admin</a></div><div><h3>Note</h3><p>All dynamic content connects through WTC_CONTENT_ENGINE API.</p></div></div><div class="footer-bottom">© WAGH Tuition Classes</div></footer><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  function autoRedirectLoggedUser() {
     const user = WTC_AUTH.getUser();
 
-    if (user && String(user.role || '').toLowerCase() === 'student') {
-      window.location.replace('student.html');
-    }
+    if (!user) return;
 
-    if (user && String(user.role || '').toLowerCase() === 'teacher') {
-      window.location.replace('teacher.html');
-    }
+    const role = String(user.role || 'Student').toLowerCase();
 
-    if (user && String(user.role || '').toLowerCase() === 'admin') {
-      window.location.replace('admin.html');
-    }
+    if (role === 'teacher') window.location.replace('teacher.html');
+    else if (role === 'admin') window.location.replace('admin.html');
+    else if (role === 'parent') window.location.replace('parent.html');
+    else window.location.replace('student.html');
+  }
 
-    if (user && String(user.role || '').toLowerCase() === 'parent') {
-      window.location.replace('parent.html');
-    }
-  });
+  document.addEventListener('DOMContentLoaded', autoRedirectLoggedUser);
+  window.addEventListener('pageshow', autoRedirectLoggedUser);
 </script>
 </body></html>

@@ -4,4 +4,26 @@
 <section id="features"><div class="container"><div class="center"><h2>Everything students need</h2><p class="sub">Modern learning flow connected to WTC_CONTENT_ENGINE.</p></div><div class="features"><div class="card"><div class="icon">📚</div><h3>Dynamic Chapters</h3><p>Students see subjects and chapters according to their board, class and medium.</p></div><div class="card"><div class="icon">📝</div><h3>Practice Tests</h3><p>MCQ, answer writing, worksheets and revision tools are loaded dynamically.</p></div><div class="card"><div class="icon">📈</div><h3>Progress Tracking</h3><p>Progress module is ready for marks, activity and personalized improvement.</p></div></div></div></section>
 <section id="login" class="soft"><div class="container"><div class="center"><h2>Login to your portal</h2><p class="sub">Student, teacher and admin roles redirect to their own dashboard.</p></div><div class="auth-panel"><div class="card auth-card"><h3>Login</h3><form id="loginForm" onsubmit="event.preventDefault();WTC_AUTH.handleLogin();"><select name="role"><option>Student</option><option>Teacher</option><option>Admin</option><option>Parent</option></select><input name="mobile" type="tel" placeholder="Mobile number" required><input name="password" type="password" placeholder="Password" required><button class="btn" type="submit">Login</button></form></div><div class="card auth-card"><h3>Student Signup</h3><form id="signupForm" onsubmit="event.preventDefault();WTC_AUTH.handleSignup();"><input name="name" placeholder="Student name" required><input name="mobile" type="tel" placeholder="Mobile number" required><input name="password" type="password" placeholder="Create password" required><select name="board"><option>CBSE</option><option>GSEB</option></select><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select><button class="btn success" type="submit">Create Student Account</button></form></div></div></div></section>
 <section id="about"><div class="container"><div class="card"><h2>About WAGH Tuition Classes</h2><p class="lead">WAGH Tuition Classes provides structured learning support for school students with chapter-wise study material, tests and progress tracking.</p></div></div></section><section id="contact" class="soft"><div class="container"><div class="card"><h2>Contact</h2><p class="lead">Mobile: 9537036383</p></div></div></section></main>
-<footer><div class="footer-wrap"><div><h3>WAGH Tuition Classes</h3><p>Main tuition website and student learning ecosystem.</p></div><div><h3>Portal</h3><a href="student.html">Student</a><a href="teacher.html">Teacher</a><a href="admin.html">Admin</a></div><div><h3>Note</h3><p>All dynamic content connects through WTC_CONTENT_ENGINE API.</p></div></div><div class="footer-bottom">© WAGH Tuition Classes</div></footer><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script></body></html>
+<footer><div class="footer-wrap"><div><h3>WAGH Tuition Classes</h3><p>Main tuition website and student learning ecosystem.</p></div><div><h3>Portal</h3><a href="student.html">Student</a><a href="teacher.html">Teacher</a><a href="admin.html">Admin</a></div><div><h3>Note</h3><p>All dynamic content connects through WTC_CONTENT_ENGINE API.</p></div></div><div class="footer-bottom">© WAGH Tuition Classes</div></footer><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const user = WTC_AUTH.getUser();
+
+    if (user && String(user.role || '').toLowerCase() === 'student') {
+      window.location.replace('student.html');
+    }
+
+    if (user && String(user.role || '').toLowerCase() === 'teacher') {
+      window.location.replace('teacher.html');
+    }
+
+    if (user && String(user.role || '').toLowerCase() === 'admin') {
+      window.location.replace('admin.html');
+    }
+
+    if (user && String(user.role || '').toLowerCase() === 'parent') {
+      window.location.replace('parent.html');
+    }
+  });
+</script>
+</body></html>

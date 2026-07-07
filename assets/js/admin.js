@@ -1,3 +1,21 @@
+function showPanel(panelId, btn) {
+  document.querySelectorAll('.panel').forEach(panel => {
+    panel.style.display = 'none';
+  });
+
+  const panel = document.getElementById(panelId);
+  if (panel) {
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.querySelectorAll('.btn').forEach(button => {
+    button.classList.remove('active');
+  });
+
+  if (btn) btn.classList.add('active');
+}
+
 const AdminApp = (() => {
   let adminUser = null;
 

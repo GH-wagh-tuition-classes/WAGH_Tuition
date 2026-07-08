@@ -190,6 +190,22 @@ const StudentApp = (() => {
     if (!feature) return;
 
     const featureName = feature.featureName || feature.name || 'Feature';
+    /* ---------- Access Control ---------- */
+
+const featureType = String(feature.type || '').toLowerCase();
+const featureLabel = featureName.toLowerCase();
+
+const isSolution =
+    featureLabel.includes('solution') ||
+    featureType.includes('solution') ||
+    (feature.url || '').toLowerCase().includes('solution');
+
+if (
+    user.studentType === "GENERAL_STUDENT" &&
+    !isSolution
+) {
+    return showFullAccessPopup();
+}
 
     WTC_API.logAccess({
       userId: user.id || user.studentId,
@@ -213,6 +229,44 @@ const StudentApp = (() => {
     openStaticFeature(feature.url, featureName);
   }
 
+  /* ------- feature buttons pop-up for general student --- */
+
+  function showFullAccessPopup() {
+
+  const old = document.getElementById("wtcAccessPopup");
+  if (old) old.remove();
+
+  document.body.insertAdjacentHTML("beforeend", `
+<div id="wtcAccessPopup" class="wtc-access-overlay">
+
+<div class="wtc-access-box">
+
+<h2>🔒 Full Access Required</h2>
+
+<p>
+Please contact
+<b>WAGH Tuition Classes</b>
+to unlock all premium learning features.
+</p>
+
+<a
+class="wtc-whatsapp-btn"
+href="https://wa.me/919537036383"
+target="_blank">
+📱 Contact on WhatsApp
+</a>
+
+<button
+class="wtc-close-btn"
+onclick="document.getElementById('wtcAccessPopup').remove();">
+Close
+</button>
+
+</div>
+
+</div>
+`);
+  }
   function openStaticFeature(url, name) {
     if (!url || url === '#') {
       return WTC_UI.toast('This feature URL is not added yet.', 'error');

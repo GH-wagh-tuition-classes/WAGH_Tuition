@@ -3,8 +3,19 @@ const WTC_AUTH = (() => {
   function normalizeUser(raw={}) {
     const role = raw.role || raw.userRole || 'Student';
     const id = raw.studentId || raw.teacherId || raw.adminId || raw.parentId || raw.id || '';
-    return { ...raw, id, studentId: raw.studentId || (role === 'Student' ? id : ''), name: raw.name || raw.studentName || raw.teacherName || 'User', mobile: raw.mobile || '', role, board: raw.board || '', className: raw.className || raw.class || '', medium: raw.medium || '', status: raw.status || 'Active' };
-  }
+    return {
+  ...raw,
+  id,
+  studentId: raw.studentId || (role === 'Student' ? id : ''),
+  name: raw.name || raw.studentName || raw.teacherName || 'User',
+  mobile: raw.mobile || '',
+  role,
+  board: raw.board || '',
+  className: raw.className || raw.class || '',
+  medium: raw.medium || '',
+  status: raw.status || 'Active',
+  studentType: raw.studentType || ''
+};
   function getUser() { try { return JSON.parse(localStorage.getItem(WTC_CONFIG.STORAGE_KEY) || sessionStorage.getItem(WTC_CONFIG.STORAGE_KEY) || 'null'); } catch { return null; } }
   function setUser(user) { const clean = normalizeUser(user); localStorage.setItem(WTC_CONFIG.STORAGE_KEY, JSON.stringify(clean)); sessionStorage.setItem(WTC_CONFIG.STORAGE_KEY, JSON.stringify(clean)); }
   function clearUser() { localStorage.removeItem(WTC_CONFIG.STORAGE_KEY); sessionStorage.removeItem(WTC_CONFIG.STORAGE_KEY); }

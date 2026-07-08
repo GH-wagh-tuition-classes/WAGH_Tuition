@@ -15,7 +15,7 @@ const WTC_AUTH = (() => {
   medium: raw.medium || '',
   status: raw.status || 'Active',
   studentType: raw.studentType || ''
-};
+};}
   function getUser() { try { return JSON.parse(localStorage.getItem(WTC_CONFIG.STORAGE_KEY) || sessionStorage.getItem(WTC_CONFIG.STORAGE_KEY) || 'null'); } catch { return null; } }
   function setUser(user) { const clean = normalizeUser(user); localStorage.setItem(WTC_CONFIG.STORAGE_KEY, JSON.stringify(clean)); sessionStorage.setItem(WTC_CONFIG.STORAGE_KEY, JSON.stringify(clean)); }
   function clearUser() { localStorage.removeItem(WTC_CONFIG.STORAGE_KEY); sessionStorage.removeItem(WTC_CONFIG.STORAGE_KEY); }

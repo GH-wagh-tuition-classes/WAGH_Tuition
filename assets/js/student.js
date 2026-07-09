@@ -147,6 +147,7 @@ window.addEventListener("popstate", () => {
     if (!selectedSubject) return;
 
     document.getElementById('chapterSubjectTitle').textContent = selectedSubject.subjectName || selectedSubject.name || 'Subject';
+    pushScreen("subjects"); // for navigation edit 09/07
     show('chaptersSection');
     pushScreen("chapters"); // edit 09/07 for navigation 
     await loadChapters();

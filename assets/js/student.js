@@ -26,10 +26,14 @@ function restoreScreen(screen) {
 
     case "subjects":
       show("subjectsSection");
+      loadSubjects(); // for navigation edit 09/07
       break;
 
     case "chapters":
       show("chaptersSection");
+      if (selectedSubject) { // for navigation edit 09/07
+        loadChapters();
+      }
       break;
 
     case "features":

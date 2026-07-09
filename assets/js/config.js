@@ -25,7 +25,7 @@ const WTC_CONFIG = {
   TEACHER: "Teacher",
   ADMIN: "Admin",
   PARENT: "Parent"
-},
+}
 
 ACCESS: {
   PUBLIC: "PUBLIC",

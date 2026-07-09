@@ -19,4 +19,16 @@ const WTC_CONFIG = {
   WHATSAPP_NUMBER: '919537036383',
 
   WHATSAPP_LINK: 'https://wa.me/919537036383'
+
+  ROLES: {
+  STUDENT: "Student",
+  TEACHER: "Teacher",
+  ADMIN: "Admin",
+  PARENT: "Parent"
+},
+
+ACCESS: {
+  PUBLIC: "PUBLIC",
+  PREMIUM: "PREMIUM"
+}
 };

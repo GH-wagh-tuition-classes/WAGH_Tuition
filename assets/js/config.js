@@ -1,4 +1,4 @@
-const WTC_CONFIG = {
+window.WTC_CONFIG = {
   APP_NAME: 'WAGH Tuition Classes',
 
   API_URL: 'https://script.google.com/macros/s/AKfycbxVRRmp3rw9kPWlBNmS0px0Tce2HCEnU_epWJjnghooNJlxu5vdqJnKVuyKsRIDOEN0/exec',
@@ -25,7 +25,7 @@ const WTC_CONFIG = {
   TEACHER: "Teacher",
   ADMIN: "Admin",
   PARENT: "Parent"
-}
+},
 
 ACCESS: {
   PUBLIC: "PUBLIC",

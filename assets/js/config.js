@@ -12,9 +12,8 @@ window.WTC_CONFIG = {
      Global Website Settings
   =========================== */
 
-  BASE_URL: '',
-
-  LOGIN_PAGE: 'index.html#login',
+  BASE_URL: '/WAGH_Tuition/',
+LOGIN_PAGE: '/WAGH_Tuition/index.html#login',
 
   WHATSAPP_NUMBER: '919537036383',
 

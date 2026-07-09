@@ -50,6 +50,27 @@ function restoreScreen(screen) {
     bindProfile();
     loadSubjects();
     loadProgress();
+    /* ==== Navigation code edit 09/07 ===== */
+    pushScreen("dashboard");
+
+window.addEventListener("popstate", () => {
+
+  navigationStack.pop();
+
+  const previous = navigationStack[navigationStack.length - 1];
+
+  if (!previous) {
+
+    history.pushState({ screen: "dashboard" }, "", "");
+    navigationStack = ["dashboard"];
+    restoreScreen("dashboard");
+    return;
+
+  }
+
+  restoreScreen(previous);
+
+});
   }
 
   function fillUser() {

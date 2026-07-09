@@ -144,6 +144,7 @@ window.addEventListener("popstate", () => {
 
     document.getElementById('chapterSubjectTitle').textContent = selectedSubject.subjectName || selectedSubject.name || 'Subject';
     show('chaptersSection');
+    pushScreen("chapters"); // edit 09/07 for navigation 
     await loadChapters();
   }
 
@@ -195,6 +196,7 @@ window.addEventListener("popstate", () => {
 
     document.getElementById('featureChapterTitle').textContent = selectedChapter.chapterName || selectedChapter.name || 'Chapter';
     show('featuresSection');
+    pushScreen("features"); // for navigation edit 09/07
 
     const box = document.getElementById('featureGrid');
     box.innerHTML = WTC_UI.loadingHTML('Loading feature buttons...');
@@ -384,13 +386,15 @@ Close
 function backToSubjects() {
   selectedChapter = null;
   currentFeatures = [];
-  show('subjectsSection');
+  restoreScreen("subjects");
+  pushScreen("subjects");
 }
 
 function backToChapters() {
   selectedChapter = null;
   currentFeatures = [];
-  show('chaptersSection');
+  restoreScreen("chapters");
+  pushScreen("chapters");
 }
   return {
     init,

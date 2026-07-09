@@ -6,6 +6,42 @@ const StudentApp = (() => {
   let selectedChapter = null;
   let currentFeatures = [];
 
+  /* ===== Student Navigation Engine ===== */
+
+let navigationStack = [];
+
+function pushScreen(screen) {
+
+  const last = navigationStack[navigationStack.length - 1];
+
+  if (last !== screen) {
+    navigationStack.push(screen);
+    history.pushState({ screen }, "", "");
+  }
+}
+
+function restoreScreen(screen) {
+
+  switch (screen) {
+
+    case "subjects":
+      show("subjectsSection");
+      break;
+
+    case "chapters":
+      show("chaptersSection");
+      break;
+
+    case "features":
+      show("featuresSection");
+      break;
+
+    default:
+      show("dashboardSection");
+  }
+
+}
+
   function init() {
     user = WTC_AUTH.requireRole('Student');
     if (!user) return;

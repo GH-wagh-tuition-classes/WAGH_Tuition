@@ -9,3 +9,10 @@ Teacher: 8888888888 / teacher123
 Admin: 9999999999 / admin123
 
 After deploying Apps Script, paste Web App URL in assets/js/config.js.
+=======
+=======
+script for premium page
+<script src="../../assets/js/page-loader.js" data-access="PREMIUM"></script>
+=======
+script for public Page 
+<script src="../../assets/js/page-loader.js" data-access="PUBLIC"></script>

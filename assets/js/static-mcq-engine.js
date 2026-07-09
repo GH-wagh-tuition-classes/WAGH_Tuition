@@ -28,6 +28,7 @@
 
   function requireStudent(){
     const user = getUser();
+    alert(JSON.stringify(user, null, 2)); //edit09/07
     if(!user || String(user.role || '').toLowerCase() !== 'student'){
       sessionStorage.setItem('WTC_NEXT_AFTER_LOGIN', location.pathname + location.search + location.hash);
       location.href = loginPath();

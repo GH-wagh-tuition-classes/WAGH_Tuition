@@ -16,9 +16,21 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const optionLetters = ['A','B','C','D'];
 
+  /*  edit and replaced 10/07
   function getUser(){
     try { return window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null; } catch(e){ return null; }
   }
+  */
+  function getUser(){
+  try {
+    return typeof WTC_AUTH !== 'undefined' && WTC_AUTH.getUser
+      ? WTC_AUTH.getUser()
+      : null;
+  } catch(e) {
+    return null;
+  }
+  }
+  
 
   function loginPath(){
     const current = location.pathname.split('/').filter(Boolean);
@@ -279,7 +291,13 @@
       totalTimeSec: r.totalTimeSec,
       attemptDetails: JSON.stringify(r.details),
       page: location.pathname,
+      /* === edit 10/07
       deviceId: window.WTC_AUTH && WTC_AUTH.deviceId ? WTC_AUTH.deviceId() : ''
+      */
+      deviceId:
+  typeof WTC_AUTH !== 'undefined' && WTC_AUTH.deviceId
+    ? WTC_AUTH.deviceId()
+    : ''
     };
     try{
       const res = await WTC_API.call(payload);

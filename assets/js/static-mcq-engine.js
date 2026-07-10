@@ -26,7 +26,7 @@
     return '../'.repeat(depth) + 'index.html#login';
   }
 
-  function requireStudent(){
+  /*function requireStudent(){
     const user = getUser();
     alert(JSON.stringify(user, null, 2)); //edit09/07
     if(!user || String(user.role || '').toLowerCase() !== 'student'){
@@ -34,6 +34,23 @@
       location.href = loginPath();
       return null;
     }
+    return user;
+  } */
+  function requireStudent(){
+
+    console.log("Storage Key:", WTC_CONFIG.STORAGE_KEY);
+    console.log("Raw Storage:", localStorage.getItem(WTC_CONFIG.STORAGE_KEY));
+
+    alert(localStorage.getItem(WTC_CONFIG.STORAGE_KEY));
+
+    const user = getUser();
+
+    if(!user || String(user.role || '').toLowerCase() !== 'student'){
+        sessionStorage.setItem('WTC_NEXT_AFTER_LOGIN', location.pathname + location.search + location.hash);
+        location.href = loginPath();
+        return null;
+    }
+
     return user;
   }
 

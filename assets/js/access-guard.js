@@ -4,9 +4,9 @@
 ===================================================== */
 
 (() => {
-  const ACCESS = String(
+  const access = String(
     window.WTC_PAGE_ACCESS || WTC_CONFIG.ACCESS.PUBLIC
-  ).toUpperCase();
+  ).trim().toUpperCase();
 
   const user = WTC_AUTH.getUser();
 
@@ -15,15 +15,17 @@
     return;
   }
 
-  if (String(user.status || '').toLowerCase() !== 'active') {
+  if (String(user.status || '').trim().toLowerCase() !== 'active') {
     alert('Your account is inactive. Please contact WAGH Tuition Classes.');
     WTC_AUTH.logout();
     return;
   }
 
+  const studentType = String(user.studentType || '').trim().toUpperCase();
+
   if (
-    ACCESS === WTC_CONFIG.ACCESS.PREMIUM &&
-    user.studentType === 'GENERAL_STUDENT'
+    access === WTC_CONFIG.ACCESS.PREMIUM &&
+    studentType === 'GENERAL_STUDENT'
   ) {
     document.body.innerHTML = `
       <div class="wtc-access-overlay">
@@ -33,13 +35,11 @@
             This feature is available only for
             <b>WAGH Tuition Classes</b> students.
           </p>
-          <a class="wtc-whatsapp-btn" href="${WTC_CONFIG.WHATSAPP_LINK}" target="_blank">
+          <a class="wtc-whatsapp-btn" href="${WTC_CONFIG.WHATSAPP_LINK}" target="_blank" rel="noopener noreferrer">
             📱 Contact on WhatsApp
           </a>
         </div>
       </div>
     `;
-
-    throw new Error('AccessGuard: Premium page blocked.');
   }
 })();

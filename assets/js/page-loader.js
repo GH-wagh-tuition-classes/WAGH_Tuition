@@ -34,7 +34,7 @@
       await loadScript(basePath + "config.js");
     }
 
-    if (!window.WTC_AUTH) {
+    if (typeof WTC_AUTH === 'undefined') {
       await loadScript(basePath + "auth.js");
     }
 

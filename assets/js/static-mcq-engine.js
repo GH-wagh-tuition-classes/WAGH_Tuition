@@ -16,46 +16,29 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const optionLetters = ['A','B','C','D'];
 
-  /*  edit and replaced 10/07
   function getUser(){
-    try { return window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null; } catch(e){ return null; }
+    try {
+      return typeof WTC_AUTH !== 'undefined' && WTC_AUTH.getUser
+        ? WTC_AUTH.getUser()
+        : null;
+    } catch(e) {
+      return null;
+    }
   }
-  */
-  function getUser(){
-  try {
-    return typeof WTC_AUTH !== 'undefined' && WTC_AUTH.getUser
-      ? WTC_AUTH.getUser()
-      : null;
-  } catch(e) {
-    return null;
-  }
-  }
-  
 
   function loginPath(){
-    const current = location.pathname.split('/').filter(Boolean);
-    const depth = Math.max(0, current.length - 1);
-    return '../'.repeat(depth) + 'index.html#login';
+    return (typeof WTC_CONFIG !== 'undefined' && WTC_CONFIG.LOGIN_PAGE)
+      ? WTC_CONFIG.LOGIN_PAGE
+      : '/WAGH_Tuition/index.html#login';
   }
 
   function requireStudent(){
     const user = getUser();
-    alert(JSON.stringify(user, null, 2)); //edit09/07
+
     if(!user || String(user.role || '').toLowerCase() !== 'student'){
       sessionStorage.setItem('WTC_NEXT_AFTER_LOGIN', location.pathname + location.search + location.hash);
       location.href = loginPath();
       return null;
-    }
-    return user;
-  } 
-  function requireStudent(){
-
-    const user = getUser();
-
-    if(!user || String(user.role || '').toLowerCase() !== 'student'){
-        sessionStorage.setItem('WTC_NEXT_AFTER_LOGIN', location.pathname + location.search + location.hash);
-        location.href = loginPath();
-        return null;
     }
 
     return user;
@@ -291,13 +274,10 @@
       totalTimeSec: r.totalTimeSec,
       attemptDetails: JSON.stringify(r.details),
       page: location.pathname,
-      /* === edit 10/07
-      deviceId: window.WTC_AUTH && WTC_AUTH.deviceId ? WTC_AUTH.deviceId() : ''
-      */
       deviceId:
-  typeof WTC_AUTH !== 'undefined' && WTC_AUTH.deviceId
-    ? WTC_AUTH.deviceId()
-    : ''
+        typeof WTC_AUTH !== 'undefined' && WTC_AUTH.deviceId
+          ? WTC_AUTH.deviceId()
+          : ''
     };
     try{
       const res = await WTC_API.call(payload);

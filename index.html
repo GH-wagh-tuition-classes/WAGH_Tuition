@@ -7,7 +7,7 @@
 <footer><div class="footer-wrap"><div><h3>WAGH Tuition Classes</h3><p>Main tuition website and student learning ecosystem.</p></div><div><h3>Portal</h3><a href="student.html">Student</a><a href="teacher.html">Teacher</a><a href="admin.html">Admin</a></div><div><h3>Note</h3><p>All dynamic content connects through WTC_CONTENT_ENGINE API.</p></div></div><div class="footer-bottom">© WAGH Tuition Classes</div></footer><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script>
 <script>
   function autoRedirectLoggedUser() {
-  if (!window.WTC_CONFIG || !window.WTC_AUTH) return;
+  if (!window.WTC_CONFIG || typeof WTC_AUTH === 'undefined') return;
 
   const user = WTC_AUTH.getUser();
 

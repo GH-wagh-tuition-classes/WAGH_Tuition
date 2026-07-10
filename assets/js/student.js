@@ -215,7 +215,11 @@ window.addEventListener("popstate", () => {
       const staticFeatures = staticData.features || [];
       const dynamicFeatures = await loadDynamicFeatures(selectedChapter.chapterId || selectedChapter.id);
 
-      currentFeatures = [...dynamicFeatures, ...staticFeatures];
+      const combinedFeatures = [...dynamicFeatures, ...staticFeatures];
+
+      currentFeatures = typeof WTC_FEATURE_ENGINE !== 'undefined'
+        ? await WTC_FEATURE_ENGINE.prepareFeatures(combinedFeatures)
+        : combinedFeatures;
 
       box.innerHTML = currentFeatures.length
         ? currentFeatures.map(featureButton).join('')
@@ -238,13 +242,24 @@ window.addEventListener("popstate", () => {
   }
 
   function featureButton(feature, index) {
-    const name = WTC_UI.escape(feature.featureName || feature.name || 'Feature');
-    const label = feature.type === 'dynamic' ? 'AI Content Engine' : (feature.type || 'Learning feature');
+    const definition = feature.__definition || {};
+    const name = WTC_UI.escape(
+      definition.buttonText || definition.featureName || feature.featureName || feature.name || 'Feature'
+    );
+    const description = WTC_UI.escape(
+      definition.description || (feature.type === 'dynamic' ? 'AI Content Engine' : (feature.type || 'Learning feature'))
+    );
+    const icon = definition.icon || feature.icon || '🔗';
+    const disabled = definition.enabled === false || definition.comingSoon === true;
+    const className = ['feature-btn', definition.themeClass || '', disabled ? 'is-disabled' : '']
+      .filter(Boolean).join(' ');
+    const stateLabel = definition.comingSoon ? 'Coming Soon' : (definition.enabled === false ? 'Disabled' : description);
 
     return `
-      <button class="feature-btn" onclick="StudentApp.openFeatureByIndex(${index})">
-        ${feature.icon || '🔗'} ${name}
-        <small>${WTC_UI.escape(label)}</small>
+      <button class="${className}" onclick="StudentApp.openFeatureByIndex(${index})"
+        ${disabled ? 'aria-disabled="true"' : ''}>
+        ${icon} ${name}
+        <small>${WTC_UI.escape(stateLabel)}</small>
       </button>
     `;
   }
@@ -253,113 +268,32 @@ window.addEventListener("popstate", () => {
     const feature = currentFeatures[index];
     if (!feature) return;
 
-    /* ======================================================
-       Feature Engine v1.0
-       Dynamic engine first → static URL fallback.
-       If the Feature Engine script is unavailable, the legacy
-       code below still protects and opens existing pages.
-    ====================================================== */
-    if (typeof WTC_FEATURE_ENGINE !== 'undefined') {
-      try {
-        await WTC_FEATURE_ENGINE.open({
-          feature,
-          user,
-          subject: selectedSubject,
-          chapter: selectedChapter
-        });
-        return;
-      } catch (error) {
-        console.warn('Feature Engine failed; using legacy fallback.', error);
-      }
+    if (typeof WTC_FEATURE_ENGINE === 'undefined') {
+      return WTC_UI.toast('Feature Engine is unavailable. Please refresh the page.', 'error');
     }
 
-    /* ---------------- Legacy backward-compatible fallback ---------------- */
-    const featureName = feature.featureName || feature.name || 'Feature';
-    const featureType = String(feature.type || '').toLowerCase();
-    const featureLabel = featureName.toLowerCase();
-
-    const isSolution =
-      featureLabel.includes('solution') ||
-      featureType.includes('solution') ||
-      String(feature.url || '').toLowerCase().includes('solution');
-
-    if (
-      String(user.studentType || '').toUpperCase() === 'GENERAL_STUDENT' &&
-      !isSolution
-    ) {
-      return showFullAccessPopup();
+    try {
+      await WTC_FEATURE_ENGINE.open({
+        feature,
+        user,
+        subject: selectedSubject,
+        chapter: selectedChapter
+      });
+    } catch (error) {
+      console.error('Feature Engine open failed:', error);
+      WTC_UI.toast(error.message || 'Feature could not be opened.', 'error');
     }
-
-    WTC_API.logAccess({
-      userId: user.id || user.studentId,
-      name: user.name,
-      role: user.role,
-      mobile: user.mobile,
-      actionName: featureName,
-      url: feature.url || feature.contentId || ''
-    }).catch(() => {});
-
-    if (feature.type === 'dynamic' && window.WTC_DYNAMIC_CONTENT) {
-      try {
-        const opened = await WTC_DYNAMIC_CONTENT.openFeature(feature);
-        if (opened !== false) return;
-      } catch (error) {
-        WTC_UI.toast(error.message || 'Dynamic content failed to open.', 'error');
-        return;
-      }
-    }
-
-    openStaticFeature(feature.url, featureName);
-  }
-
-  /* ------- feature buttons pop-up for general student --- */
-
-  function showFullAccessPopup() {
-
-  const old = document.getElementById("wtcAccessPopup");
-  if (old) old.remove();
-
-  document.body.insertAdjacentHTML("beforeend", `
-<div id="wtcAccessPopup" class="wtc-access-overlay">
-
-<div class="wtc-access-box">
-
-<h2>🔒 Full Access Required</h2>
-
-<p>
-Please contact
-<b>WAGH Tuition Classes</b>
-to unlock all premium learning features.
-</p>
-
-<a
-class="wtc-whatsapp-btn"
-href="https://wa.me/919537036383"
-target="_blank">
-📱 Contact on WhatsApp
-</a>
-
-<button
-class="wtc-close-btn"
-onclick="document.getElementById('wtcAccessPopup').remove();">
-Close
-</button>
-
-</div>
-
-</div>
-`);
-  }
-  function openStaticFeature(url, name) {
-    if (!url || url === '#') {
-      return WTC_UI.toast('This feature URL is not added yet.', 'error');
-    }
-
-    window.location.href = url;
   }
 
   function openFeature(url, name) {
-    openStaticFeature(url, name);
+    const feature = { featureName: name || 'Feature', url };
+    if (typeof WTC_FEATURE_ENGINE !== 'undefined') {
+      return WTC_FEATURE_ENGINE.open({
+        feature, user, subject: selectedSubject, chapter: selectedChapter
+      });
+    }
+    if (!url || url === '#') return WTC_UI.toast('This feature is not available yet.', 'error');
+    window.location.href = url;
   }
 
   async function loadProgress() {

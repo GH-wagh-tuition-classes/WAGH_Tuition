@@ -29,6 +29,35 @@ const WTC_FEATURE_ENGINE = (() => {
     visible: true
   };
 
+
+  function toBoolean(value, fallback) {
+    if (value === true || value === false) return value;
+    if (value === '' || value === null || value === undefined) return fallback;
+    const v = String(value).trim().toLowerCase();
+    if (['true','yes','1','active','enabled'].includes(v)) return true;
+    if (['false','no','0','inactive','disabled'].includes(v)) return false;
+    return fallback;
+  }
+
+  function normalizeDefinition(definition) {
+    return {
+      ...definition,
+      enabled: toBoolean(definition.enabled, true),
+      requiresLogin: toBoolean(definition.requiresLogin, true),
+      saveProgress: toBoolean(definition.saveProgress, false),
+      resumeAllowed: toBoolean(definition.resumeAllowed, false),
+      logAccess: toBoolean(definition.logAccess, true),
+      comingSoon: toBoolean(definition.comingSoon, false),
+      visible: toBoolean(definition.visible, true),
+      subscriptionRequired: toBoolean(definition.subscriptionRequired, false),
+      displayOrder: Number(definition.displayOrder || 999),
+      xpReward: Number(definition.xpReward || 0),
+      unlockLevel: Number(definition.unlockLevel || 0),
+      dailyLimit: Number(definition.dailyLimit || 0),
+      cooldownMinutes: Number(definition.cooldownMinutes || 0)
+    };
+  }
+
   function normalizeId(value) {
     return String(value || '')
       .trim()
@@ -91,7 +120,7 @@ const WTC_FEATURE_ENGINE = (() => {
     const ui = findById(registry.ui, featureId);
     const rules = findById(registry.rules, featureId);
 
-    return {
+    return normalizeDefinition({
       ...defaults,
       ...metadata,
       ...ui,
@@ -103,7 +132,18 @@ const WTC_FEATURE_ENGINE = (() => {
         featureId,
       icon: ui.icon || (feature && feature.icon) || '🔗',
       xpReward: Number(rules.xpReward || 0)
-    };
+    });
+  }
+
+  async function prepareFeatures(features) {
+    const prepared = await Promise.all((features || []).map(async feature => {
+      const definition = feature.__definition || await getDefinition(feature);
+      return { ...feature, featureId: definition.featureId, __definition: definition };
+    }));
+
+    return prepared
+      .filter(feature => feature.__definition.visible !== false)
+      .sort((a, b) => a.__definition.displayOrder - b.__definition.displayOrder);
   }
 
   function showAccessPopup() {
@@ -195,6 +235,17 @@ const WTC_FEATURE_ENGINE = (() => {
       return false;
     }
 
+    if (String(definition.status || 'Active').toLowerCase() !== 'active') {
+      showMessage(definition.featureName + ' is currently unavailable.', 'error');
+      return false;
+    }
+
+    const userLevel = Number((user && user.level) || 0);
+    if (definition.unlockLevel > userLevel) {
+      showMessage('Unlocks at level ' + definition.unlockLevel + '.', 'error');
+      return false;
+    }
+
     if (definition.requiresLogin && !user) {
       window.location.href = WTC_CONFIG.LOGIN_PAGE;
       return false;
@@ -205,7 +256,8 @@ const WTC_FEATURE_ENGINE = (() => {
       .toUpperCase();
 
     if (
-      String(definition.accessLevel || '').toUpperCase() === 'PREMIUM' &&
+      (String(definition.accessLevel || '').toUpperCase() === 'PREMIUM' ||
+       definition.subscriptionRequired) &&
       studentType === 'GENERAL_STUDENT'
     ) {
       showAccessPopup();
@@ -283,6 +335,7 @@ const WTC_FEATURE_ENGINE = (() => {
     getDefinition,
     loadRegistry,
     clearCache,
-    resolveFeatureId
+    resolveFeatureId,
+    prepareFeatures
   };
 })();

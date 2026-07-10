@@ -253,23 +253,42 @@ window.addEventListener("popstate", () => {
     const feature = currentFeatures[index];
     if (!feature) return;
 
+    /* ======================================================
+       Feature Engine v1.0
+       Dynamic engine first → static URL fallback.
+       If the Feature Engine script is unavailable, the legacy
+       code below still protects and opens existing pages.
+    ====================================================== */
+    if (typeof WTC_FEATURE_ENGINE !== 'undefined') {
+      try {
+        await WTC_FEATURE_ENGINE.open({
+          feature,
+          user,
+          subject: selectedSubject,
+          chapter: selectedChapter
+        });
+        return;
+      } catch (error) {
+        console.warn('Feature Engine failed; using legacy fallback.', error);
+      }
+    }
+
+    /* ---------------- Legacy backward-compatible fallback ---------------- */
     const featureName = feature.featureName || feature.name || 'Feature';
-    /* ---------- Access Control ---------- */
+    const featureType = String(feature.type || '').toLowerCase();
+    const featureLabel = featureName.toLowerCase();
 
-const featureType = String(feature.type || '').toLowerCase();
-const featureLabel = featureName.toLowerCase();
+    const isSolution =
+      featureLabel.includes('solution') ||
+      featureType.includes('solution') ||
+      String(feature.url || '').toLowerCase().includes('solution');
 
-const isSolution =
-    featureLabel.includes('solution') ||
-    featureType.includes('solution') ||
-    (feature.url || '').toLowerCase().includes('solution');
-
-if (
-    user.studentType === "GENERAL_STUDENT" &&
-    !isSolution
-) {
-    return showFullAccessPopup();
-}
+    if (
+      String(user.studentType || '').toUpperCase() === 'GENERAL_STUDENT' &&
+      !isSolution
+    ) {
+      return showFullAccessPopup();
+    }
 
     WTC_API.logAccess({
       userId: user.id || user.studentId,
@@ -284,8 +303,8 @@ if (
       try {
         const opened = await WTC_DYNAMIC_CONTENT.openFeature(feature);
         if (opened !== false) return;
-      } catch (err) {
-        WTC_UI.toast(err.message || 'Dynamic content failed to open.', 'error');
+      } catch (error) {
+        WTC_UI.toast(error.message || 'Dynamic content failed to open.', 'error');
         return;
       }
     }

@@ -35,6 +35,7 @@ const WTC_API = (() => {
     getSubjects: (student) => call({ action:'getSubjects', ...student }, 'subjects'),
     getChapters: (params) => call({ action:'getChapters', ...params }, 'chapters'),
     getChapterFeatures: (params) => call({ action:'getChapterFeatures', ...params }, 'features'),
+    getFeatureRegistry: (forceRefresh=false) => raw({ action:'getFeatureRegistry', forceRefresh }),
     getStudentProgress: (studentId) => call({ action:'getStudentProgress', studentId }, 'progress'),
     logAccess: (data) => raw({ action:'logAccess', ...data, deviceId:WTC_AUTH.deviceId() })
   };

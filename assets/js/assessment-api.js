@@ -1,5 +1,5 @@
-/* WTC Assessment API client v1.4 */
-const WTC_ASSESSMENT_API = (() => {
+/* WTC Assessment API client v1.5 */
+window.WTC_ASSESSMENT_API = (() => {
   async function call(payload) {
     if (!WTC_ASSESSMENT_CONFIG.API_URL || WTC_ASSESSMENT_CONFIG.API_URL.includes('PASTE_')) {
       throw new Error('Assessment API URL is not set in assets/js/assessment-config.js');

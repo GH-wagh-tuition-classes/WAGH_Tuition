@@ -221,13 +221,48 @@
           <button class="ai-btn outline" onclick="WTC_AI_CONTENT_ADMIN.detectQuestions()">Detect Questions</button>
           <button class="ai-btn success" onclick="WTC_AI_CONTENT_ADMIN.generateContent()">Generate Content</button>
           <button class="ai-btn success" onclick="WTC_AI_CONTENT_ADMIN.fullPipeline()">Run Full Pipeline</button>
+          <button class="ai-btn outline" onclick="WTC_AI_CONTENT_ADMIN.markUnderReview()">Mark Under Review</button>
+          <button class="ai-btn success" onclick="WTC_AI_CONTENT_ADMIN.publishReviewed()">Publish Reviewed Content</button>
         </div>
       </div>
+
+      <div class="ai-card static-import-card">
+        <div class="static-import-heading">
+          <div>
+            <h3>2. Import Existing Static Feature Page</h3>
+            <p>Import a WTC MCQ or Solution Engine HTML page into the structured content bank. Existing static pages remain unchanged.</p>
+          </div>
+          <span class="draft-pill">DRAFT FIRST</span>
+        </div>
+
+        <label>Upload Static HTML Page</label>
+        <input id="staticImportFile" type="file" accept=".html,.htm,text/html">
+        <div id="staticImportFileName" class="ai-file-name">No HTML file selected</div>
+
+        <div class="static-divider"><span>OR</span></div>
+        <label>GitHub Pages URL / Repository-relative Path</label>
+        <div class="static-url-row">
+          <input id="staticImportUrl" type="url" placeholder="tests/mcq/chapter.html or https://.../chapter.html">
+          <button class="ai-btn secondary" type="button" onclick="WTC_STATIC_CONTENT_IMPORTER.loadUrl()">Load URL</button>
+        </div>
+
+        <input id="staticImportUploadId" type="hidden">
+        <div class="ai-action-row">
+          <button class="ai-btn warning" type="button" onclick="WTC_STATIC_CONTENT_IMPORTER.analyze()">Analyze Static Page</button>
+          <button class="ai-btn" type="button" onclick="WTC_STATIC_CONTENT_IMPORTER.importDraft()">Import as Draft</button>
+          <button class="ai-btn success" type="button" onclick="WTC_STATIC_CONTENT_IMPORTER.publishImported()">Approve &amp; Publish</button>
+        </div>
+        <label class="static-override-check"><input id="staticUseMetadataOverride" type="checkbox"> Use the Board, Class, Medium, Subject ID and Chapter ID fields above as admin-confirmed metadata</label>
+        <p class="static-help">MCQ pages normally contain an exact Chapter ID. Solution pages may not, so confirm their existing Chapter ID with this override before importing.</p>
+      </div>
+
+      <div id="staticImportStatus" class="ai-status info">Static importer ready.</div>
+      <div id="staticImportPreview" class="static-import-preview"><div class="ai-empty">Choose an HTML page and tap Analyze Static Page.</div></div>
 
       <div id="aiStatus" class="ai-status info">Ready.</div>
 
       <div class="ai-card">
-        <h3>2. AI Queue</h3>
+        <h3>3. AI Queue</h3>
         <button class="ai-btn outline" onclick="WTC_AI_CONTENT_ADMIN.refreshQueue()">Refresh Queue</button>
         <div id="aiQueueTable" class="ai-table-wrap" style="margin-top:12px"></div>
       </div>
@@ -246,6 +281,7 @@
 <script src="assets/js/assessment-config.js"></script>
 <script src="assets/js/assessment-api.js"></script>
 <script src="assets/js/ai-content.js"></script>
+<script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js"></script>
 </body>
 </html>

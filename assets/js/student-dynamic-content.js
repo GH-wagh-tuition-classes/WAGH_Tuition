@@ -1,9 +1,10 @@
 /*
-Patch helper for student.js dynamic feature buttons.
-Use this after loading assessment-config.js and assessment-api.js.
-It lets dynamic feature buttons open clean lesson/solutions/MCQ/worksheet content from WTC_AI_CONTENT_ENGINE.
+WAGH Tuition Classes - Dynamic Student Content Renderer v1.1
+Load after assessment-config.js and assessment-api.js.
+Exposes the renderer on window so feature-engine.js can open dynamic content
+inside the Student Portal instead of navigating to a GitHub file path.
 */
-const WTC_DYNAMIC_CONTENT = (() => {
+window.WTC_DYNAMIC_CONTENT = (() => {
   async function openFeature(feature) {
     if (!feature || feature.type !== 'dynamic') return false;
     if (feature.action === 'lesson') return renderLesson(feature.contentId);
@@ -32,7 +33,7 @@ const WTC_DYNAMIC_CONTENT = (() => {
   async function renderMCQ(mcqSetId) {
     const res = await WTC_ASSESSMENT_API.getMCQ(mcqSetId);
     const rows = res.mcq || [];
-    const html = `<div class="mcq-page"><h1>MCQ Test</h1>${rows.map((q,i)=>`<div class="content-card"><h3>Q${i+1}. ${esc(q.questionText)}</h3><ol type="A"><li>${esc(q.optionA)}</li><li>${esc(q.optionB)}</li><li>${esc(q.optionC)}</li><li>${esc(q.optionD)}</li></ol><details><summary>Answer & Explanation</summary><b>Answer: ${esc(q.correctOption)}</b><p>${esc(q.explanation)}</p></details></div>`).join('') || '<p>No MCQ published yet.</p>'}</div>`;
+    const html = `<div class="mcq-page"><h1>MCQ Test</h1>${rows.map((q,i)=>`<div class="content-card"><h3>Q${i+1}. ${esc(q.questionText)}</h3><ol type="A"><li>${esc(q.optionA)}</li><li>${esc(q.optionB)}</li><li>${esc(q.optionC)}</li><li>${esc(q.optionD)}</li></ol><details><summary>Answer &amp; Explanation</summary><b>Answer: ${esc(q.correctOption)}</b><p>${esc(q.explanation)}</p></details></div>`).join('') || '<p>No MCQ published yet.</p>'}</div>`;
     renderContentShell('MCQ Test', html);
   }
 
@@ -58,6 +59,10 @@ const WTC_DYNAMIC_CONTENT = (() => {
   function solutionCard(s) {
     return `<details class="content-card"><summary><b>${esc(s.questionGroup)} ${esc(s.questionNumber)}</b> — ${esc(s.questionText)}</summary><div>${s.solutionHTML || esc(s.stepByStepSolution || '')}</div></details>`;
   }
-  function esc(s='') { return String(s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m])); }
+
+  function esc(s='') {
+    return String(s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+  }
+
   return { openFeature };
 })();

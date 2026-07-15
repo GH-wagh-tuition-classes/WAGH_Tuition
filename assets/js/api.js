@@ -37,6 +37,13 @@ const WTC_API = (() => {
     getChapterFeatures: (params) => call({ action:'getChapterFeatures', ...params }, 'features'),
     getFeatureRegistry: (forceRefresh=false) => raw({ action:'getFeatureRegistry', forceRefresh }),
     getStudentProgress: (studentId) => call({ action:'getStudentProgress', studentId }, 'progress'),
+    getMCQProgressReport: (studentId) => raw({ action:'getMCQProgressReport', studentId }),
+    saveMCQResult: (data) => raw({
+      action:'saveStaticMCQResult',
+      ...data,
+      deviceId:data.deviceId || WTC_AUTH.deviceId(),
+      sourceType:data.sourceType || 'Dynamic MCQ'
+    }),
     logAccess: (data) => raw({ action:'logAccess', ...data, deviceId:WTC_AUTH.deviceId() })
   };
 })();

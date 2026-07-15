@@ -1,4 +1,4 @@
-const StudentApp = (() => {
+window.StudentApp = (() => {
   let user = null;
   let subjects = [];
   let chapters = [];
@@ -41,7 +41,7 @@ function restoreScreen(screen) {
       break;
 
     default:
-      show("dashboardSection");
+      show("homeSection");
   }
 
 }
@@ -54,6 +54,7 @@ function restoreScreen(screen) {
     bindProfile();
     loadSubjects();
     loadProgress();
+    document.addEventListener('wtc:progress-updated', () => loadProgress(true));
     /* ==== Navigation code edit 09/07 ===== */
     pushScreen("dashboard");
 
@@ -101,6 +102,8 @@ window.addEventListener("popstate", () => {
     document.querySelectorAll('[data-nav]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.nav === sectionId);
     });
+
+    if (sectionId === 'progressSection') loadProgress();
   }
 
   async function loadSubjects() {
@@ -362,19 +365,90 @@ Close
     openStaticFeature(url, name);
   }
 
-  async function loadProgress() {
-    try {
-      const data = await WTC_API.getStudentProgress(user.id || user.studentId);
-      const progress = Array.isArray(data.progress) ? data.progress[0] : data.progress;
-      const percent = Number(progress?.percent || progress?.overallPercent || 0);
+  async function loadProgress(forceRefresh=false) {
+    const studentId = user.id || user.studentId;
+    const text = document.getElementById('progressText');
+    if (text && forceRefresh) text.textContent = 'Refreshing your personal report…';
 
-      document.getElementById('progressPercent').textContent = percent + '%';
-      document.getElementById('progressFill').style.width = percent + '%';
-      document.getElementById('progressFill2').style.width = percent + '%';
-      document.getElementById('progressText').textContent = `Overall progress: ${percent}%`;
-    } catch {
-      document.getElementById('progressText').textContent = 'Progress will appear after test records are added.';
+    try {
+      const [basic, report] = await Promise.all([
+        WTC_API.getStudentProgress(studentId).catch(() => ({ progress:{ percent:0 } })),
+        WTC_API.getMCQProgressReport(studentId).catch(() => null)
+      ]);
+      const progress = Array.isArray(basic.progress) ? basic.progress[0] : basic.progress;
+      const summary = report?.summary || {};
+      const percent = Number(summary.overallPercent ?? progress?.percent ?? progress?.overallPercent ?? 0);
+
+      setText('progressPercent', percent + '%');
+      setWidth('progressFill', percent);
+      setWidth('progressFill2', percent);
+      setText('progressOverall', percent + '%');
+      setText('progressStudentName', user.name || 'Student');
+      setText('progressAttempts', Number(summary.totalAttempts || 0));
+      setText('progressBest', Number(summary.bestPercent || 0) + '%');
+      setText('progressTests', Number(summary.testsCompleted || 0));
+      setText('testsCompletedHome', Number(summary.testsCompleted || 0));
+      const xp = Number(report?.gamification?.xp || 0);
+      const level = Number(report?.gamification?.level || 1);
+      setText('progressXp', xp + ' · ' + level);
+      const ring = document.getElementById('progressRing');
+      if (ring) ring.style.setProperty('--progress', Math.max(0, Math.min(100, percent)));
+
+      const message = report?.recentAttempts?.[0]?.personalizedMessage ||
+        (percent >= 80 ? 'You are building strong chapter mastery.' :
+          percent > 0 ? 'Keep practising your focus topics.' : 'Complete your first test to begin.');
+      setText('progressMessage', message);
+      if (text) text.textContent = summary.totalAttempts
+        ? `Overall progress ${percent}% · Accuracy ${Number(summary.accuracy || 0)}% · ${formatStudyTime(summary.totalTimeSec || 0)} practised`
+        : 'Your progress will update automatically after your first submitted MCQ test.';
+
+      renderRecommendations(report?.recommendations || []);
+      renderSkills(report?.skills || []);
+      renderRecentAttempts(report?.recentAttempts || []);
+    } catch (error) {
+      if (text) text.textContent = 'Progress could not be loaded. Please refresh after checking the runtime deployment.';
     }
+  }
+
+  function renderRecommendations(items) {
+    const box = document.getElementById('progressRecommendations');
+    if (!box) return;
+    box.innerHTML = items.length ? items.map((item, index) => `
+      <div class="recommendation-item ${WTC_UI.escape(item.type || 'practice')}">
+        <span>${index + 1}</span><div><b>${WTC_UI.escape(item.title || 'Next step')}</b><p>${WTC_UI.escape(item.message || '')}</p></div>
+      </div>`).join('') : '<div class="progress-empty">📝 Complete an MCQ test to receive personal recommendations.</div>';
+  }
+
+  function renderSkills(items) {
+    const box = document.getElementById('progressSkills');
+    if (!box) return;
+    box.innerHTML = items.length ? items.map(item => {
+      const accuracy = Number(item.accuracy || 0);
+      return `<div class="skill-item"><div><b>${WTC_UI.escape(item.topic || 'General')}</b><span>${WTC_UI.escape(item.level || 'Developing')}</span></div>
+        <div class="skill-track"><i style="width:${Math.max(0, Math.min(100, accuracy))}%"></i></div>
+        <small>${accuracy}% accuracy · ${Number(item.attempted || 0)} questions</small></div>`;
+    }).join('') : '<div class="progress-empty">📊 Topic strengths will appear after your first test.</div>';
+  }
+
+  function renderRecentAttempts(items) {
+    const box = document.getElementById('progressRecentAttempts');
+    if (!box) return;
+    box.innerHTML = items.length ? items.map(item => `
+      <article class="recent-attempt">
+        <div class="attempt-score ${Number(item.percent || 0) >= 75 ? 'strong' : ''}">${Number(item.percent || 0)}%</div>
+        <div><b>${WTC_UI.escape(item.testTitle || 'MCQ Test')}</b><p>${WTC_UI.escape(item.chapterName || item.chapterId || '')}</p>
+        <small>${Number(item.correctCount || item.score || 0)}/${Number(item.total || 0)} correct · ${formatStudyTime(item.totalTimeSec || 0)} · ${WTC_UI.escape(item.createdAt || '')}</small></div>
+        <span class="attempt-tag">${Number(item.retryCount || 0) ? 'Retry ' + Number(item.retryCount || 0) : 'First attempt'}</span>
+      </article>`).join('') : '<div class="progress-empty">🕘 No test attempts have been saved yet.</div>';
+  }
+
+  function setText(id, value) { const element = document.getElementById(id); if (element) element.textContent = value; }
+  function setWidth(id, percent) { const element = document.getElementById(id); if (element) element.style.width = Math.max(0, Math.min(100, Number(percent || 0))) + '%'; }
+  function formatStudyTime(seconds) {
+    const value = Number(seconds || 0);
+    if (value < 60) return value + ' sec';
+    if (value < 3600) return Math.round(value / 60) + ' min';
+    return (value / 3600).toFixed(1) + ' hr';
   }
 
   function bindProfile() {
@@ -428,6 +502,7 @@ function backToChapters() {
     openChapter,
     openFeature,
     openFeatureByIndex,
+    loadProgress,
     backToSubjects, 
     backToChapters
   };

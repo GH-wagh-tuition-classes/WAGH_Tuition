@@ -278,7 +278,11 @@ const WTC_FEATURE_ENGINE = (() => {
       try {
         const opened = await WTC_DYNAMIC_CONTENT.openFeature({
           ...feature,
-          featureId: definition.featureId
+          featureId: definition.featureId,
+          user: context.user || null,
+          subject: context.subject || null,
+          chapter: context.chapter || null,
+          definition
         });
 
         if (opened !== false) {

@@ -1,68 +1,360 @@
-/*
-WAGH Tuition Classes - Dynamic Student Content Renderer v1.1
-Load after assessment-config.js and assessment-api.js.
-Exposes the renderer on window so feature-engine.js can open dynamic content
-inside the Student Portal instead of navigating to a GitHub file path.
-*/
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.0 */
 window.WTC_DYNAMIC_CONTENT = (() => {
+  const state = {
+    context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
+    progressReport:null, activeTest:null, activeQuestions:[], answers:{},
+    questionTimes:{}, currentIndex:0, startedAt:0, enteredAt:0,
+    remainingSec:0, timerId:null, submitting:false
+  };
+  let unloadBound = false;
+
   async function openFeature(feature) {
     if (!feature || feature.type !== 'dynamic') return false;
+    state.context = feature;
+    state.user = feature.user || (window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null) || {};
     if (feature.action === 'lesson') return renderLesson(feature.contentId);
     if (feature.action === 'solutions') return renderSolutions(feature.contentId);
-    if (feature.action === 'mcq') return renderMCQ(feature.contentId);
+    if (feature.action === 'mcq') return openMCQEngine(feature.contentId);
     if (feature.action === 'worksheet' || feature.action === 'answerWriting') return renderWorksheet(feature.contentId);
     return false;
   }
 
-  async function renderLesson(lessonId) {
-    const res = await WTC_ASSESSMENT_API.getLesson(lessonId);
-    const html = res.lesson ? res.lesson.formattedHTML : '<div class="card">Lesson not published yet.</div>';
-    renderContentShell('Lesson', html);
+  async function openMCQEngine(mcqSetId) {
+    renderContentShell('MCQ Test', loadingCard('Preparing your personalized tests…'));
+    const response = await WTC_ASSESSMENT_API.getMCQ(mcqSetId);
+    if (!response || response.success === false) throw new Error((response && response.message) || 'MCQ content could not be loaded.');
+
+    state.mcqSetId = mcqSetId;
+    state.questions = response.mcq || [];
+    state.tests = response.tests || [];
+    state.questionMap = {};
+    state.questions.forEach(question => {
+      [question.mcqId, question.sourceQuestionId].filter(Boolean).forEach(id => state.questionMap[String(id)] = question);
+    });
+    if (!state.tests.length && state.questions.length) {
+      state.tests = [{
+        testId:mcqSetId + '-ALL', testTitle:'Complete Chapter Test', testType:'FULL_LENGTH',
+        topic:'Complete Chapter', questionCount:state.questions.length,
+        questionIds:state.questions.map(question => question.mcqId)
+      }];
+    }
+
+    try {
+      state.progressReport = await WTC_API.getMCQProgressReport(studentId());
+    } catch (error) {
+      state.progressReport = { success:false, testPerformance:[] };
+    }
+    bindUnload();
+    renderTestHub();
+    return true;
   }
 
-  async function renderSolutions(solutionSetId) {
-    const res = await WTC_ASSESSMENT_API.getSolutions(solutionSetId);
-    const inside = (res.solutions && res.solutions.insideChapter) || [];
-    const end = (res.solutions && res.solutions.endExercise) || [];
-    const html = `<div class="solution-page"><h1>Solutions</h1>
-      <section><h2>Inside Chapter Questions</h2>${inside.length ? inside.map(solutionCard).join('') : '<p>No inside chapter solutions published.</p>'}</section>
-      <section><h2>End Exercise Questions</h2>${end.length ? end.map(solutionCard).join('') : '<p>No end exercise solutions published.</p>'}</section></div>`;
-    renderContentShell('Solutions', html);
-  }
-
-  async function renderMCQ(mcqSetId) {
-    const res = await WTC_ASSESSMENT_API.getMCQ(mcqSetId);
-    const rows = res.mcq || [];
-    const html = `<div class="mcq-page"><h1>MCQ Test</h1>${rows.map((q,i)=>`<div class="content-card"><h3>Q${i+1}. ${esc(q.questionText)}</h3><ol type="A"><li>${esc(q.optionA)}</li><li>${esc(q.optionB)}</li><li>${esc(q.optionC)}</li><li>${esc(q.optionD)}</li></ol><details><summary>Answer &amp; Explanation</summary><b>Answer: ${esc(q.correctOption)}</b><p>${esc(q.explanation)}</p></details></div>`).join('') || '<p>No MCQ published yet.</p>'}</div>`;
+  function renderTestHub() {
+    clearTimer();
+    state.activeTest = null;
+    const name = esc((state.user && state.user.name) || 'Student');
+    const completed = Number(state.progressReport?.summary?.testsCompleted || 0);
+    const best = Number(state.progressReport?.summary?.bestPercent || 0);
+    const cards = state.tests.map((test, index) => testCard(test, index)).join('');
+    const html = `
+      <div class="wtc-mcq-hub">
+        <section class="mcq-welcome">
+          <div><span class="mcq-kicker">PERSONALIZED PRACTICE</span><h2>Ready, ${name}?</h2>
+          <p>Choose a topic test for focused practice or a full-length test for chapter mastery.</p></div>
+          <div class="mcq-mini-stats"><span><b>${state.tests.length}</b> tests</span><span><b>${completed}</b> completed</span><span><b>${best}%</b> best</span></div>
+        </section>
+        <div class="mcq-profile-line">
+          ${profileChip('🎓', state.user.className || state.user.class || 'Class')}
+          ${profileChip('📘', state.context?.subject?.subjectName || state.context?.subject?.name || 'Subject')}
+          ${profileChip('📖', state.context?.chapter?.chapterName || 'Chapter')}
+        </div>
+        <div class="mcq-test-grid">${cards || emptyCard('No published test definitions were found.')}</div>
+      </div>`;
     renderContentShell('MCQ Test', html);
   }
 
-  async function renderWorksheet(worksheetSetId) {
-    const res = await WTC_ASSESSMENT_API.getWorksheet(worksheetSetId);
-    const rows = res.worksheet || [];
-    const html = `<div class="worksheet-page"><h1>Worksheet</h1>${rows.map((q,i)=>`<div class="content-card"><h3>${i+1}. ${esc(q.questionText)}</h3><p><b>Type:</b> ${esc(q.questionType)} | <b>Marks:</b> ${esc(q.marks)}</p><details><summary>Answer Key</summary>${q.answerKeyHTML || ''}</details></div>`).join('') || '<p>No worksheet published yet.</p>'}</div>`;
-    renderContentShell('Worksheet', html);
+  function testCard(test, index) {
+    const performance = testPerformance(test.testId);
+    const resume = loadResume(test.testId);
+    const count = Number(test.questionCount || (test.questionIds || []).length || 0);
+    const full = String(test.testType || '').toUpperCase().includes('FULL');
+    const best = performance ? Number(performance.bestPercent || 0) : 0;
+    const attempts = performance ? Number(performance.attempts || 0) : 0;
+    return `<article class="mcq-test-card ${full ? 'is-full' : ''}">
+      <div class="mcq-test-top"><span class="mcq-test-number">${full ? '🏆' : String(index + 1).padStart(2, '0')}</span><span class="mcq-type">${full ? 'FULL LENGTH' : 'TOPIC TEST'}</span></div>
+      <h3>${esc(test.testTitle || `Test ${index + 1}`)}</h3>
+      <p>${esc(test.topic || test.questionLabel || 'Chapter practice')}</p>
+      <div class="mcq-test-meta"><span>❓ ${count} questions</span><span>⏱ ${count} min</span><span>🎯 ${best}% best</span></div>
+      <div class="mcq-test-progress"><i style="width:${best}%"></i></div>
+      <div class="mcq-test-footer"><small>${attempts ? `${attempts} attempt${attempts === 1 ? '' : 's'}` : 'Not attempted yet'}</small>
+      <div class="mcq-card-actions">${resume ? `<button class="mcq-btn secondary" onclick="WTC_DYNAMIC_CONTENT.startTest('${attr(test.testId)}',true)">Resume</button>` : ''}<button class="mcq-btn" onclick="WTC_DYNAMIC_CONTENT.startTest('${attr(test.testId)}',false)">${attempts ? 'Try again' : 'Start test'}</button></div></div>
+    </article>`;
   }
 
-  function renderContentShell(title, html) {
-    let sec = document.getElementById('dynamicContentSection');
-    if (!sec) {
-      sec = document.createElement('section');
-      sec.id = 'dynamicContentSection';
-      sec.className = 'page-section';
-      document.querySelector('.main-area').appendChild(sec);
+  function startTest(testId, resume) {
+    const test = state.tests.find(item => String(item.testId) === String(testId));
+    if (!test) return;
+    const saved = loadResume(testId);
+    if (saved && !resume && !window.confirm('Start again and replace your saved progress for this test?')) return;
+
+    const ids = Array.isArray(test.questionIds) ? test.questionIds : [];
+    const questions = ids.length ? ids.map(id => state.questionMap[String(id)]).filter(Boolean) : state.questions.slice();
+    if (!questions.length) return toast('No published questions were found for this test.', 'error');
+
+    state.activeTest = test;
+    state.activeQuestions = questions;
+    state.answers = resume && saved ? saved.answers || {} : {};
+    state.questionTimes = resume && saved ? saved.questionTimes || {} : {};
+    state.currentIndex = resume && saved ? Math.min(Number(saved.currentIndex || 0), questions.length - 1) : 0;
+    state.startedAt = resume && saved ? Number(saved.startedAt || Date.now()) : Date.now();
+    state.remainingSec = resume && saved
+      ? Number(saved.remainingSec || questions.length * 60)
+      : Number(test.timeLimitSec || test.durationSeconds || questions.length * 60);
+    state.enteredAt = Date.now();
+    state.submitting = false;
+    startTimer();
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const question = state.activeQuestions[state.currentIndex];
+    if (!question) return;
+    const selected = state.answers[question.mcqId] || '';
+    const answered = Object.keys(state.answers).filter(key => state.answers[key]).length;
+    const percent = Math.round((answered / state.activeQuestions.length) * 100);
+    const options = ['A','B','C','D'].map(letter => {
+      const text = question['option' + letter] || '';
+      return `<button class="mcq-option ${selected === letter ? 'selected' : ''}" onclick="WTC_DYNAMIC_CONTENT.selectOption('${letter}')"><b>${letter}</b><span>${esc(text)}</span><i>✓</i></button>`;
+    }).join('');
+    const palette = state.activeQuestions.map((item, index) => {
+      const isAnswered = Boolean(state.answers[item.mcqId]);
+      return `<button class="mcq-palette-item ${index === state.currentIndex ? 'current' : ''} ${isAnswered ? 'answered' : ''}" onclick="WTC_DYNAMIC_CONTENT.goTo(${index})">${index + 1}</button>`;
+    }).join('');
+    const html = `<div class="wtc-test-stage">
+      <header class="mcq-stage-head"><div><button class="mcq-text-btn" onclick="WTC_DYNAMIC_CONTENT.backToTests()">← Exit test</button><span class="mcq-kicker">${esc(state.activeTest.testType || 'MCQ TEST')}</span><h2>${esc(state.activeTest.testTitle || 'MCQ Test')}</h2></div>
+      <div class="mcq-clock"><small>TIME LEFT</small><b id="mcqTimer">${formatDuration(state.remainingSec)}</b></div></header>
+      <div class="mcq-answer-progress"><div><b>${answered}/${state.activeQuestions.length}</b> answered</div><span><i style="width:${percent}%"></i></span></div>
+      <div class="mcq-stage-layout">
+        <main class="mcq-question-card"><div class="mcq-question-label"><span>Question ${state.currentIndex + 1} of ${state.activeQuestions.length}</span><em>${esc(question.topic || 'General')} · ${esc(question.difficulty || 'Medium')}</em></div>
+          <h3>${esc(question.questionText)}</h3><div class="mcq-options">${options}</div>
+          <div class="mcq-question-actions"><button class="mcq-btn secondary" onclick="WTC_DYNAMIC_CONTENT.goTo(${state.currentIndex - 1})" ${state.currentIndex === 0 ? 'disabled' : ''}>← Previous</button>
+          <button class="mcq-text-btn danger-text" onclick="WTC_DYNAMIC_CONTENT.clearAnswer()">Clear answer</button>
+          ${state.currentIndex < state.activeQuestions.length - 1
+            ? `<button class="mcq-btn" onclick="WTC_DYNAMIC_CONTENT.goTo(${state.currentIndex + 1})">Next →</button>`
+            : `<button class="mcq-btn success" onclick="WTC_DYNAMIC_CONTENT.submitTest(false)">Submit test</button>`}</div>
+        </main>
+        <aside class="mcq-palette"><h4>Question palette</h4><div>${palette}</div><p><span class="dot answered"></span>Answered <span class="dot current"></span>Current</p><button class="mcq-btn success wide" onclick="WTC_DYNAMIC_CONTENT.submitTest(false)">Submit Test</button></aside>
+      </div></div>`;
+    renderContentShell('MCQ Test', html, true);
+    updateTimerNode();
+  }
+
+  function selectOption(letter) {
+    const question = state.activeQuestions[state.currentIndex];
+    if (!question) return;
+    state.answers[question.mcqId] = letter;
+    saveResume();
+    renderQuestion();
+  }
+
+  function clearAnswer() {
+    const question = state.activeQuestions[state.currentIndex];
+    if (!question) return;
+    delete state.answers[question.mcqId];
+    saveResume();
+    renderQuestion();
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= state.activeQuestions.length) return;
+    syncQuestionTime();
+    state.currentIndex = index;
+    state.enteredAt = Date.now();
+    saveResume();
+    renderQuestion();
+  }
+
+  async function submitTest(autoSubmit) {
+    if (state.submitting || !state.activeTest) return;
+    const unanswered = state.activeQuestions.filter(question => !state.answers[question.mcqId]).length;
+    if (!autoSubmit) {
+      const prompt = unanswered
+        ? `${unanswered} question${unanswered === 1 ? ' is' : 's are'} unanswered. Submit this test anyway?`
+        : 'Submit this test now?';
+      if (!window.confirm(prompt)) return;
     }
-    sec.innerHTML = `<div class="section-head"><div><h2>${esc(title)}</h2><p class="muted">Clean student-ready content from WTC AI Content Engine.</p></div><button class="btn outline" onclick="StudentApp.show('featuresSection')">← Features</button></div><div class="student-content-render">${html}</div>`;
+    state.submitting = true;
+    syncQuestionTime();
+    clearTimer();
+
+    const totalTimeSec = Math.max(1, Math.round((Date.now() - state.startedAt) / 1000));
+    const details = state.activeQuestions.map((question, index) => {
+      const selected = state.answers[question.mcqId] || '';
+      return {
+        questionNo:index + 1, questionId:question.mcqId,
+        questionText:question.questionText, topic:question.topic || 'General',
+        difficulty:question.difficulty || 'Medium', selectedOption:selected,
+        correctOption:String(question.correctOption || '').toUpperCase(),
+        isCorrect:Boolean(selected && selected === String(question.correctOption || '').toUpperCase()),
+        marks:Number(question.marks || 1), timeTakenSec:Number(state.questionTimes[question.mcqId] || 0),
+        explanationViewed:true
+      };
+    });
+    const correct = details.filter(item => item.isCorrect).length;
+    const total = details.length;
+    const percent = total ? Math.round((correct / total) * 100) : 0;
+    const subject = state.context.subject || {};
+    const chapter = state.context.chapter || {};
+    renderContentShell('MCQ Test', loadingCard('Saving your result and updating your personal report…'), true);
+
+    let saveResult = { success:false, message:'Result could not be saved.' };
+    try {
+      saveResult = await WTC_API.saveMCQResult({
+        studentId:studentId(), name:state.user.name || '', mobile:state.user.mobile || '',
+        board:state.user.board || '', className:state.user.className || state.user.class || '',
+        medium:state.user.medium || '', subjectId:subject.subjectId || subject.id || '',
+        subjectName:subject.subjectName || subject.name || '',
+        chapterId:chapter.chapterId || state.activeQuestions[0]?.chapterId || '',
+        chapterName:chapter.chapterName || chapter.name || '',
+        testId:state.activeTest.testId, testTitle:state.activeTest.testTitle,
+        testType:state.activeTest.testType || 'Dynamic MCQ', score:correct, total:total,
+        percent:percent, earnedMarks:correct, totalMarks:total,
+        unansweredCount:details.filter(item => !item.selectedOption).length,
+        totalTimeSec:totalTimeSec, page:location.pathname, sourceType:'Dynamic MCQ v2.0',
+        attemptDetails:JSON.stringify(details)
+      });
+      localStorage.removeItem(resumeKey(state.activeTest.testId));
+      try { state.progressReport = await WTC_API.getMCQProgressReport(studentId()); } catch (error) {}
+      document.dispatchEvent(new CustomEvent('wtc:progress-updated'));
+    } catch (error) {
+      saveResult = { success:false, message:error.message || 'Result could not be saved.' };
+    }
+    renderResult(details, percent, totalTimeSec, saveResult, autoSubmit);
+    state.submitting = false;
+  }
+
+  function renderResult(details, percent, totalTimeSec, saveResult, autoSubmit) {
+    const correct = details.filter(item => item.isCorrect).length;
+    const unanswered = details.filter(item => !item.selectedOption).length;
+    const wrong = details.length - correct - unanswered;
+    const message = saveResult.personalizedMessage || personalMessage(percent);
+    const review = details.map((detail, index) => {
+      const question = state.activeQuestions[index];
+      const cls = detail.isCorrect ? 'correct' : (!detail.selectedOption ? 'unanswered' : 'wrong');
+      return `<details class="mcq-review ${cls}"><summary><span>${detail.isCorrect ? '✓' : (!detail.selectedOption ? '–' : '×')}</span><div><small>Question ${index + 1} · ${esc(detail.topic)}</small><b>${esc(detail.questionText)}</b></div><em>${detail.isCorrect ? 'Correct' : (!detail.selectedOption ? 'Unanswered' : 'Review')}</em></summary>
+        <div class="mcq-review-body"><p><b>Your answer:</b> ${detail.selectedOption ? `${detail.selectedOption}. ${esc(question['option' + detail.selectedOption] || '')}` : 'Not answered'}</p>
+        <p><b>Correct answer:</b> ${esc(detail.correctOption)}. ${esc(question['option' + detail.correctOption] || '')}</p>
+        <div class="mcq-explanation"><b>Explanation</b><p>${esc(question.explanation || 'Review this concept in your chapter notes.')}</p></div></div></details>`;
+    }).join('');
+    const html = `<div class="wtc-result-page">
+      <section class="mcq-result-hero"><div class="result-score" style="--score:${percent}"><b>${percent}%</b><span>${correct}/${details.length}</span></div>
+      <div><span class="mcq-kicker">${autoSubmit ? 'TIME COMPLETED' : 'TEST COMPLETED'}</span><h2>${esc(state.activeTest.testTitle)}</h2><p>${esc(message)}</p>
+      <div class="result-pills"><span>✅ ${correct} correct</span><span>❌ ${wrong} wrong</span><span>➖ ${unanswered} unanswered</span><span>⏱ ${formatDuration(totalTimeSec)}</span></div></div></section>
+      <div class="save-status ${saveResult.success ? 'saved' : 'failed'}">${saveResult.success ? '✓ Result saved and Progress dashboard updated.' : '⚠ ' + esc(saveResult.message || 'Result was not saved.')}</div>
+      <div class="result-actions"><button class="mcq-btn secondary" onclick="WTC_DYNAMIC_CONTENT.backToTests()">← All tests</button><button class="mcq-btn" onclick="WTC_DYNAMIC_CONTENT.startTest('${attr(state.activeTest.testId)}',false)">Retake test</button></div>
+      <section class="mcq-review-list"><div class="review-heading"><div><span class="mcq-kicker">PERSONAL REVIEW</span><h3>Answers and explanations</h3></div><span>${details.length} questions</span></div>${review}</section>
+    </div>`;
+    renderContentShell('Test Result', html, true);
+  }
+
+  function backToTests() {
+    syncQuestionTime();
+    if (state.activeTest && !state.submitting) saveResume();
+    renderTestHub();
+  }
+
+  function startTimer() {
+    clearTimer();
+    state.timerId = window.setInterval(() => {
+      state.remainingSec = Math.max(0, state.remainingSec - 1);
+      updateTimerNode();
+      if (state.remainingSec === 0) submitTest(true);
+      else if (state.remainingSec % 10 === 0) saveResume();
+    }, 1000);
+  }
+
+  function clearTimer() {
+    if (state.timerId) window.clearInterval(state.timerId);
+    state.timerId = null;
+  }
+
+  function updateTimerNode() {
+    const node = document.getElementById('mcqTimer');
+    if (!node) return;
+    node.textContent = formatDuration(state.remainingSec);
+    node.closest('.mcq-clock')?.classList.toggle('urgent', state.remainingSec <= 60);
+  }
+
+  function syncQuestionTime() {
+    const question = state.activeQuestions[state.currentIndex];
+    if (!question || !state.enteredAt) return;
+    const elapsed = Math.max(0, Math.round((Date.now() - state.enteredAt) / 1000));
+    state.questionTimes[question.mcqId] = Number(state.questionTimes[question.mcqId] || 0) + elapsed;
+    state.enteredAt = Date.now();
+  }
+
+  function saveResume() {
+    if (!state.activeTest || state.submitting) return;
+    localStorage.setItem(resumeKey(state.activeTest.testId), JSON.stringify({
+      testId:state.activeTest.testId, answers:state.answers, questionTimes:state.questionTimes,
+      currentIndex:state.currentIndex, startedAt:state.startedAt,
+      remainingSec:state.remainingSec, savedAt:Date.now()
+    }));
+  }
+
+  function loadResume(testId) {
+    try { return JSON.parse(localStorage.getItem(resumeKey(testId)) || 'null'); }
+    catch (error) { return null; }
+  }
+
+  function resumeKey(testId) { return `wtc:dynamic-mcq:${studentId()}:${testId}`; }
+  function studentId() { return String(state.user?.studentId || state.user?.id || 'guest'); }
+  function testPerformance(testId) { return (state.progressReport?.testPerformance || []).find(item => String(item.testId) === String(testId)); }
+  function profileChip(icon, text) { return `<span>${icon} ${esc(text)}</span>`; }
+  function personalMessage(percent) {
+    if (percent >= 90) return 'Outstanding mastery! Keep your accuracy strong.';
+    if (percent >= 75) return 'Strong work. Review the missed questions and aim for mastery.';
+    if (percent >= 50) return 'Good progress. Revise the focus topics before retrying.';
+    return 'Keep practising. Review each explanation and improve one concept at a time.';
+  }
+  function formatDuration(seconds) { const value = Math.max(0, Number(seconds || 0)); return `${String(Math.floor(value / 60)).padStart(2,'0')}:${String(value % 60).padStart(2,'0')}`; }
+  function loadingCard(message) { return `<div class="mcq-loading"><span></span><h3>${esc(message)}</h3></div>`; }
+  function emptyCard(message) { return `<div class="mcq-empty"><span>📝</span><h3>${esc(message)}</h3></div>`; }
+  function toast(message, type) { if (window.WTC_UI?.toast) WTC_UI.toast(message, type); else window.alert(message); }
+
+  async function renderLesson(lessonId) {
+    const response = await WTC_ASSESSMENT_API.getLesson(lessonId);
+    renderContentShell('Lesson', response.lesson ? response.lesson.formattedHTML : emptyCard('Lesson not published yet.'));
+  }
+  async function renderSolutions(solutionSetId) {
+    const response = await WTC_ASSESSMENT_API.getSolutions(solutionSetId);
+    const inside = response.solutions?.insideChapter || [], end = response.solutions?.endExercise || [];
+    renderContentShell('Solutions', `<div class="solution-page"><h1>Solutions</h1><section><h2>Inside Chapter Questions</h2>${inside.length ? inside.map(solutionCard).join('') : '<p>No inside chapter solutions published.</p>'}</section><section><h2>End Exercise Questions</h2>${end.length ? end.map(solutionCard).join('') : '<p>No end exercise solutions published.</p>'}</section></div>`);
+  }
+  async function renderWorksheet(worksheetSetId) {
+    const response = await WTC_ASSESSMENT_API.getWorksheet(worksheetSetId), rows = response.worksheet || [];
+    renderContentShell('Worksheet', `<div class="worksheet-page"><h1>Worksheet</h1>${rows.map((q,i)=>`<div class="content-card"><h3>${i+1}. ${esc(q.questionText)}</h3><p><b>Type:</b> ${esc(q.questionType)} · <b>Marks:</b> ${esc(q.marks)}</p><details><summary>Answer Key</summary>${q.answerKeyHTML || ''}</details></div>`).join('') || '<p>No worksheet published yet.</p>'}</div>`);
+  }
+
+  function renderContentShell(title, html, compact) {
+    let section = document.getElementById('dynamicContentSection');
+    if (!section) {
+      section = document.createElement('section'); section.id = 'dynamicContentSection'; section.className = 'page-section';
+      document.querySelector('.main-area').appendChild(section);
+    }
+    section.innerHTML = `<div class="section-head dynamic-section-head ${compact ? 'compact' : ''}"><div><h2>${esc(title)}</h2><p class="muted">Personalized content from WTC AI Content Engine.</p></div><button class="btn outline" onclick="WTC_DYNAMIC_CONTENT.exitToFeatures()">← Features</button></div><div class="student-content-render">${html}</div>`;
     StudentApp.show('dynamicContentSection');
+    window.scrollTo({ top:0, behavior:'smooth' });
   }
 
-  function solutionCard(s) {
-    return `<details class="content-card"><summary><b>${esc(s.questionGroup)} ${esc(s.questionNumber)}</b> — ${esc(s.questionText)}</summary><div>${s.solutionHTML || esc(s.stepByStepSolution || '')}</div></details>`;
-  }
+  function exitToFeatures() { clearTimer(); if (state.activeTest) saveResume(); StudentApp.show('featuresSection'); }
+  function solutionCard(item) { return `<details class="content-card"><summary><b>${esc(item.questionGroup)} ${esc(item.questionNumber)}</b> — ${esc(item.questionText)}</summary><div>${item.solutionHTML || esc(item.stepByStepSolution || '')}</div></details>`; }
+  function bindUnload() { if (unloadBound) return; unloadBound = true; window.addEventListener('beforeunload', saveResume); }
+  function esc(value='') { return String(value).replace(/[&<>\"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[char])); }
+  function attr(value='') { return esc(value).replace(/'/g, '&#39;'); }
 
-  function esc(s='') {
-    return String(s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
-  }
-
-  return { openFeature };
+  return {
+    openFeature, startTest, selectOption, clearAnswer, goTo, submitTest,
+    backToTests, exitToFeatures
+  };
 })();

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.0 */
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.2 */
 window.WTC_DYNAMIC_CONTENT = (() => {
   const state = {
     context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
@@ -7,9 +7,11 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     remainingSec:0, timerId:null, submitting:false
   };
   let unloadBound = false;
+  let confirmState = null;
 
   async function openFeature(feature) {
     if (!feature || feature.type !== 'dynamic') return false;
+    setFocusMode(false);
     state.context = feature;
     state.user = feature.user || (window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null) || {};
     if (feature.action === 'lesson') return renderLesson(feature.contentId);
@@ -51,10 +53,12 @@ window.WTC_DYNAMIC_CONTENT = (() => {
 
   function renderTestHub() {
     clearTimer();
+    setFocusMode(false);
     state.activeTest = null;
     const name = esc((state.user && state.user.name) || 'Student');
-    const completed = Number(state.progressReport?.summary?.testsCompleted || 0);
-    const best = Number(state.progressReport?.summary?.bestPercent || 0);
+    const currentPerformance = state.tests.map(test => testPerformance(test.testId)).filter(Boolean);
+    const completed = currentPerformance.filter(item => Number(item.attempts || 0) > 0).length;
+    const best = currentPerformance.reduce((highest, item) => Math.max(highest, Number(item.bestPercent || 0)), 0);
     const cards = state.tests.map((test, index) => testCard(test, index)).join('');
     const html = `
       <div class="wtc-mcq-hub">
@@ -91,11 +95,23 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     </article>`;
   }
 
-  function startTest(testId, resume) {
+  async function startTest(testId, resume) {
     const test = state.tests.find(item => String(item.testId) === String(testId));
     if (!test) return;
     const saved = loadResume(testId);
-    if (saved && !resume && !window.confirm('Start again and replace your saved progress for this test?')) return;
+    if (saved && !resume) {
+      const savedAnswers = Object.values(saved.answers || {}).filter(Boolean).length;
+      const startAgain = await confirmAction({
+        icon:'↻', eyebrow:'SAVED TEST FOUND', title:'Start this test again?',
+        message:'Starting again will remove the saved answers and remaining time for this test.',
+        stats:[
+          { label:'Saved answers', value:String(savedAnswers) },
+          { label:'Time remaining', value:formatDuration(saved.remainingSec) }
+        ],
+        confirmLabel:'Start again', cancelLabel:'Keep saved progress', tone:'warning'
+      });
+      if (!startAgain) return;
+    }
 
     const ids = Array.isArray(test.questionIds) ? test.questionIds : [];
     const questions = ids.length ? ids.map(id => state.questionMap[String(id)]).filter(Boolean) : state.questions.slice();
@@ -112,6 +128,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
       : Number(test.timeLimitSec || test.durationSeconds || questions.length * 60);
     state.enteredAt = Date.now();
     state.submitting = false;
+    setFocusMode(true);
     startTimer();
     renderQuestion();
   }
@@ -177,11 +194,30 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   async function submitTest(autoSubmit) {
     if (state.submitting || !state.activeTest) return;
     const unanswered = state.activeQuestions.filter(question => !state.answers[question.mcqId]).length;
-    if (!autoSubmit) {
-      const prompt = unanswered
-        ? `${unanswered} question${unanswered === 1 ? ' is' : 's are'} unanswered. Submit this test anyway?`
-        : 'Submit this test now?';
-      if (!window.confirm(prompt)) return;
+    const totalQuestions = state.activeQuestions.length;
+    const answered = totalQuestions - unanswered;
+    if (autoSubmit) {
+      closeConfirmDialog(false);
+    } else {
+      const noneAnswered = unanswered === totalQuestions;
+      const confirmed = await confirmAction({
+        icon:unanswered ? '📝' : '✓', eyebrow:'SUBMIT TEST',
+        title:noneAnswered ? 'No answers selected yet' : (unanswered ? 'Some questions need attention' : 'Ready to submit?'),
+        message:noneAnswered
+          ? `You have not answered any questions. If you submit now, all ${totalQuestions} will be marked unanswered.`
+          : (unanswered
+            ? `${unanswered} question${unanswered === 1 ? ' is' : 's are'} still unanswered. You can continue the test or submit them unanswered.`
+            : 'Every question has an answer. You can submit now or continue reviewing your choices.'),
+        stats:[
+          { label:'Answered', value:`${answered}/${totalQuestions}`, accent:answered === totalQuestions },
+          { label:'Unanswered', value:String(unanswered), warning:unanswered > 0 },
+          { label:'Time left', value:formatDuration(state.remainingSec) }
+        ],
+        confirmLabel:unanswered ? 'Submit anyway' : 'Submit test',
+        cancelLabel:unanswered ? 'Continue answering' : 'Review answers',
+        tone:unanswered ? 'warning' : 'success'
+      });
+      if (!confirmed || state.submitting || !state.activeTest) return;
     }
     state.submitting = true;
     syncQuestionTime();
@@ -220,7 +256,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
         testType:state.activeTest.testType || 'Dynamic MCQ', score:correct, total:total,
         percent:percent, earnedMarks:correct, totalMarks:total,
         unansweredCount:details.filter(item => !item.selectedOption).length,
-        totalTimeSec:totalTimeSec, page:location.pathname, sourceType:'Dynamic MCQ v2.0',
+        totalTimeSec:totalTimeSec, page:location.pathname, sourceType:'Dynamic MCQ v2.2',
         attemptDetails:JSON.stringify(details)
       });
       localStorage.removeItem(resumeKey(state.activeTest.testId));
@@ -234,6 +270,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   }
 
   function renderResult(details, percent, totalTimeSec, saveResult, autoSubmit) {
+    setFocusMode(false);
     const correct = details.filter(item => item.isCorrect).length;
     const unanswered = details.filter(item => !item.selectedOption).length;
     const wrong = details.length - correct - unanswered;
@@ -260,7 +297,60 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   function backToTests() {
     syncQuestionTime();
     if (state.activeTest && !state.submitting) saveResume();
+    setFocusMode(false);
     renderTestHub();
+  }
+
+  function confirmAction(options={}) {
+    closeConfirmDialog(false);
+    document.querySelectorAll('.mcq-confirm-backdrop').forEach(node => node.remove());
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      const stats = (options.stats || []).map(item => `<div class="mcq-confirm-stat ${item.accent ? 'accent' : ''} ${item.warning ? 'warning' : ''}"><small>${esc(item.label)}</small><b>${esc(item.value)}</b></div>`).join('');
+      overlay.className = 'mcq-confirm-backdrop';
+      overlay.innerHTML = `<section class="mcq-confirm-dialog ${esc(options.tone || '')}" role="dialog" aria-modal="true" aria-labelledby="mcqConfirmTitle">
+        <div class="mcq-confirm-icon" aria-hidden="true">${esc(options.icon || '?')}</div>
+        <span class="mcq-kicker">${esc(options.eyebrow || 'PLEASE CONFIRM')}</span>
+        <h2 id="mcqConfirmTitle">${esc(options.title || 'Are you sure?')}</h2>
+        <p>${esc(options.message || '')}</p>
+        ${stats ? `<div class="mcq-confirm-stats">${stats}</div>` : ''}
+        <div class="mcq-confirm-actions">
+          <button type="button" class="mcq-btn secondary" data-dialog-cancel>${esc(options.cancelLabel || 'Cancel')}</button>
+          <button type="button" class="mcq-btn ${options.tone === 'success' ? 'success' : ''}" data-dialog-confirm>${esc(options.confirmLabel || 'Confirm')}</button>
+        </div>
+      </section>`;
+
+      const previousFocus = document.activeElement;
+      const finish = value => {
+        if (!confirmState || confirmState.overlay !== overlay) return;
+        confirmState = null;
+        document.removeEventListener('keydown', onKeydown);
+        document.body.classList.remove('mcq-dialog-open');
+        overlay.classList.remove('visible');
+        window.setTimeout(() => overlay.remove(), 160);
+        if (previousFocus && previousFocus.focus) previousFocus.focus();
+        resolve(Boolean(value));
+      };
+      const onKeydown = event => {
+        if (event.key === 'Escape') finish(false);
+      };
+
+      confirmState = { overlay, finish };
+      overlay.querySelector('[data-dialog-cancel]').addEventListener('click', () => finish(false));
+      overlay.querySelector('[data-dialog-confirm]').addEventListener('click', () => finish(true));
+      overlay.addEventListener('click', event => { if (event.target === overlay) finish(false); });
+      document.addEventListener('keydown', onKeydown);
+      document.body.classList.add('mcq-dialog-open');
+      document.body.appendChild(overlay);
+      window.requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+        overlay.querySelector('[data-dialog-cancel]').focus();
+      });
+    });
+  }
+
+  function closeConfirmDialog(value=false) {
+    if (confirmState && confirmState.finish) confirmState.finish(value);
   }
 
   function startTimer() {
@@ -320,7 +410,19 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   function formatDuration(seconds) { const value = Math.max(0, Number(seconds || 0)); return `${String(Math.floor(value / 60)).padStart(2,'0')}:${String(value % 60).padStart(2,'0')}`; }
   function loadingCard(message) { return `<div class="mcq-loading"><span></span><h3>${esc(message)}</h3></div>`; }
   function emptyCard(message) { return `<div class="mcq-empty"><span>📝</span><h3>${esc(message)}</h3></div>`; }
-  function toast(message, type) { if (window.WTC_UI?.toast) WTC_UI.toast(message, type); else window.alert(message); }
+  function toast(message, type) {
+    if (window.WTC_UI?.toast) return WTC_UI.toast(message, type);
+    const node = document.createElement('div');
+    node.className = `mcq-inline-toast ${type || 'info'}`;
+    node.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    node.textContent = message;
+    document.body.appendChild(node);
+    window.requestAnimationFrame(() => node.classList.add('visible'));
+    window.setTimeout(() => {
+      node.classList.remove('visible');
+      window.setTimeout(() => node.remove(), 180);
+    }, 3600);
+  }
 
   async function renderLesson(lessonId) {
     const response = await WTC_ASSESSMENT_API.getLesson(lessonId);
@@ -342,12 +444,45 @@ window.WTC_DYNAMIC_CONTENT = (() => {
       section = document.createElement('section'); section.id = 'dynamicContentSection'; section.className = 'page-section';
       document.querySelector('.main-area').appendChild(section);
     }
-    section.innerHTML = `<div class="section-head dynamic-section-head ${compact ? 'compact' : ''}"><div><h2>${esc(title)}</h2><p class="muted">Personalized content from WTC AI Content Engine.</p></div><button class="btn outline" onclick="WTC_DYNAMIC_CONTENT.exitToFeatures()">← Features</button></div><div class="student-content-render">${html}</div>`;
+    clearTypeset(section);
+    const language = detectContentLanguage(`${title} ${stripHTML(html)}`);
+    section.innerHTML = `<div class="section-head dynamic-section-head ${compact ? 'compact' : ''}"><div><h2>${esc(title)}</h2><p class="muted">Personalized content from WTC AI Content Engine.</p></div><button class="btn outline" onclick="WTC_DYNAMIC_CONTENT.exitToFeatures()">← Features</button></div><div class="student-content-render" lang="${language}" data-content-lang="${language}">${html}</div>`;
     StudentApp.show('dynamicContentSection');
+    bindSolutionAccordions(section);
+    typesetContent(section);
     window.scrollTo({ top:0, behavior:'smooth' });
   }
 
-  function exitToFeatures() { clearTimer(); if (state.activeTest) saveResume(); StudentApp.show('featuresSection'); }
+  function setFocusMode(active) { document.body.classList.toggle('mcq-focus-mode', Boolean(active)); }
+  function detectContentLanguage(text) { return /[\u0A80-\u0AFF]/.test(String(text || '')) ? 'gu' : 'en'; }
+  function stripHTML(html) {
+    const holder = document.createElement('div');
+    holder.innerHTML = String(html || '');
+    return holder.textContent || holder.innerText || '';
+  }
+  function clearTypeset(node) {
+    try { if (window.MathJax?.typesetClear) window.MathJax.typesetClear([node]); }
+    catch (error) { console.warn('MathJax cleanup skipped:', error.message); }
+  }
+  function typesetContent(node) {
+    const run = () => {
+      if (!window.MathJax?.typesetPromise) return Promise.resolve();
+      return window.MathJax.typesetPromise([node]).catch(error => console.warn('MathJax typesetting skipped:', error.message));
+    };
+    if (window.MathJax?.startup?.promise) window.MathJax.startup.promise.then(run).catch(error => console.warn('MathJax startup skipped:', error.message));
+    else run();
+  }
+  function bindSolutionAccordions(section) {
+    section.querySelectorAll('.solution-page details').forEach(details => {
+      details.addEventListener('toggle', () => {
+        if (!details.open) return;
+        section.querySelectorAll('.solution-page details[open]').forEach(other => {
+          if (other !== details) other.open = false;
+        });
+      });
+    });
+  }
+  function exitToFeatures() { closeConfirmDialog(false); clearTimer(); setFocusMode(false); if (state.activeTest) saveResume(); StudentApp.show('featuresSection'); }
   function solutionCard(item) { return `<details class="content-card"><summary><b>${esc(item.questionGroup)} ${esc(item.questionNumber)}</b> — ${esc(item.questionText)}</summary><div>${item.solutionHTML || esc(item.stepByStepSolution || '')}</div></details>`; }
   function bindUnload() { if (unloadBound) return; unloadBound = true; window.addEventListener('beforeunload', saveResume); }
   function esc(value='') { return String(value).replace(/[&<>\"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[char])); }

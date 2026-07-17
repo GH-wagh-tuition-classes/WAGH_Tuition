@@ -199,11 +199,11 @@ const WTC_FEATURE_ENGINE = (() => {
     return enginePath + separator + params.toString();
   }
 
-  async function logFeatureOpen(context, definition, destination) {
+  function logFeatureOpen(context, definition, destination) {
     if (!definition.logAccess) return;
 
     const user = context.user || {};
-    await WTC_API.logAccess({
+    WTC_API.logAccess({
       userId: user.id || user.studentId,
       name: user.name,
       role: user.role,
@@ -286,7 +286,7 @@ const WTC_FEATURE_ENGINE = (() => {
         });
 
         if (opened !== false) {
-          await logFeatureOpen(
+          logFeatureOpen(
             context,
             definition,
             feature.contentId || 'dynamic-content'
@@ -309,14 +309,14 @@ const WTC_FEATURE_ENGINE = (() => {
       hasDynamicPayload
     ) {
       const dynamicUrl = buildDynamicUrl(definition.enginePath, context, definition);
-      await logFeatureOpen(context, definition, dynamicUrl);
+      logFeatureOpen(context, definition, dynamicUrl);
       window.location.href = dynamicUrl;
       return true;
     }
 
     /* Priority 3: Existing static chapter page fallback. */
     if (feature.url && feature.url !== '#') {
-      await logFeatureOpen(context, definition, feature.url);
+      logFeatureOpen(context, definition, feature.url);
       window.location.href = feature.url;
       return true;
     }

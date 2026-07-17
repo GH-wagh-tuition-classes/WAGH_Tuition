@@ -5,6 +5,8 @@ window.StudentApp = (() => {
   let selectedSubject = null;
   let selectedChapter = null;
   let currentFeatures = [];
+  let progressRequest = null;
+  let progressLoadedAt = 0;
   const ROUTE_VERSION = 1;
   let routeWritePaused = false;
 
@@ -141,8 +143,7 @@ function restoreScreen(screen) {
     bindProfile();
     const savedRoute = readRoute();
     routeWritePaused = true;
-    await loadSubjects();
-    loadProgress();
+    await loadInitialData();
     document.addEventListener('wtc:progress-updated', () => loadProgress(true));
     /* ==== Navigation code edit 09/07 ===== */
     pushScreen("dashboard");
@@ -229,26 +230,77 @@ window.addEventListener("popstate", () => {
     if (options.persist !== false) recordSection(sectionId);
   }
 
-  async function loadSubjects() {
+  function subjectRequestProfile() {
+    return {
+      studentId:user.id || user.studentId,
+      id:user.id || user.studentId,
+      board:user.board,
+      className:user.className || user.class,
+      medium:user.medium
+    };
+  }
+
+  function applySubjects(list) {
+    subjects = Array.isArray(list) ? list : [];
     const box = document.getElementById('subjectGrid');
-    box.innerHTML = WTC_UI.loadingHTML('Loading your subjects...');
-
-    try {
-      const data = await WTC_API.getSubjects({
-        studentId: user.id || user.studentId,
-        board: user.board,
-        className: user.className || user.class,
-        medium: user.medium
-      });
-
-      subjects = data.subjects || [];
-      document.getElementById('subjectCount').textContent = subjects.length;
-
+    document.getElementById('subjectCount').textContent = subjects.length;
+    if (box) {
       box.innerHTML = subjects.length
         ? subjects.map(subjectCard).join('')
         : WTC_UI.loadingHTML('No subjects found for your profile yet.');
+    }
+  }
+
+  function applyBasicProgress(progress={}) {
+    const percent = Number(progress.percent ?? progress.overallPercent ?? progress.averagePercent ?? 0);
+    setText('progressPercent', percent + '%');
+    setWidth('progressFill', percent);
+    setWidth('progressFill2', percent);
+    setText('progressOverall', percent + '%');
+    setText('progressAttempts', Number(progress.totalAttempts || 0));
+    setText('progressBest', Number(progress.bestPercent || 0) + '%');
+    setText('progressTests', Number(progress.testsCompleted || 0));
+    setText('testsCompletedHome', Number(progress.testsCompleted || 0));
+  }
+
+  async function loadInitialData() {
+    const profile = subjectRequestProfile();
+    const cached = window.WTC_API?.peekSubjects ? WTC_API.peekSubjects(profile) : null;
+    if (cached?.subjects) applySubjects(cached.subjects);
+    else {
+      const box = document.getElementById('subjectGrid');
+      if (box) box.innerHTML = WTC_UI.loadingHTML('Loading your subjects...');
+    }
+
+    const refresh = WTC_API.getStudentBootstrap(profile)
+      .then(data => {
+        applySubjects(data.subjects || []);
+        applyBasicProgress(Array.isArray(data.progress) ? data.progress[0] : (data.progress || {}));
+        return data;
+      })
+      .catch(error => {
+        if (!cached?.subjects) throw error;
+        console.warn('Background student bootstrap refresh failed.', error.message);
+        return { success:true, subjects:cached.subjects, progress:{ percent:0 }, cachedOnly:true };
+      });
+
+    // Cached catalogue data lets refresh restoration continue immediately.
+    if (cached?.subjects?.length) {
+      refresh.catch(() => {});
+      return;
+    }
+    await refresh;
+  }
+
+  async function loadSubjects(forceRefresh=false) {
+    const box = document.getElementById('subjectGrid');
+    if (!subjects.length || forceRefresh) box.innerHTML = WTC_UI.loadingHTML(forceRefresh ? 'Refreshing your subjects...' : 'Loading your subjects...');
+
+    try {
+      const data = await WTC_API.getSubjects(subjectRequestProfile(), forceRefresh);
+      applySubjects(data.subjects || []);
     } catch (err) {
-      box.innerHTML = WTC_UI.loadingHTML(err.message);
+      if (!subjects.length) box.innerHTML = WTC_UI.loadingHTML(err.message);
     }
   }
 
@@ -280,7 +332,7 @@ window.addEventListener("popstate", () => {
     if (!options.restore) writeRoute({ sectionId:'chaptersSection', subjectId:selectedSubjectId(), chapterId:null, feature:null, dynamic:null, scrollY:0 });
   }
 
-  async function loadChapters() {
+  async function loadChapters(forceRefresh=false) {
     const box = document.getElementById('chapterGrid');
     box.innerHTML = WTC_UI.loadingHTML('Loading chapters...');
 
@@ -294,7 +346,7 @@ window.addEventListener("popstate", () => {
         medium: user.medium,
         subjectId,
         subjectName: selectedSubject.subjectName || selectedSubject.name
-      });
+      }, forceRefresh);
 
       chapters = data.chapters || [];
       document.getElementById('chapterCount').textContent = chapters.length;
@@ -340,14 +392,16 @@ window.addEventListener("popstate", () => {
     box.innerHTML = WTC_UI.loadingHTML('Loading feature buttons...');
 
     try {
-      const staticData = await WTC_API.getChapterFeatures({
-        chapterId: selectedChapter.chapterId || selectedChapter.id,
-        subjectId: selectedSubject.subjectId || selectedSubject.id
-      });
+      const chapterId = selectedChapter.chapterId || selectedChapter.id;
+      const [staticData, dynamicFeatures] = await Promise.all([
+        WTC_API.getChapterFeatures({
+          chapterId,
+          subjectId:selectedSubject.subjectId || selectedSubject.id
+        }),
+        loadDynamicFeatures(chapterId)
+      ]);
 
       const staticFeatures = staticData.features || [];
-      const dynamicFeatures = await loadDynamicFeatures(selectedChapter.chapterId || selectedChapter.id);
-
       currentFeatures = [...dynamicFeatures, ...staticFeatures];
 
       box.innerHTML = currentFeatures.length
@@ -512,11 +566,14 @@ Close
     const studentId = user.id || user.studentId;
     const text = document.getElementById('progressText');
     if (text && forceRefresh) text.textContent = 'Refreshing your personal report…';
+    if (!forceRefresh && progressRequest) return progressRequest;
+    if (!forceRefresh && progressLoadedAt && (Date.now() - progressLoadedAt) < 15000) return;
 
+    progressRequest = (async () => {
     try {
       const [basic, report] = await Promise.all([
-        WTC_API.getStudentProgress(studentId).catch(() => ({ progress:{ percent:0 } })),
-        WTC_API.getMCQProgressReport(studentId).catch(() => null)
+        WTC_API.getStudentProgress(studentId, forceRefresh).catch(() => ({ progress:{ percent:0 } })),
+        WTC_API.getMCQProgressReport(studentId, forceRefresh).catch(() => null)
       ]);
       const progress = Array.isArray(basic.progress) ? basic.progress[0] : basic.progress;
       const summary = report?.summary || {};
@@ -548,9 +605,14 @@ Close
       renderRecommendations(report?.recommendations || []);
       renderSkills(report?.skills || []);
       renderRecentAttempts(report?.recentAttempts || []);
+      progressLoadedAt = Date.now();
     } catch (error) {
       if (text) text.textContent = 'Progress could not be loaded. Please refresh after checking the runtime deployment.';
+    } finally {
+      progressRequest = null;
     }
+    })();
+    return progressRequest;
   }
 
   function renderRecommendations(items) {
@@ -617,7 +679,7 @@ Close
         WTC_AUTH.setUser(user);
         fillUser();
         WTC_UI.toast('Profile saved successfully.', 'success');
-        await loadSubjects();
+        await loadSubjects(true);
       } catch (err) {
         WTC_UI.toast(err.message, 'error');
       }

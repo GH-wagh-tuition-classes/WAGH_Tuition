@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.0 */
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.1-performance */
 window.WTC_DYNAMIC_CONTENT = (() => {
   const state = {
     context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
@@ -8,6 +8,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   };
   let unloadBound = false;
   let confirmState = null;
+  let mathJaxPromise = null;
 
   function rememberRoute(value) {
     if (window.StudentApp?.setDynamicRoute) window.StudentApp.setDynamicRoute(value || {});
@@ -481,13 +482,36 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     try { if (window.MathJax?.typesetClear) window.MathJax.typesetClear([node]); }
     catch (error) { console.warn('MathJax cleanup skipped:', error.message); }
   }
-  function typesetContent(node) {
-    const run = () => {
-      if (!window.MathJax?.typesetPromise) return Promise.resolve();
-      return window.MathJax.typesetPromise([node]).catch(error => console.warn('MathJax typesetting skipped:', error.message));
+  function ensureMathJax() {
+    if (window.MathJax?.typesetPromise) return Promise.resolve(window.MathJax);
+    if (mathJaxPromise) return mathJaxPromise;
+    window.MathJax = window.MathJax || {
+      loader:{ load:['[tex]/mhchem'] },
+      tex:{ packages:{ '[+]':['mhchem'] }, inlineMath:[['\\(','\\)']], displayMath:[['\\[','\\]']], processEscapes:true },
+      options:{ skipHtmlTags:['script','noscript','style','textarea','pre','code'] }
     };
-    if (window.MathJax?.startup?.promise) window.MathJax.startup.promise.then(run).catch(error => console.warn('MathJax startup skipped:', error.message));
-    else run();
+    mathJaxPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js';
+      script.async = true;
+      script.onload = () => resolve(window.MathJax);
+      script.onerror = () => reject(new Error('MathJax could not be loaded.'));
+      document.head.appendChild(script);
+    }).catch(error => {
+      mathJaxPromise = null;
+      console.warn(error.message);
+      return null;
+    });
+    return mathJaxPromise;
+  }
+  function typesetContent(node) {
+    ensureMathJax().then(() => {
+      const run = () => window.MathJax?.typesetPromise
+        ? window.MathJax.typesetPromise([node]).catch(error => console.warn('MathJax typesetting skipped:', error.message))
+        : Promise.resolve();
+      if (window.MathJax?.startup?.promise) return window.MathJax.startup.promise.then(run);
+      return run();
+    }).catch(error => console.warn('MathJax startup skipped:', error.message));
   }
   function bindSolutionAccordions(section) {
     section.querySelectorAll('.solution-page details').forEach(details => {

@@ -10,6 +10,17 @@
   <link rel="preload" href="assets/fonts/noto-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/noto-serif-gujarati-gujarati-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/dynamic-mcq.css?v=2.2.2">
+  <style>
+    #studentRestoreSplash{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:24px;background:linear-gradient(145deg,#eff9fb,#fff9e9);opacity:1;visibility:visible;transition:opacity .22s ease,visibility .22s ease}
+    .student-restore-card{width:min(100%,390px);display:grid;justify-items:center;gap:12px;padding:30px 24px;border:1px solid #d7e7eb;border-radius:26px;background:rgba(255,255,255,.94);box-shadow:0 24px 70px rgba(15,96,115,.16);text-align:center;color:#172033}
+    .student-restore-card img{width:70px;height:70px;object-fit:contain}
+    .student-restore-card h1{margin:2px 0 0;font:800 clamp(22px,6vw,29px)/1.2 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+    .student-restore-card p{margin:0;color:#64748b;font:600 14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+    .student-restore-spinner{width:38px;height:38px;margin-top:4px;border:4px solid #d7e9ed;border-top-color:#14798d;border-radius:50%;animation:studentRestoreSpin .75s linear infinite}
+    html.student-portal-ready #studentRestoreSplash{opacity:0;visibility:hidden;pointer-events:none}
+    @keyframes studentRestoreSpin{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){#studentRestoreSplash{transition:none}.student-restore-spinner{animation:none;border-top-color:#d7e9ed;background:#14798d;box-shadow:inset 0 0 0 10px #fff}}
+  </style>
   <script>
     window.MathJax = {
       loader: { load: ['[tex]/mhchem'] },
@@ -27,6 +38,14 @@
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
+<div id="studentRestoreSplash" role="status" aria-live="polite" aria-label="Loading student portal">
+  <div class="student-restore-card">
+    <img src="assets/images/logo.png" alt="WAGH Tuition Classes">
+    <span class="student-restore-spinner" aria-hidden="true"></span>
+    <h1>Returning to your page…</h1>
+    <p>Loading your learning progress and saved position.</p>
+  </div>
+</div>
 <header class="topbar">
   <div class="topbar-inner">
     <a class="brand" href="student.html"><img src="assets/images/logo.png" alt="WAGH Tuition Classes"><span>Student Portal</span></a>
@@ -188,6 +207,6 @@
   <script src="assets/js/student-dynamic-content.js?v=2.3.0"></script>
 <!-- Feature Engine must load before student.js -->
 <script src="assets/js/feature-engine.js?v=2.0"></script>
-<script src="assets/js/student.js?v=2.3.0"></script>
+<script src="assets/js/student.js?v=2.3.1"></script>
 </body>
 </html>

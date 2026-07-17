@@ -131,8 +131,12 @@ function restoreScreen(screen) {
 
   async function init() {
     user = WTC_AUTH.requireRole('Student');
-    if (!user) return;
+    if (!user) {
+      finishPageRestore();
+      return;
+    }
 
+    try {
     fillUser();
     bindProfile();
     const savedRoute = readRoute();
@@ -176,6 +180,23 @@ window.addEventListener("popstate", () => {
       const restoreY = exactRestore ? Number(savedRoute?.scrollY || 0) : 0;
       window.requestAnimationFrame(() => window.scrollTo(0, restoreY));
       window.setTimeout(() => window.scrollTo(0, restoreY), 350);
+    }
+    } catch (error) {
+      routeWritePaused = false;
+      console.error('Student page restoration failed.', error);
+      show('homeSection', { persist:false });
+      recordSection('homeSection');
+    } finally {
+      finishPageRestore();
+    }
+  }
+
+  function finishPageRestore() {
+    document.documentElement.classList.add('student-portal-ready');
+    const splash = document.getElementById('studentRestoreSplash');
+    if (splash) {
+      splash.setAttribute('aria-hidden', 'true');
+      window.setTimeout(() => splash.remove(), 260);
     }
   }
 

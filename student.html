@@ -21,26 +21,11 @@
     @keyframes studentRestoreSpin{to{transform:rotate(360deg)}}
     @media(prefers-reduced-motion:reduce){#studentRestoreSplash{transition:none}.student-restore-spinner{animation:none;border-top-color:#d7e9ed;background:#14798d;box-shadow:inset 0 0 0 10px #fff}}
   </style>
-  <script>
-    window.MathJax = {
-      loader: { load: ['[tex]/mhchem'] },
-      tex: {
-        packages: { '[+]': ['mhchem'] },
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-        processEscapes: true
-      },
-      options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-      }
-    };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div id="studentRestoreSplash" role="status" aria-live="polite" aria-label="Loading student portal">
   <div class="student-restore-card">
-    <img src="assets/images/logo.png" alt="WAGH Tuition Classes">
+    <img src="assets/images/logo.png" alt="WAGH Tuition Classes" width="512" height="512" decoding="async">
     <span class="student-restore-spinner" aria-hidden="true"></span>
     <h1>Returning to your page…</h1>
     <p>Loading your learning progress and saved position.</p>
@@ -48,7 +33,7 @@
 </div>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="student.html"><img src="assets/images/logo.png" alt="WAGH Tuition Classes"><span>Student Portal</span></a>
+    <a class="brand" href="student.html"><img src="assets/images/logo.png" alt="WAGH Tuition Classes" width="512" height="512" decoding="async"><span>Student Portal</span></a>
     <div class="top-actions">
       <span class="hide-mobile" data-user-name>Student</span>
       <span class="avatar" data-user-avatar>U</span>
@@ -59,7 +44,7 @@
 
 <div class="app-shell">
   <aside class="sidebar">
-    <div class="side-title"><img src="assets/images/logo.png" alt="WTC"><span>WTC Portal</span></div>
+    <div class="side-title"><img src="assets/images/logo.png" alt="WTC" width="512" height="512" loading="lazy" decoding="async"><span>WTC Portal</span></div>
     <nav class="side-nav">
       <button class="active" data-nav="homeSection" onclick="StudentApp.show('homeSection')">🏠 Home</button>
       <button data-nav="subjectsSection" onclick="StudentApp.show('subjectsSection')">📚 Subjects</button>
@@ -104,7 +89,7 @@
     <section id="subjectsSection" class="page-section">
       <div class="section-head">
         <div><h2>My Subjects</h2><p class="muted">Loaded according to your board, class and medium.</p></div>
-        <button class="btn outline" onclick="StudentApp.loadSubjects()">Refresh</button>
+        <button class="btn outline" onclick="StudentApp.loadSubjects(true)">Refresh</button>
       </div>
       <div id="subjectGrid" class="grid grid-3"></div>
     </section>
@@ -201,12 +186,12 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/js/api.js?v=2.0"></script>
+<script src="assets/js/api.js?v=stage1.0"></script>
 <script src="assets/js/assessment-config.js"></script>
-<script src="assets/js/assessment-api.js"></script>
-  <script src="assets/js/student-dynamic-content.js?v=2.3.0"></script>
+<script src="assets/js/assessment-api.js?v=stage1.0"></script>
+  <script src="assets/js/student-dynamic-content.js?v=2.3.1p"></script>
 <!-- Feature Engine must load before student.js -->
-<script src="assets/js/feature-engine.js?v=2.0"></script>
-<script src="assets/js/student.js?v=2.3.1"></script>
+<script src="assets/js/feature-engine.js?v=stage1.0"></script>
+<script src="assets/js/student.js?v=2.3.2p"></script>
 </body>
 </html>

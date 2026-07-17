@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.2 */
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.0 */
 window.WTC_DYNAMIC_CONTENT = (() => {
   const state = {
     context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
@@ -9,11 +9,16 @@ window.WTC_DYNAMIC_CONTENT = (() => {
   let unloadBound = false;
   let confirmState = null;
 
+  function rememberRoute(value) {
+    if (window.StudentApp?.setDynamicRoute) window.StudentApp.setDynamicRoute(value || {});
+  }
+
   async function openFeature(feature) {
     if (!feature || feature.type !== 'dynamic') return false;
     setFocusMode(false);
     state.context = feature;
     state.user = feature.user || (window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null) || {};
+    rememberRoute({ view:feature.action === 'mcq' ? 'hub' : 'content', action:feature.action || '', contentId:feature.contentId || '' });
     if (feature.action === 'lesson') return renderLesson(feature.contentId);
     if (feature.action === 'solutions') return renderSolutions(feature.contentId);
     if (feature.action === 'mcq') return openMCQEngine(feature.contentId);
@@ -55,6 +60,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     clearTimer();
     setFocusMode(false);
     state.activeTest = null;
+    rememberRoute({ view:'hub', action:'mcq', contentId:state.mcqSetId || state.context?.contentId || '', testId:null, result:null });
     const name = esc((state.user && state.user.name) || 'Student');
     const currentPerformance = state.tests.map(test => testPerformance(test.testId)).filter(Boolean);
     const completed = currentPerformance.filter(item => Number(item.attempts || 0) > 0).length;
@@ -128,6 +134,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
       : Number(test.timeLimitSec || test.durationSeconds || questions.length * 60);
     state.enteredAt = Date.now();
     state.submitting = false;
+    rememberRoute({ view:'active-test', action:'mcq', contentId:state.mcqSetId, testId:state.activeTest.testId, result:null });
     setFocusMode(true);
     startTimer();
     renderQuestion();
@@ -137,6 +144,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     const question = state.activeQuestions[state.currentIndex];
     if (!question) return;
     const selected = state.answers[question.mcqId] || '';
+    rememberRoute({ view:'active-test', action:'mcq', contentId:state.mcqSetId, testId:state.activeTest?.testId || '', currentIndex:state.currentIndex, result:null });
     const answered = Object.keys(state.answers).filter(key => state.answers[key]).length;
     const percent = Math.round((answered / state.activeQuestions.length) * 100);
     const options = ['A','B','C','D'].map(letter => {
@@ -271,6 +279,15 @@ window.WTC_DYNAMIC_CONTENT = (() => {
 
   function renderResult(details, percent, totalTimeSec, saveResult, autoSubmit) {
     setFocusMode(false);
+    rememberRoute({
+      view:'result', action:'mcq', contentId:state.mcqSetId,
+      testId:state.activeTest?.testId || '',
+      result:{
+        details:details || [], percent:Number(percent || 0), totalTimeSec:Number(totalTimeSec || 0),
+        saveResult:{ success:Boolean(saveResult?.success), message:saveResult?.message || '', personalizedMessage:saveResult?.personalizedMessage || '' },
+        autoSubmit:Boolean(autoSubmit)
+      }
+    });
     const correct = details.filter(item => item.isCorrect).length;
     const unanswered = details.filter(item => !item.selectedOption).length;
     const wrong = details.length - correct - unanswered;
@@ -482,14 +499,71 @@ window.WTC_DYNAMIC_CONTENT = (() => {
       });
     });
   }
+  async function restoreRefreshState(route={}) {
+    if (route.view === 'active-test' && route.testId) {
+      if (loadResume(route.testId)) {
+        await startTest(route.testId, true);
+        return true;
+      }
+      renderTestHub();
+      toast('Your saved test attempt was not available, so the test list was restored.', 'error');
+      return false;
+    }
+
+    if (route.view === 'result' && route.testId && route.result) {
+      const test = state.tests.find(item => String(item.testId) === String(route.testId));
+      if (!test) return false;
+      const ids = Array.isArray(test.questionIds) ? test.questionIds : [];
+      state.activeTest = test;
+      state.activeQuestions = ids.length ? ids.map(id => state.questionMap[String(id)]).filter(Boolean) : state.questions.slice();
+      renderResult(
+        Array.isArray(route.result.details) ? route.result.details : [],
+        Number(route.result.percent || 0),
+        Number(route.result.totalTimeSec || 0),
+        route.result.saveResult || { success:true },
+        Boolean(route.result.autoSubmit)
+      );
+      return true;
+    }
+    return true;
+  }
   function exitToFeatures() { closeConfirmDialog(false); clearTimer(); setFocusMode(false); if (state.activeTest) saveResume(); StudentApp.show('featuresSection'); }
-  function solutionCard(item) { return `<details class="content-card"><summary><b>${esc(item.questionGroup)} ${esc(item.questionNumber)}</b> — ${esc(item.questionText)}</summary><div>${item.solutionHTML || esc(item.stepByStepSolution || '')}</div></details>`; }
+  function solutionCard(item) {
+    return `<details class="content-card"><summary class="solution-question-summary"><span class="solution-question-title">${esc(item.questionGroup)} ${esc(item.questionNumber)}</span>${formatSolutionQuestion(item.questionText)}</summary><div class="solution-answer-body">${item.solutionHTML || esc(item.stepByStepSolution || '')}</div></details>`;
+  }
+  function formatSolutionQuestion(value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+
+    // Accept only a sequential (a), (b), (c)... series. This deliberately
+    // leaves chemistry state symbols such as (aq), (s), (g) and (l) alone.
+    const candidates = Array.from(text.matchAll(/\(([a-h])\)/gi));
+    const markers = [];
+    let expectedCode = 'a'.charCodeAt(0);
+    candidates.forEach(match => {
+      if (match[1].toLowerCase().charCodeAt(0) !== expectedCode) return;
+      markers.push({ label: match[1].toLowerCase(), index: match.index, length: match[0].length });
+      expectedCode += 1;
+    });
+
+    if (!markers.length) return `<span class="solution-question-copy">${escLines(text)}</span>`;
+
+    const prompt = text.slice(0, markers[0].index).trim();
+    const parts = markers.map((marker, index) => {
+      const end = markers[index + 1] ? markers[index + 1].index : text.length;
+      const partText = text.slice(marker.index + marker.length, end).trim();
+      return `<span class="solution-question-part"><span class="solution-part-marker">${marker.label}</span><span>${escLines(partText)}</span></span>`;
+    }).join('');
+
+    return `<span class="solution-question-copy">${prompt ? `<span class="solution-question-prompt">${escLines(prompt)}</span>` : ''}<span class="solution-question-parts">${parts}</span></span>`;
+  }
+  function escLines(value='') { return esc(value).replace(/\r?\n/g, '<br>'); }
   function bindUnload() { if (unloadBound) return; unloadBound = true; window.addEventListener('beforeunload', saveResume); }
   function esc(value='') { return String(value).replace(/[&<>\"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[char])); }
   function attr(value='') { return esc(value).replace(/'/g, '&#39;'); }
 
   return {
     openFeature, startTest, selectOption, clearAnswer, goTo, submitTest,
-    backToTests, exitToFeatures
+    backToTests, exitToFeatures, restoreRefreshState
   };
 })();

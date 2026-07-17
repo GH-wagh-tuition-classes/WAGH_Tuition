@@ -5,6 +5,89 @@ window.StudentApp = (() => {
   let selectedSubject = null;
   let selectedChapter = null;
   let currentFeatures = [];
+  const ROUTE_VERSION = 1;
+  let routeWritePaused = false;
+
+  function studentId() {
+    return String((user && (user.id || user.studentId)) || 'guest');
+  }
+
+  function routeKey() {
+    return `wtc:student-route:${studentId()}`;
+  }
+
+  function readRoute() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(routeKey()) || 'null');
+      if (!value || value.version !== ROUTE_VERSION || String(value.studentId) !== studentId()) return null;
+      return value;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeRoute(patch) {
+    if (routeWritePaused || !user) return;
+    const previous = readRoute() || {};
+    const next = {
+      ...previous,
+      ...patch,
+      version:ROUTE_VERSION,
+      studentId:studentId(),
+      savedAt:Date.now()
+    };
+    try { sessionStorage.setItem(routeKey(), JSON.stringify(next)); }
+    catch (error) { console.warn('Student page position could not be saved.', error.message); }
+  }
+
+  function recordSection(sectionId) {
+    const simple = ['homeSection','subjectsSection','progressSection','profileSection'].includes(sectionId);
+    const route = {
+      sectionId,
+      subjectId:simple ? null : selectedSubjectId(),
+      chapterId:simple ? null : selectedChapterId(),
+      scrollY:0
+    };
+    if (simple || sectionId !== 'dynamicContentSection') {
+      route.feature = null;
+      route.dynamic = null;
+    }
+    writeRoute(route);
+  }
+
+  function selectedSubjectId() {
+    return selectedSubject && (selectedSubject.subjectId || selectedSubject.id || selectedSubject.subjectName || selectedSubject.name) || '';
+  }
+
+  function selectedChapterId() {
+    return selectedChapter && (selectedChapter.chapterId || selectedChapter.id || selectedChapter.chapterNo || selectedChapter.chapterName) || '';
+  }
+
+  function compactFeature(feature) {
+    if (!feature) return null;
+    return ['featureId','featureName','name','type','action','contentId','url','icon'].reduce((copy, key) => {
+      if (feature[key] !== undefined && feature[key] !== null) copy[key] = feature[key];
+      return copy;
+    }, {});
+  }
+
+  function featureIdentity(feature) {
+    if (!feature) return '';
+    return [feature.featureId, feature.action, feature.contentId, feature.url, feature.featureName || feature.name]
+      .map(value => String(value || '').trim().toLowerCase()).join('|');
+  }
+
+  function setDynamicRoute(dynamicState) {
+    const previous = readRoute() || {};
+    writeRoute({
+      sectionId:'dynamicContentSection',
+      subjectId:selectedSubjectId(),
+      chapterId:selectedChapterId(),
+      feature:previous.feature || null,
+      dynamic:{ ...(previous.dynamic || {}), ...(dynamicState || {}) },
+      scrollY:window.scrollY || 0
+    });
+  }
 
   /* ===== Student Navigation Engine ===== */
 
@@ -46,13 +129,15 @@ function restoreScreen(screen) {
 
 }
 
-  function init() {
+  async function init() {
     user = WTC_AUTH.requireRole('Student');
     if (!user) return;
 
     fillUser();
     bindProfile();
-    loadSubjects();
+    const savedRoute = readRoute();
+    routeWritePaused = true;
+    await loadSubjects();
     loadProgress();
     document.addEventListener('wtc:progress-updated', () => loadProgress(true));
     /* ==== Navigation code edit 09/07 ===== */
@@ -76,6 +161,22 @@ window.addEventListener("popstate", () => {
   restoreScreen(previous);
 
 });
+    window.addEventListener('pagehide', saveCurrentScroll);
+    window.addEventListener('beforeunload', saveCurrentScroll);
+
+    const restoredSection = await restoreSavedRoute(savedRoute);
+    routeWritePaused = false;
+    if (!restoredSection) {
+      show('homeSection', { persist:false });
+      recordSection('homeSection');
+    } else {
+      const exactRestore = restoredSection === savedRoute?.sectionId;
+      if (exactRestore) writeRoute({ ...(savedRoute || {}), scrollY:Number(savedRoute?.scrollY || 0) });
+      else recordSection(restoredSection);
+      const restoreY = exactRestore ? Number(savedRoute?.scrollY || 0) : 0;
+      window.requestAnimationFrame(() => window.scrollTo(0, restoreY));
+      window.setTimeout(() => window.scrollTo(0, restoreY), 350);
+    }
   }
 
   function fillUser() {
@@ -91,7 +192,7 @@ window.addEventListener("popstate", () => {
     document.getElementById('studentMeta').textContent = meta;
   }
 
-  function show(sectionId) {
+  function show(sectionId, options={}) {
     document.querySelectorAll('.page-section').forEach(section => {
       section.classList.remove('active');
     });
@@ -104,6 +205,7 @@ window.addEventListener("popstate", () => {
     });
 
     if (sectionId === 'progressSection') loadProgress();
+    if (options.persist !== false) recordSection(sectionId);
   }
 
   async function loadSubjects() {
@@ -142,7 +244,7 @@ window.addEventListener("popstate", () => {
     `;
   }
 
-  async function openSubject(id) {
+  async function openSubject(id, options={}) {
     selectedSubject = subjects.find(subject => {
       return String(subject.subjectId || subject.id || subject.subjectName || subject.name) === String(id);
     });
@@ -150,10 +252,11 @@ window.addEventListener("popstate", () => {
     if (!selectedSubject) return;
 
     document.getElementById('chapterSubjectTitle').textContent = selectedSubject.subjectName || selectedSubject.name || 'Subject';
-    pushScreen("subjects"); // for navigation edit 09/07
-    show('chaptersSection');
-    pushScreen("chapters"); // edit 09/07 for navigation 
+    if (!options.restore) pushScreen("subjects"); // for navigation edit 09/07
+    show('chaptersSection', { persist:false });
+    if (!options.restore) pushScreen("chapters"); // edit 09/07 for navigation
     await loadChapters();
+    if (!options.restore) writeRoute({ sectionId:'chaptersSection', subjectId:selectedSubjectId(), chapterId:null, feature:null, dynamic:null, scrollY:0 });
   }
 
   async function loadChapters() {
@@ -195,7 +298,7 @@ window.addEventListener("popstate", () => {
     `;
   }
 
-  async function openChapter(id) {
+  async function openChapter(id, options={}) {
     selectedChapter = chapters.find(chapter => {
       return String(chapter.chapterId || chapter.id || chapter.chapterNo || chapter.chapterName) === String(id);
     });
@@ -203,8 +306,14 @@ window.addEventListener("popstate", () => {
     if (!selectedChapter) return;
 
     document.getElementById('featureChapterTitle').textContent = selectedChapter.chapterName || selectedChapter.name || 'Chapter';
-    show('featuresSection');
-    pushScreen("features"); // for navigation edit 09/07
+    show('featuresSection', { persist:false });
+    if (!options.restore) pushScreen("features"); // for navigation edit 09/07
+
+    await loadFeatures();
+    if (!options.restore) writeRoute({ sectionId:'featuresSection', subjectId:selectedSubjectId(), chapterId:selectedChapterId(), feature:null, dynamic:null, scrollY:0 });
+  }
+
+  async function loadFeatures() {
 
     const box = document.getElementById('featureGrid');
     box.innerHTML = WTC_UI.loadingHTML('Loading feature buttons...');
@@ -252,9 +361,21 @@ window.addEventListener("popstate", () => {
     `;
   }
 
-  async function openFeatureByIndex(index) {
-    const feature = currentFeatures[index];
-    if (!feature) return;
+  async function openFeatureByIndex(index, options={}) {
+    const sourceFeature = currentFeatures[index];
+    if (!sourceFeature) return false;
+    const feature = { ...sourceFeature, user, subject:selectedSubject, chapter:selectedChapter };
+
+    if (feature.type === 'dynamic' && !options.restore) {
+      writeRoute({
+        sectionId:'dynamicContentSection',
+        subjectId:selectedSubjectId(),
+        chapterId:selectedChapterId(),
+        feature:compactFeature(feature),
+        dynamic:{ view:feature.action === 'mcq' ? 'hub' : 'content', action:feature.action || '', contentId:feature.contentId || '' },
+        scrollY:0
+      });
+    }
 
     /* ======================================================
        Feature Engine v1.0
@@ -264,13 +385,13 @@ window.addEventListener("popstate", () => {
     ====================================================== */
     if (typeof WTC_FEATURE_ENGINE !== 'undefined') {
       try {
-        await WTC_FEATURE_ENGINE.open({
+        const opened = await WTC_FEATURE_ENGINE.open({
           feature,
           user,
           subject: selectedSubject,
           chapter: selectedChapter
         });
-        return;
+        return opened;
       } catch (error) {
         console.warn('Feature Engine failed; using legacy fallback.', error);
       }
@@ -305,14 +426,15 @@ window.addEventListener("popstate", () => {
     if (feature.type === 'dynamic' && window.WTC_DYNAMIC_CONTENT) {
       try {
         const opened = await WTC_DYNAMIC_CONTENT.openFeature(feature);
-        if (opened !== false) return;
+        if (opened !== false) return opened;
       } catch (error) {
         WTC_UI.toast(error.message || 'Dynamic content failed to open.', 'error');
-        return;
+        return false;
       }
     }
 
     openStaticFeature(feature.url, featureName);
+    return true;
   }
 
   /* ------- feature buttons pop-up for general student --- */
@@ -480,6 +602,85 @@ Close
       }
     });
   }
+
+  function findById(list, id, keys) {
+    return (list || []).find(item => keys.some(key => String(item[key] || '') === String(id || ''))) || null;
+  }
+
+  async function restoreSavedRoute(route) {
+    if (!route || !route.sectionId) return '';
+    const sectionId = route.sectionId;
+    const simpleSections = ['homeSection','subjectsSection','progressSection','profileSection'];
+
+    if (simpleSections.includes(sectionId)) {
+      show(sectionId, { persist:false });
+      return sectionId;
+    }
+
+    selectedSubject = findById(subjects, route.subjectId, ['subjectId','id','subjectName','name']);
+    if (!selectedSubject) {
+      show('subjectsSection', { persist:false });
+      return 'subjectsSection';
+    }
+    document.getElementById('chapterSubjectTitle').textContent = selectedSubject.subjectName || selectedSubject.name || 'Subject';
+    await loadChapters();
+
+    if (sectionId === 'chaptersSection') {
+      show('chaptersSection', { persist:false });
+      navigationStack = ['dashboard','subjects','chapters'];
+      return 'chaptersSection';
+    }
+
+    selectedChapter = findById(chapters, route.chapterId, ['chapterId','id','chapterNo','chapterName','name']);
+    if (!selectedChapter) {
+      show('chaptersSection', { persist:false });
+      return 'chaptersSection';
+    }
+    document.getElementById('featureChapterTitle').textContent = selectedChapter.chapterName || selectedChapter.name || 'Chapter';
+    await loadFeatures();
+
+    if (sectionId === 'featuresSection') {
+      show('featuresSection', { persist:false });
+      navigationStack = ['dashboard','subjects','chapters','features'];
+      return 'featuresSection';
+    }
+
+    if (sectionId !== 'dynamicContentSection' || !route.feature) {
+      show('featuresSection', { persist:false });
+      return 'featuresSection';
+    }
+
+    const wantedIdentity = featureIdentity(route.feature);
+    let featureIndex = currentFeatures.findIndex(feature => featureIdentity(feature) === wantedIdentity);
+    if (featureIndex < 0 && route.feature.contentId) {
+      featureIndex = currentFeatures.findIndex(feature => String(feature.contentId || '') === String(route.feature.contentId));
+    }
+    if (featureIndex < 0 && route.feature.action) {
+      featureIndex = currentFeatures.findIndex(feature => String(feature.action || '') === String(route.feature.action));
+    }
+    if (featureIndex < 0) {
+      show('featuresSection', { persist:false });
+      return 'featuresSection';
+    }
+
+    const opened = await openFeatureByIndex(featureIndex, { restore:true });
+    if (opened === false) {
+      show('featuresSection', { persist:false });
+      return 'featuresSection';
+    }
+    if (window.WTC_DYNAMIC_CONTENT?.restoreRefreshState) {
+      await window.WTC_DYNAMIC_CONTENT.restoreRefreshState(route.dynamic || {});
+    }
+    navigationStack = ['dashboard','subjects','chapters','features','dynamic'];
+    return 'dynamicContentSection';
+  }
+
+  function saveCurrentScroll() {
+    if (routeWritePaused) return;
+    const route = readRoute();
+    if (route) writeRoute({ scrollY:window.scrollY || 0 });
+  }
+
   /* smart navigation*/
 function backToSubjects() {
   selectedChapter = null;
@@ -503,6 +704,7 @@ function backToChapters() {
     openFeature,
     openFeatureByIndex,
     loadProgress,
+    setDynamicRoute,
     backToSubjects, 
     backToChapters
   };

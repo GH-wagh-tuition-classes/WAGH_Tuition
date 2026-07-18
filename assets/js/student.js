@@ -402,7 +402,7 @@ window.addEventListener("popstate", () => {
       ]);
 
       const staticFeatures = staticData.features || [];
-      currentFeatures = [...dynamicFeatures, ...staticFeatures];
+      currentFeatures = mergeFeatureSources(dynamicFeatures, staticFeatures);
 
       box.innerHTML = currentFeatures.length
         ? currentFeatures.map(featureButton).join('')
@@ -422,6 +422,38 @@ window.addEventListener("popstate", () => {
       console.warn('Dynamic feature map not available:', err.message);
       return [];
     }
+  }
+
+  /*
+   * One visible button per feature family.
+   * Published dynamic content wins; the existing static page remains the fallback
+   * only when that exact dynamic feature is unavailable.
+   */
+  function mergeFeatureSources(dynamicFeatures, staticFeatures) {
+    const dynamic = Array.isArray(dynamicFeatures) ? dynamicFeatures : [];
+    const fallback = Array.isArray(staticFeatures) ? staticFeatures : [];
+    const dynamicFamilies = new Set(dynamic.map(featureFamily).filter(Boolean));
+    return dynamic.concat(fallback.filter(feature => !dynamicFamilies.has(featureFamily(feature))));
+  }
+
+  function featureFamily(feature) {
+    if (!feature) return '';
+    if (window.WTC_FEATURE_ENGINE && typeof WTC_FEATURE_ENGINE.resolveFeatureId === 'function') {
+      return WTC_FEATURE_ENGINE.resolveFeatureId(feature);
+    }
+    const source = [feature.featureId, feature.action, feature.featureName, feature.name, feature.type, feature.url]
+      .filter(Boolean).join(' ').toLowerCase();
+    if (source.includes('answer writing') || source.includes('answerwriting')) return 'ANSWER_WRITING';
+    if (source.includes('solution')) return 'SOLUTION';
+    if (source.includes('worksheet')) return 'WORKSHEET';
+    if (source.includes('mcq') || source.includes('quiz') || source.includes('test')) return 'MCQ';
+    if (source.includes('lesson')) return 'LESSON';
+    if (source.includes('notes')) return 'NOTES';
+    if (source.includes('video')) return 'VIDEO';
+    if (source.includes('revision')) return 'REVISION';
+    if (source.includes('digital lab')) return 'DIGITAL_LAB';
+    if (source.includes('activity')) return 'ACTIVITY';
+    return String(feature.featureId || feature.featureName || feature.name || feature.url || '').trim().toUpperCase();
   }
 
   function featureButton(feature, index) {

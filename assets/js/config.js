@@ -9,7 +9,7 @@ window.WTC_CONFIG = {
   WHATSAPP_NUMBER: '919537036383',
   WHATSAPP_LINK: 'https://wa.me/919537036383',
   PERFORMANCE: {
-    CACHE_VERSION: 'stage1-solution-identity-v1',
+    CACHE_VERSION: 'stage1-published-feature-visibility-v1',
     API_TIMEOUT_MS: 15000,
     ASSESSMENT_TIMEOUT_MS: 18000,
     READ_RETRY_COUNT: 1,

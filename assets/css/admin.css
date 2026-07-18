@@ -10,3 +10,43 @@
 .panel.active{
     display:block;
 }
+
+
+/* ===== Student Profile Change Approval System v1.0 ===== */
+.profile-admin-launcher{display:flex;justify-content:space-between;gap:18px;align-items:center}
+.profile-admin-launcher h2{margin:0 0 6px}
+.profile-admin-launcher-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pending-request-count{display:inline-flex;align-items:center;gap:5px;padding:9px 12px;border-radius:999px;background:#fff7ed;color:#c2410c;font-weight:800}
+.pending-request-count b{font-size:18px}
+.profile-admin-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
+.profile-admin-heading h2{margin:0 0 5px}
+.admin-password-confirmation{display:grid;gap:7px;padding:14px;border:1px solid #fed7aa;border-radius:14px;background:#fffaf5;margin-bottom:14px}
+.admin-password-confirmation label{font-weight:900}
+.admin-password-confirmation input{width:100%;max-width:420px}
+.admin-password-confirmation small{color:#9a3412}
+.profile-request-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.profile-admin-list{display:grid;gap:14px}
+.profile-admin-request{border:1px solid var(--border);border-radius:16px;padding:16px;background:#fff}
+.profile-admin-request.pending{border-left:5px solid #f59e0b}
+.profile-admin-request.applied{border-left:5px solid #22c55e}
+.profile-admin-request.rejected{border-left:5px solid #ef4444}
+.profile-admin-request.cancelled{border-left:5px solid #94a3b8}
+.profile-admin-request-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.profile-admin-request-head h3{margin:0 0 4px}
+.profile-admin-status{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:900;background:#e2e8f0}
+.profile-admin-status.pending{background:#ffedd5;color:#c2410c}
+.profile-admin-status.applied{background:#dcfce7;color:#166534}
+.profile-admin-status.rejected{background:#fee2e2;color:#991b1b}
+.profile-admin-status.cancelled{background:#e2e8f0;color:#475569}
+.profile-admin-diff{display:grid;gap:8px;margin:14px 0}
+.profile-admin-diff-row{display:grid;grid-template-columns:minmax(100px,.7fr) minmax(0,1fr) 28px minmax(0,1fr);gap:8px;align-items:center;padding:10px;border-radius:11px;background:#f8fafc;font-size:13px}
+.profile-admin-diff-row strong{color:#64748b}
+.profile-admin-diff-row span{overflow-wrap:anywhere}
+.profile-admin-reason{padding:11px 12px;border-radius:11px;background:#f8fafc;margin:10px 0;font-size:13px}
+.profile-admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.profile-admin-empty{padding:18px;border:1px dashed var(--border);border-radius:14px;text-align:center;color:#64748b}
+@media(max-width:700px){
+  .profile-admin-launcher,.profile-admin-heading,.profile-admin-request-head{flex-direction:column;align-items:stretch}
+  .profile-admin-diff-row{grid-template-columns:1fr}
+  .profile-admin-diff-row .profile-admin-arrow{display:none}
+}

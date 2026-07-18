@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.2-solution-identity */
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.2-runtime-reliability */
 window.WTC_DYNAMIC_CONTENT = (() => {
   const state = {
     context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
@@ -40,6 +40,20 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     ).trim();
   }
 
+  function progressProfile() {
+    return {
+      studentId:studentId(),
+      board:state.user?.board || '',
+      className:state.user?.className || state.user?.class || '',
+      medium:state.user?.medium || ''
+    };
+  }
+
+  function currentAttemptId() {
+    const safeTest = String(state.activeTest?.testId || 'TEST').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48);
+    return `MCQATT${Number(state.startedAt || Date.now())}_${safeTest}_${studentId().slice(-12)}`;
+  }
+
   async function openMCQEngine(mcqSetId) {
     renderContentShell('MCQ Test', loadingCard('Preparing your personalized tests…'));
     const response = await WTC_ASSESSMENT_API.getMCQ(mcqSetId);
@@ -61,7 +75,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     }
 
     try {
-      state.progressReport = await WTC_API.getMCQProgressReport(studentId());
+      state.progressReport = await WTC_API.getMCQProgressReport(progressProfile());
     } catch (error) {
       state.progressReport = { success:false, testPerformance:[] };
     }
@@ -268,6 +282,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     let saveResult = { success:false, message:'Result could not be saved.' };
     try {
       saveResult = await WTC_API.saveMCQResult({
+        attemptId:currentAttemptId(),
         studentId:studentId(), name:state.user.name || '', mobile:state.user.mobile || '',
         board:state.user.board || '', className:state.user.className || state.user.class || '',
         medium:state.user.medium || '', subjectId:subject.subjectId || subject.id || '',
@@ -282,7 +297,7 @@ window.WTC_DYNAMIC_CONTENT = (() => {
         attemptDetails:JSON.stringify(details)
       });
       localStorage.removeItem(resumeKey(state.activeTest.testId));
-      try { state.progressReport = await WTC_API.getMCQProgressReport(studentId()); } catch (error) {}
+      try { state.progressReport = await WTC_API.getMCQProgressReport(progressProfile()); } catch (error) {}
       document.dispatchEvent(new CustomEvent('wtc:progress-updated'));
     } catch (error) {
       saveResult = { success:false, message:error.message || 'Result could not be saved.' };

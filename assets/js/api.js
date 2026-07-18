@@ -221,6 +221,20 @@ const WTC_API = (() => {
     }
   }
 
+  function progressPayload(studentOrParams, forceRefresh=false) {
+    const source = (studentOrParams && typeof studentOrParams === 'object')
+      ? studentOrParams
+      : { studentId:studentOrParams };
+    return {
+      action:'getMCQProgressReport',
+      studentId:source.studentId || source.id || '',
+      board:source.board || '',
+      className:source.className || source.class || '',
+      medium:source.medium || '',
+      forceRefresh:Boolean(forceRefresh)
+    };
+  }
+
   function clearStudentData(studentId) {
     const id = String(studentId || '');
     clearActions(['getStudentBootstrap','getStudentProgress','getMCQProgressReport']);
@@ -256,7 +270,7 @@ const WTC_API = (() => {
     getStudentProgress: (studentId, forceRefresh=false) => read({ action:'getStudentProgress', studentId }, {
       ttlMs:ttl('PROGRESS', 10000), forceRefresh, persistent:false
     }),
-    getMCQProgressReport: (studentId, forceRefresh=false) => read({ action:'getMCQProgressReport', studentId, forceRefresh:Boolean(forceRefresh) }, {
+    getMCQProgressReport: (studentOrParams, forceRefresh=false) => read(progressPayload(studentOrParams, forceRefresh), {
       ttlMs:ttl('MCQ_PROGRESS', 15000), forceRefresh, persistent:false
     }),
     saveMCQResult: async data => {
@@ -265,7 +279,10 @@ const WTC_API = (() => {
         ...data,
         deviceId:data.deviceId || deviceId(),
         sourceType:data.sourceType || 'Dynamic MCQ'
-      }, { dedupe:true, retries:0 });
+      }, {
+        dedupe:true, retries:0,
+        timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+      });
       if (response?.success !== false) clearStudentData(data.studentId);
       return response;
     },

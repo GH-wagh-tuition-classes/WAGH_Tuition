@@ -251,6 +251,13 @@ window.addEventListener("popstate", () => {
     }
   }
 
+  function applyCatalogSummary(catalog={}) {
+    const subjectTotal = Number(catalog.subjectCount ?? subjects.length ?? 0);
+    const chapterTotal = Number(catalog.chapterCount ?? 0);
+    setText('subjectCount', subjectTotal);
+    setText('chapterCount', chapterTotal);
+  }
+
   function applyBasicProgress(progress={}) {
     const percent = Number(progress.percent ?? progress.overallPercent ?? progress.averagePercent ?? 0);
     setText('progressPercent', percent + '%');
@@ -275,6 +282,7 @@ window.addEventListener("popstate", () => {
     const refresh = WTC_API.getStudentBootstrap(profile)
       .then(data => {
         applySubjects(data.subjects || []);
+        applyCatalogSummary(data.catalog || { subjectCount:(data.subjects || []).length, chapterCount:data.chapterCount || 0 });
         applyBasicProgress(Array.isArray(data.progress) ? data.progress[0] : (data.progress || {}));
         return data;
       })
@@ -349,7 +357,6 @@ window.addEventListener("popstate", () => {
       }, forceRefresh);
 
       chapters = data.chapters || [];
-      document.getElementById('chapterCount').textContent = chapters.length;
 
       box.innerHTML = chapters.length
         ? chapters.map(chapterCard).join('')
@@ -605,7 +612,7 @@ Close
     try {
       const [basic, report] = await Promise.all([
         WTC_API.getStudentProgress(studentId, forceRefresh).catch(() => ({ progress:{ percent:0 } })),
-        WTC_API.getMCQProgressReport(studentId, forceRefresh).catch(() => null)
+        WTC_API.getMCQProgressReport(subjectRequestProfile(), forceRefresh).catch(() => null)
       ]);
       const progress = Array.isArray(basic.progress) ? basic.progress[0] : basic.progress;
       const summary = report?.summary || {};

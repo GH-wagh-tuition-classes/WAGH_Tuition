@@ -52,6 +52,8 @@ const AdminApp = (() => {
       document.getElementById('studentTotal').textContent = data.totalStudents || 0;
       document.getElementById('teacherTotal').textContent = data.totalTeachers || 0;
       document.getElementById('logTotal').textContent = data.totalLogs || 0;
+      const pendingBox = document.getElementById('profileRequestPendingTotal');
+      if (pendingBox) pendingBox.textContent = Number(data.pendingProfileRequests || 0);
     } catch (err) {
       WTC_UI.toast(err.message || 'Admin dashboard failed.', 'error');
     }
@@ -393,6 +395,171 @@ async function loadChapterFeaturesManager() {
 }
 // feature chapter update to excel by admin code end here
 
+
+  async function loadProfileChangeRequests(status='PENDING') {
+    const box = document.getElementById('profileRequestAdminList');
+    if (!box) return;
+
+    box.innerHTML = '<div class="profile-admin-empty">Loading student profile requests…</div>';
+
+    try {
+      const data = await WTC_API.getProfileChangeRequests(status);
+      if (!data.success) throw new Error(data.message || 'Could not load profile requests.');
+
+      const pendingBox = document.getElementById('profileRequestPendingTotal');
+      if (pendingBox) pendingBox.textContent = Number(data.pendingCount || 0);
+
+      const requests = Array.isArray(data.requests) ? data.requests : [];
+      box.innerHTML = requests.length
+        ? requests.map(renderAdminProfileRequest).join('')
+        : `<div class="profile-admin-empty">No ${status === 'ALL' ? '' : status.toLowerCase() + ' '}profile change requests found.</div>`;
+    } catch (err) {
+      box.innerHTML = `<div class="profile-admin-empty">${escapeHTML(err.message || 'Could not load profile requests.')}</div>`;
+      WTC_UI.toast(err.message || 'Could not load profile requests.', 'error');
+    }
+  }
+
+  function renderAdminProfileRequest(item) {
+    const status = String(item.status || 'PENDING').toUpperCase();
+    const statusClass = status.toLowerCase();
+    const changes = [];
+
+    pushAdminDiff(changes, 'Name', item.studentName, item.requestedName);
+    pushAdminDiff(changes, 'Mobile', item.currentMobile, item.requestedMobile);
+    pushAdminDiff(changes, 'Board', item.currentBoard, item.requestedBoard);
+    pushAdminDiff(changes, 'Class', item.currentClassName, item.requestedClassName);
+    pushAdminDiff(changes, 'Medium', item.currentMedium, item.requestedMedium);
+
+    return `
+      <article class="profile-admin-request ${statusClass}">
+        <div class="profile-admin-request-head">
+          <div>
+            <h3>${escapeHTML(item.studentName || 'Student')}</h3>
+            <p class="muted">Student ID: ${escapeHTML(item.studentId || '')} · Request: ${escapeHTML(item.requestId || '')}</p>
+          </div>
+          <span class="profile-admin-status ${statusClass}">${escapeHTML(adminProfileStatusLabel(status))}</span>
+        </div>
+
+        <div class="profile-admin-diff">
+          ${changes.join('') || '<div class="profile-admin-empty">No changed fields found.</div>'}
+        </div>
+
+        <div class="profile-admin-reason"><b>Student reason:</b> ${escapeHTML(item.reason || '—')}</div>
+        <p class="muted">Requested: ${escapeHTML(item.requestedAt || '—')}
+          ${item.reviewedAt ? ` · Reviewed: ${escapeHTML(item.reviewedAt)}` : ''}
+        </p>
+        ${item.adminRemarks ? `<div class="profile-admin-reason"><b>Admin note:</b> ${escapeHTML(item.adminRemarks)}</div>` : ''}
+
+        ${status === 'PENDING' ? `
+          <div class="profile-admin-actions">
+            <button class="btn small success" type="button" onclick="AdminApp.approveProfileRequest('${escapeHTML(item.requestId || '')}')">Approve &amp; Apply</button>
+            <button class="btn small danger" type="button" onclick="AdminApp.rejectProfileRequest('${escapeHTML(item.requestId || '')}')">Reject</button>
+          </div>
+        ` : ''}
+      </article>
+    `;
+  }
+
+  function pushAdminDiff(lines, label, currentValue, requestedValue) {
+    const current = String(currentValue || '—');
+    const requested = String(requestedValue || current);
+    if (current === requested) return;
+
+    lines.push(`
+      <div class="profile-admin-diff-row">
+        <strong>${escapeHTML(label)}</strong>
+        <span>${escapeHTML(current)}</span>
+        <span class="profile-admin-arrow">→</span>
+        <span><b>${escapeHTML(requested)}</b></span>
+      </div>
+    `);
+  }
+
+  function adminProfileStatusLabel(status) {
+    return ({
+      PENDING:'Pending',
+      APPLIED:'Approved & Applied',
+      REJECTED:'Rejected',
+      CANCELLED:'Cancelled'
+    })[status] || status;
+  }
+
+  function adminReviewCredentials() {
+    const input = document.getElementById('profileRequestAdminPassword');
+    const adminPassword = input?.value || '';
+
+    if (!adminPassword) {
+      WTC_UI.toast('Enter your admin password before reviewing a request.', 'error');
+      input?.focus();
+      return null;
+    }
+
+    return {
+      adminId:adminUser.adminId || adminUser.id || '',
+      adminMobile:adminUser.mobile || '',
+      adminPassword
+    };
+  }
+
+  async function approveProfileRequest(requestId) {
+    const credentials = adminReviewCredentials();
+    if (!credentials) return;
+
+    const confirmed = window.confirm(
+      'Approve this request and update the student profile now? Existing progress will remain stored under the previous Board, Class and Medium.'
+    );
+    if (!confirmed) return;
+
+    const adminRemarks = window.prompt('Optional admin note for this approval:', '') || '';
+
+    try {
+      const data = await WTC_API.approveProfileChangeRequest({
+        requestId,
+        adminRemarks,
+        ...credentials
+      });
+      if (!data.success) return WTC_UI.toast(data.message || 'Approval failed.', 'error');
+
+      clearAdminReviewPassword();
+      WTC_UI.toast(data.message || 'Request approved and applied.', 'success');
+      await Promise.all([loadProfileChangeRequests('PENDING'), loadDashboard()]);
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Approval failed.', 'error');
+    }
+  }
+
+  async function rejectProfileRequest(requestId) {
+    const credentials = adminReviewCredentials();
+    if (!credentials) return;
+
+    const adminRemarks = window.prompt('Reason for rejecting this request:');
+    if (adminRemarks === null) return;
+    if (!String(adminRemarks).trim()) {
+      return WTC_UI.toast('Enter a reason before rejecting the request.', 'error');
+    }
+
+    try {
+      const data = await WTC_API.rejectProfileChangeRequest({
+        requestId,
+        adminRemarks:String(adminRemarks).trim(),
+        ...credentials
+      });
+      if (!data.success) return WTC_UI.toast(data.message || 'Rejection failed.', 'error');
+
+      clearAdminReviewPassword();
+      WTC_UI.toast(data.message || 'Request rejected.', 'success');
+      await Promise.all([loadProfileChangeRequests('PENDING'), loadDashboard()]);
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Rejection failed.', 'error');
+    }
+  }
+
+  function clearAdminReviewPassword() {
+    const input = document.getElementById('profileRequestAdminPassword');
+    if (input) input.value = '';
+  }
+
+
   function escapeHTML(value = '') {
     return String(value).replace(/[&<>\"]/g, char => ({
       '&': '&amp;',
@@ -412,7 +579,10 @@ async function loadChapterFeaturesManager() {
     editSubject, //edit subject master from admin panel 
     loadChaptersManager, //load chapters to chapter manager in admin 
     editChapter, //edit chapters to excel by admin 
-    loadChapterFeaturesManager // feature chapter update to excel by admin 
+    loadChapterFeaturesManager, // feature chapter update to excel by admin
+    loadProfileChangeRequests,
+    approveProfileRequest,
+    rejectProfileRequest
   };
 })();
 

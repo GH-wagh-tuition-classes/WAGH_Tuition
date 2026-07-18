@@ -227,6 +227,7 @@ window.addEventListener("popstate", () => {
     });
 
     if (sectionId === 'progressSection') loadProgress();
+    if (sectionId === 'profileSection') loadMyProfileRequests();
     if (options.persist !== false) recordSection(sectionId);
   }
 
@@ -696,33 +697,241 @@ Close
   }
 
   function bindProfile() {
-    const form = document.getElementById('profileForm');
+    renderProfileSummary();
+
+    const requestForm = document.getElementById('profileChangeRequestForm');
+    const passwordForm = document.getElementById('passwordChangeForm');
+
+    fillProfileRequestForm();
+
+    if (requestForm && !requestForm.dataset.bound) {
+      requestForm.dataset.bound = 'true';
+      requestForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const payload = Object.fromEntries(new FormData(requestForm).entries());
+        payload.studentId = user.id || user.studentId;
+
+        try {
+          setProfileFormBusy(requestForm, true);
+          const data = await WTC_API.createProfileChangeRequest(payload);
+          if (!data.success) {
+            await loadMyProfileRequests();
+            return WTC_UI.toast(data.message || 'Profile change request failed.', 'error');
+          }
+          requestForm.currentPassword.value = '';
+          requestForm.reason.value = '';
+          requestForm.requestedMobile.value = '';
+          WTC_UI.toast(data.message || 'Request sent for admin approval.', 'success');
+          await loadMyProfileRequests();
+        } catch (err) {
+          WTC_UI.toast(err.message || 'Profile change request failed.', 'error');
+        } finally {
+          setProfileFormBusy(requestForm, false);
+        }
+      });
+    }
+
+    if (passwordForm && !passwordForm.dataset.bound) {
+      passwordForm.dataset.bound = 'true';
+      passwordForm.addEventListener('submit', async event => {
+        event.preventDefault();
+
+        const payload = Object.fromEntries(new FormData(passwordForm).entries());
+        if (payload.newPassword !== payload.confirmPassword) {
+          return WTC_UI.toast('New password and confirmation do not match.', 'error');
+        }
+
+        try {
+          setProfileFormBusy(passwordForm, true);
+          const data = await WTC_API.changeStudentPassword({
+            studentId:user.id || user.studentId,
+            currentPassword:payload.currentPassword,
+            newPassword:payload.newPassword
+          });
+          if (!data.success) return WTC_UI.toast(data.message || 'Password change failed.', 'error');
+          passwordForm.reset();
+          WTC_UI.toast(data.message || 'Password changed successfully.', 'success');
+        } catch (err) {
+          WTC_UI.toast(err.message || 'Password change failed.', 'error');
+        } finally {
+          setProfileFormBusy(passwordForm, false);
+        }
+      });
+    }
+
+    loadMyProfileRequests();
+  }
+
+  function setProfileFormBusy(form, busy) {
     if (!form) return;
-
-    ['name', 'mobile', 'board', 'className', 'medium'].forEach(key => {
-      if (form[key]) form[key].value = user[key] || user.class || '';
+    form.querySelectorAll('input,select,textarea,button').forEach(control => {
+      control.disabled = Boolean(busy);
     });
+  }
 
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
+  function maskMobile(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    return digits ? `••••••${digits.slice(-4)}` : 'Not available';
+  }
 
-      const payload = Object.fromEntries(new FormData(form).entries());
-      payload.studentId = user.id || user.studentId;
+  function renderProfileSummary(maskedMobile) {
+    setText('profileDisplayName', user?.name || 'Student');
+    setText('profileDisplayMobile', maskedMobile || maskMobile(user?.mobile));
+    setText('profileDisplayBoard', user?.board || '—');
+    setText('profileDisplayClass', user?.className || user?.class || '—');
+    setText('profileDisplayMedium', user?.medium || '—');
+  }
 
-      try {
-        const data = await WTC_API.updateStudentProfile(payload);
-        if (!data.success) return WTC_UI.toast(data.message || 'Profile update failed.', 'error');
+  function fillProfileRequestForm() {
+    const form = document.getElementById('profileChangeRequestForm');
+    if (!form) return;
+    if (form.requestedName) form.requestedName.value = user?.name || '';
+    if (form.requestedBoard) form.requestedBoard.value = user?.board || 'CBSE';
+    if (form.requestedClassName) form.requestedClassName.value = user?.className || user?.class || 'Class 10';
+    if (form.requestedMedium) form.requestedMedium.value = user?.medium || 'English Medium';
+    if (form.requestedMobile) form.requestedMobile.value = '';
+  }
 
-        user = { ...user, ...payload };
-        delete user.password;
+  async function loadMyProfileRequests() {
+    const box = document.getElementById('profileRequestStatus');
+    const form = document.getElementById('profileChangeRequestForm');
+    if (!box || !user) return;
+
+    box.innerHTML = '<div class="profile-request-empty">Loading profile request status…</div>';
+
+    try {
+      const previousProfile = {
+        name:user.name || '',
+        mobile:user.mobile || '',
+        board:user.board || '',
+        className:user.className || user.class || '',
+        medium:user.medium || ''
+      };
+
+      const data = await WTC_API.getMyProfileChangeRequests(user.id || user.studentId);
+      if (!data.success) throw new Error(data.message || 'Could not load profile requests.');
+
+      if (data.student) {
+        user = { ...user, ...data.student };
         WTC_AUTH.setUser(user);
         fillUser();
-        WTC_UI.toast('Profile saved successfully.', 'success');
-        await loadSubjects(true);
-      } catch (err) {
-        WTC_UI.toast(err.message, 'error');
+        renderProfileSummary(data.maskedMobile);
+        fillProfileRequestForm();
+
+        const profileChanged = previousProfile.name !== (user.name || '') ||
+          previousProfile.mobile !== (user.mobile || '') ||
+          previousProfile.board !== (user.board || '') ||
+          previousProfile.className !== (user.className || user.class || '') ||
+          previousProfile.medium !== (user.medium || '');
+
+        if (profileChanged) {
+          WTC_API.clearStudentData(user.id || user.studentId);
+          subjects = [];
+          chapters = [];
+          selectedSubject = null;
+          selectedChapter = null;
+          await loadInitialData();
+        }
+      } else {
+        renderProfileSummary(data.maskedMobile);
       }
-    });
+
+      const requests = Array.isArray(data.requests) ? data.requests : [];
+      box.innerHTML = requests.length
+        ? requests.map(renderStudentProfileRequest).join('')
+        : '<div class="profile-request-empty">No profile change request has been submitted.</div>';
+
+      if (form) form.hidden = Boolean(data.pendingRequest);
+    } catch (err) {
+      box.innerHTML = `<div class="profile-request-empty">${WTC_UI.escape(err.message || 'Could not load profile request status.')}</div>`;
+      if (form) form.hidden = false;
+    }
+  }
+
+  function renderStudentProfileRequest(item) {
+    const status = String(item.status || 'PENDING').toUpperCase();
+    const statusClass = status.toLowerCase();
+    const changes = profileRequestChanges(item);
+    const canCancel = status === 'PENDING';
+
+    return `
+      <article class="profile-request-entry ${statusClass}">
+        <div class="profile-request-entry-head">
+          <div>
+            <h4>Request ${WTC_UI.escape(item.requestId || '')}</h4>
+            <div class="profile-request-meta">Submitted ${WTC_UI.escape(item.requestedAt || '')}</div>
+          </div>
+          <span class="profile-request-status-pill ${statusClass}">${WTC_UI.escape(profileStatusLabel(status))}</span>
+        </div>
+        <div class="profile-change-list">${changes || '<div class="profile-request-meta">No visible change details.</div>'}</div>
+        <div class="profile-request-meta"><b>Reason:</b> ${WTC_UI.escape(item.reason || '—')}</div>
+        ${item.adminRemarks ? `<div class="profile-request-remarks"><b>Admin note:</b> ${WTC_UI.escape(item.adminRemarks)}</div>` : ''}
+        ${canCancel ? `
+          <div class="profile-cancel-row">
+            <div class="field">
+              <label>Current password to cancel</label>
+              <input id="cancelPassword_${WTC_UI.escape(item.requestId || '')}" type="password" autocomplete="current-password">
+            </div>
+            <button class="btn small outline" type="button" onclick="StudentApp.cancelProfileRequest('${WTC_UI.escape(item.requestId || '')}')">Cancel Request</button>
+          </div>` : ''}
+      </article>
+    `;
+  }
+
+  function profileRequestChanges(item) {
+    const lines = [];
+    addProfileChangeLine(lines, 'Name', userSafeCurrentName(item), item.requestedName);
+    addProfileChangeLine(lines, 'Mobile', item.currentMobileMasked, item.requestedMobileMasked);
+    addProfileChangeLine(lines, 'Board', item.currentBoard, item.requestedBoard);
+    addProfileChangeLine(lines, 'Class', item.currentClassName, item.requestedClassName);
+    addProfileChangeLine(lines, 'Medium', item.currentMedium, item.requestedMedium);
+    return lines.join('');
+  }
+
+  function userSafeCurrentName(item) {
+    return item.studentName || user?.name || 'Current name';
+  }
+
+  function addProfileChangeLine(lines, label, currentValue, requestedValue) {
+    const current = String(currentValue || '—');
+    const requested = String(requestedValue || current);
+    if (current === requested) return;
+    lines.push(`
+      <div class="profile-change-line">
+        <strong>${WTC_UI.escape(label)}</strong>
+        <span>${WTC_UI.escape(current)}</span>
+        <span class="profile-arrow">→</span>
+        <span><b>${WTC_UI.escape(requested)}</b></span>
+      </div>
+    `);
+  }
+
+  function profileStatusLabel(status) {
+    return ({
+      PENDING:'Pending Admin Approval',
+      APPLIED:'Approved & Applied',
+      REJECTED:'Rejected',
+      CANCELLED:'Cancelled'
+    })[status] || status;
+  }
+
+  async function cancelProfileRequest(requestId) {
+    const input = document.getElementById(`cancelPassword_${requestId}`);
+    const currentPassword = input?.value || '';
+    if (!currentPassword) return WTC_UI.toast('Enter your current password to cancel the request.', 'error');
+
+    try {
+      const data = await WTC_API.cancelProfileChangeRequest({
+        requestId,
+        studentId:user.id || user.studentId,
+        currentPassword
+      });
+      if (!data.success) return WTC_UI.toast(data.message || 'Could not cancel the request.', 'error');
+      WTC_UI.toast(data.message || 'Request cancelled.', 'success');
+      await loadMyProfileRequests();
+    } catch (err) {
+      WTC_UI.toast(err.message || 'Could not cancel the request.', 'error');
+    }
   }
 
   function findById(list, id, keys) {
@@ -826,6 +1035,8 @@ function backToChapters() {
     openFeature,
     openFeatureByIndex,
     loadProgress,
+    loadMyProfileRequests,
+    cancelProfileRequest,
     setDynamicRoute,
     backToSubjects, 
     backToChapters

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Runtime API client Stage 1 Performance v1.0 */
+/* WAGH Tuition Classes — Runtime API client cumulative PCR1 */
 const WTC_API = (() => {
   const inFlight = new Map();
   const memoryCache = new Map();
@@ -250,10 +250,57 @@ const WTC_API = (() => {
     login: (mobile,password,role='Student') => raw({ action:'login', mobile, password, role, deviceId:deviceId() }),
     signupStudent: (student) => raw({ action:'signupStudent', ...student, deviceId:deviceId() }),
     updateStudentProfile: async profile => {
-      const data = await raw({ action:'updateStudentProfile', ...profile, deviceId:deviceId() });
+      const data = await raw({ action:'updateStudentProfile', ...profile, deviceId:deviceId() }, {
+        dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+      });
       if (data?.success !== false) clearActions(['getStudentBootstrap','getSubjects','getChapters','getChapterFeatures']);
       return data;
     },
+    changeStudentPassword: data => raw({
+      action:'changeStudentPassword',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    createProfileChangeRequest: data => raw({
+      action:'createProfileChangeRequest',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    getMyProfileChangeRequests: studentId => raw({
+      action:'getMyProfileChangeRequests',
+      studentId,
+      deviceId:deviceId()
+    }, { dedupe:true, retries:1 }),
+    cancelProfileChangeRequest: data => raw({
+      action:'cancelProfileChangeRequest',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    getProfileChangeRequests: (status='PENDING') => raw({
+      action:'getProfileChangeRequests',
+      status,
+      deviceId:deviceId()
+    }, { dedupe:true, retries:1 }),
+    approveProfileChangeRequest: data => raw({
+      action:'approveProfileChangeRequest',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    rejectProfileChangeRequest: data => raw({
+      action:'rejectProfileChangeRequest',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
     getStudentBootstrap,
     getSubjects: (student, forceRefresh=false) => read(subjectPayload(student), {
       ttlMs:ttl('SUBJECTS', 900000), forceRefresh, fallbackKey:'subjects', persistent:true

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
-  <link rel="stylesheet" href="assets/css/admin.css">
+  <link rel="stylesheet" href="assets/css/admin.css?v=pcr1">
   <link rel="stylesheet" href="assets/css/admin-ai.css">
 </head>
 <body>
@@ -35,6 +35,46 @@
     <div class="card"><h3>Students</h3><p id="studentTotal">Loading...</p></div>
     <div class="card"><h3>Teachers</h3><p id="teacherTotal">Loading...</p></div>
     <div class="card"><h3>Logs</h3><p id="logTotal">Loading...</p></div>
+  </section>
+
+  <br>
+
+  <div class="card profile-admin-launcher">
+    <div>
+      <h2>🪪 Student Profile Change Requests</h2>
+      <p class="muted">Review requested changes to student name, mobile, board, class and medium.</p>
+    </div>
+    <div class="profile-admin-launcher-actions">
+      <span class="pending-request-count"><b id="profileRequestPendingTotal">0</b> pending</span>
+      <button class="btn" onclick="showPanel('profileRequestPanel',this);AdminApp.loadProfileChangeRequests()">Open Requests</button>
+    </div>
+  </div>
+
+  <section id="profileRequestPanel" class="panel">
+    <div class="card">
+      <div class="profile-admin-heading">
+        <div>
+          <h2>🪪 Profile Change Approval</h2>
+          <p class="muted">Approval updates STUDENT_MASTER. Existing progress remains stored under the original profile combination.</p>
+        </div>
+        <button class="btn small outline" type="button" onclick="AdminApp.loadProfileChangeRequests()">🔄 Refresh</button>
+      </div>
+
+      <div class="admin-password-confirmation">
+        <label for="profileRequestAdminPassword">Admin password confirmation</label>
+        <input id="profileRequestAdminPassword" type="password" autocomplete="current-password" placeholder="Required for Approve or Reject">
+        <small>The password is sent only for this review action and is not stored in the page.</small>
+      </div>
+
+      <div class="profile-request-filters">
+        <button class="btn small" type="button" onclick="AdminApp.loadProfileChangeRequests('PENDING')">Pending</button>
+        <button class="btn small outline" type="button" onclick="AdminApp.loadProfileChangeRequests('ALL')">All Requests</button>
+      </div>
+
+      <div id="profileRequestAdminList" class="profile-admin-list">
+        <p class="muted">Open or refresh to load student requests.</p>
+      </div>
+    </div>
   </section>
 
   <br>
@@ -277,11 +317,11 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/js/api.js"></script>
+<script src="assets/js/api.js?v=pcr1"></script>
 <script src="assets/js/assessment-config.js"></script>
 <script src="assets/js/assessment-api.js"></script>
 <script src="assets/js/ai-content.js"></script>
 <script src="assets/js/static-content-importer.js"></script>
-<script src="assets/js/admin.js"></script>
+<script src="assets/js/admin.js?v=pcr1"></script>
 </body>
 </html>

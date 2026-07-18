@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Portal | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
-  <link rel="stylesheet" href="assets/css/student.css?v=2.0">
+  <link rel="stylesheet" href="assets/css/student.css?v=2.3.2p-pcr1">
   <link rel="stylesheet" href="assets/css/student-content.css?v=2.0">
   <link rel="preload" href="assets/fonts/noto-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/noto-serif-gujarati-gujarati-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -157,19 +157,82 @@
     </section>
 
     <section id="profileSection" class="page-section">
-      <h2>Profile</h2>
-      <div class="card">
-        <form id="profileForm">
-          <div class="profile-grid">
-            <div class="field"><label>Name</label><input name="name"></div>
-            <div class="field"><label>Mobile</label><input name="mobile" inputmode="numeric"></div>
-            <div class="field"><label>Board</label><select name="board"><option>CBSE</option><option>GSEB</option></select></div>
-            <div class="field"><label>Class</label><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
-            <div class="field"><label>Medium</label><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select></div>
-            <div class="field"><label>New Password</label><input name="password" type="password" placeholder="Optional"></div>
+      <div class="profile-section-heading">
+        <div>
+          <span class="pill">ACCOUNT SECURITY</span>
+          <h2>Profile &amp; Password</h2>
+          <p class="muted">Only your password can be changed immediately. Other account details require admin approval.</p>
+        </div>
+      </div>
+
+      <div class="card profile-summary-card">
+        <div class="profile-lock-title">
+          <div>
+            <h3>Registered Student Details</h3>
+            <p class="muted">These details are locked to protect your learning records.</p>
           </div>
-          <br>
-          <button class="btn success" type="submit">Save & Improve Profile</button>
+          <span class="profile-lock-badge">🔒 Admin controlled</span>
+        </div>
+        <div class="profile-readonly-grid">
+          <div class="profile-readonly-item"><span>Name</span><b id="profileDisplayName">Student</b></div>
+          <div class="profile-readonly-item"><span>Mobile</span><b id="profileDisplayMobile">••••••0000</b></div>
+          <div class="profile-readonly-item"><span>Board</span><b id="profileDisplayBoard">—</b></div>
+          <div class="profile-readonly-item"><span>Class</span><b id="profileDisplayClass">—</b></div>
+          <div class="profile-readonly-item"><span>Medium</span><b id="profileDisplayMedium">—</b></div>
+        </div>
+        <p class="profile-privacy-note">Your complete registered mobile number is not displayed in the student portal.</p>
+      </div>
+
+      <div class="card profile-request-card">
+        <div class="profile-lock-title">
+          <div>
+            <h3>Request a Profile Change</h3>
+            <p class="muted">Request changes to name, mobile, board, class or medium. An administrator must approve the request.</p>
+          </div>
+          <span class="profile-request-badge">Admin approval</span>
+        </div>
+
+        <div id="profileRequestStatus" class="profile-request-status">
+          <p class="muted">Loading your request status…</p>
+        </div>
+
+        <form id="profileChangeRequestForm">
+          <div class="profile-grid">
+            <div class="field"><label>Requested Name</label><input name="requestedName" autocomplete="name" required></div>
+            <div class="field">
+              <label>Requested Mobile</label>
+              <input name="requestedMobile" inputmode="numeric" maxlength="10" placeholder="Enter only when changing mobile">
+              <small>Leave blank to keep the current registered mobile.</small>
+            </div>
+            <div class="field"><label>Requested Board</label><select name="requestedBoard"><option>CBSE</option><option>GSEB</option></select></div>
+            <div class="field"><label>Requested Class</label><select name="requestedClassName"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select></div>
+            <div class="field"><label>Requested Medium</label><select name="requestedMedium"><option>English Medium</option><option>Gujarati Medium</option></select></div>
+            <div class="field"><label>Reason</label><textarea name="reason" rows="3" placeholder="Why should this information be changed?" required></textarea></div>
+            <div class="field"><label>Current Password</label><input name="currentPassword" type="password" autocomplete="current-password" required></div>
+          </div>
+          <div class="profile-form-actions">
+            <button class="btn" type="submit">📨 Send Request to Admin</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card password-change-card">
+        <div class="profile-lock-title">
+          <div>
+            <h3>Change Password</h3>
+            <p class="muted">Password changes are applied immediately after your current password is verified.</p>
+          </div>
+          <span class="password-direct-badge">Direct change</span>
+        </div>
+        <form id="passwordChangeForm">
+          <div class="profile-grid">
+            <div class="field"><label>Current Password</label><input name="currentPassword" type="password" autocomplete="current-password" required></div>
+            <div class="field"><label>New Password</label><input name="newPassword" type="password" minlength="4" autocomplete="new-password" required></div>
+            <div class="field"><label>Confirm New Password</label><input name="confirmPassword" type="password" minlength="4" autocomplete="new-password" required></div>
+          </div>
+          <div class="profile-form-actions">
+            <button class="btn success" type="submit">🔐 Change Password</button>
+          </div>
         </form>
       </div>
     </section>
@@ -186,12 +249,12 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/js/api.js?v=stage1.0"></script>
+<script src="assets/js/api.js?v=pcr1"></script>
 <script src="assets/js/assessment-config.js"></script>
 <script src="assets/js/assessment-api.js?v=stage1.0"></script>
   <script src="assets/js/student-dynamic-content.js?v=2.3.1p"></script>
 <!-- Feature Engine must load before student.js -->
 <script src="assets/js/feature-engine.js?v=stage1.0"></script>
-<script src="assets/js/student.js?v=2.3.2p"></script>
+<script src="assets/js/student.js?v=2.3.2p-pcr1"></script>
 </body>
 </html>

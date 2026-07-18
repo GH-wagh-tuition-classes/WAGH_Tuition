@@ -1,4 +1,4 @@
-/* WTC Assessment API client Stage 1 Performance v1.0 */
+/* WTC Assessment API client Stage 1 Performance v1.1 — Solution Identity Isolation */
 window.WTC_ASSESSMENT_API = (() => {
   const inFlight = new Map();
   const memoryCache = new Map();
@@ -138,7 +138,11 @@ window.WTC_ASSESSMENT_API = (() => {
     },
     getFeatureMap: (chapterId, forceRefresh=false) => read({ action:'getFeatureMap', chapterId }, ttl('FEATURE_MAP', 300000), forceRefresh),
     getLesson: (lessonId, forceRefresh=false) => read({ action:'getLesson', lessonId }, ttl('PUBLISHED_CONTENT', 600000), forceRefresh),
-    getSolutions: (solutionSetId, forceRefresh=false) => read({ action:'getSolutions', solutionSetId }, ttl('PUBLISHED_CONTENT', 600000), forceRefresh),
+    getSolutions: (solutionSetId, chapterIdOrForceRefresh='', forceRefresh=false) => {
+      const chapterId = typeof chapterIdOrForceRefresh === 'string' ? chapterIdOrForceRefresh : '';
+      const refresh = typeof chapterIdOrForceRefresh === 'boolean' ? chapterIdOrForceRefresh : forceRefresh;
+      return read({ action:'getSolutions', solutionSetId, chapterId }, ttl('PUBLISHED_CONTENT', 600000), refresh);
+    },
     getMCQ: (mcqSetId, forceRefresh=false) => read({ action:'getMCQ', mcqSetId }, ttl('PUBLISHED_CONTENT', 600000), forceRefresh),
     getWorksheet: (worksheetSetId, forceRefresh=false) => read({ action:'getWorksheet', worksheetSetId }, ttl('PUBLISHED_CONTENT', 600000), forceRefresh)
   };

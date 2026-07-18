@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.1-performance */
+/* WAGH Tuition Classes — Dynamic Student Content & MCQ Test Engine v2.3.2-solution-identity */
 window.WTC_DYNAMIC_CONTENT = (() => {
   const state = {
     context:null, user:null, mcqSetId:'', questions:[], questionMap:{}, tests:[],
@@ -21,10 +21,23 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     state.user = feature.user || (window.WTC_AUTH && WTC_AUTH.getUser ? WTC_AUTH.getUser() : null) || {};
     rememberRoute({ view:feature.action === 'mcq' ? 'hub' : 'content', action:feature.action || '', contentId:feature.contentId || '' });
     if (feature.action === 'lesson') return renderLesson(feature.contentId);
-    if (feature.action === 'solutions') return renderSolutions(feature.contentId);
+    if (feature.action === 'solutions') return renderSolutions(feature.contentId, contextChapterId(feature));
     if (feature.action === 'mcq') return openMCQEngine(feature.contentId);
     if (feature.action === 'worksheet' || feature.action === 'answerWriting') return renderWorksheet(feature.contentId);
     return false;
+  }
+
+
+  function contextChapterId(feature) {
+    return String(
+      feature?.chapterId ||
+      feature?.chapter?.chapterId ||
+      feature?.chapter?.id ||
+      state.context?.chapterId ||
+      state.context?.chapter?.chapterId ||
+      state.context?.chapter?.id ||
+      ''
+    ).trim();
   }
 
   async function openMCQEngine(mcqSetId) {
@@ -446,9 +459,13 @@ window.WTC_DYNAMIC_CONTENT = (() => {
     const response = await WTC_ASSESSMENT_API.getLesson(lessonId);
     renderContentShell('Lesson', response.lesson ? response.lesson.formattedHTML : emptyCard('Lesson not published yet.'));
   }
-  async function renderSolutions(solutionSetId) {
-    const response = await WTC_ASSESSMENT_API.getSolutions(solutionSetId);
+  async function renderSolutions(solutionSetId, chapterId) {
+    const response = await WTC_ASSESSMENT_API.getSolutions(solutionSetId, chapterId);
     const inside = response.solutions?.insideChapter || [], end = response.solutions?.endExercise || [];
+    const total = inside.length + end.length;
+    if (!total) {
+      throw new Error('Dynamic solutions are not published for this exact chapter. Open the available static Solution feature instead.');
+    }
     renderContentShell('Solutions', `<div class="solution-page"><h1>Solutions</h1><section><h2>Inside Chapter Questions</h2>${inside.length ? inside.map(solutionCard).join('') : '<p>No inside chapter solutions published.</p>'}</section><section><h2>End Exercise Questions</h2>${end.length ? end.map(solutionCard).join('') : '<p>No end exercise solutions published.</p>'}</section></div>`);
   }
   async function renderWorksheet(worksheetSetId) {

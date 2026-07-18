@@ -1,5 +1,5 @@
 /*
-WAGH Tuition Classes - Static Page Importer v1.1
+WAGH Tuition Classes - Static Page Importer v1.2 Solution Identity Isolation
 Reads trusted WTC static HTML in the admin browser and sends normalized Draft
 rows to WTC_AI_CONTENT_ENGINE. Static student pages are never modified.
 */
@@ -50,6 +50,7 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
       const overrides = collectMetadataOverrides();
       parsed.metadata = Object.assign({}, parsed.metadata, onlyFilled(overrides));
       if (overrides.chapterId) parsed.metadata.chapterIdConfidence = 'Admin confirmed';
+      isolateSolutionIdentity(parsed);
       validateParsed(parsed, true);
       importedUploadId = '';
       document.getElementById('staticImportUploadId').value = '';
@@ -201,6 +202,37 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
     };
   }
 
+
+  function isolateSolutionIdentity(data) {
+    if (!data || data.pageType !== 'SOLUTION') return data;
+    const chapterId = String(data.metadata?.chapterId || '').trim();
+    if (!chapterId) return data;
+
+    data.solutionSetId = `SOLSET-${chapterId}`;
+    data.solutions = (data.solutions || []).map((solution, index) => {
+      const sourceToken = identityToken(solution.questionSource || 'Question');
+      const groupToken = identityToken(solution.questionGroup || 'Question');
+      const numberToken = identityToken(solution.questionNumber || (index + 1));
+      const sourceQuestionId = `${chapterId}-${sourceToken}-${groupToken}-${numberToken}-${String(index + 1).padStart(3, '0')}`;
+      return {
+        ...solution,
+        sourceQuestionId,
+        solutionId:`SOL-${sourceQuestionId}`
+      };
+    });
+    return data;
+  }
+
+  function identityToken(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toUpperCase()
+      .slice(0, 36) || 'Q';
+  }
+
   function validateParsed(data, allowInferredChapterId) {
     if (!data.metadata?.chapterId) throw new Error('Chapter ID could not be detected. Enter it in the AI form, then analyze again.');
     if (!allowInferredChapterId && data.pageType === 'SOLUTION' && /Inferred/i.test(data.metadata.chapterIdConfidence || '')) {
@@ -222,8 +254,17 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
       });
     } else {
       if (!data.solutions?.length) throw new Error('No Solution Engine questions detected.');
+      const chapterId = String(data.metadata.chapterId || '').trim();
+      const expectedSetId = `SOLSET-${chapterId}`;
+      if (data.solutionSetId !== expectedSetId) throw new Error('Solution Set ID does not match the confirmed Chapter ID.');
+      const ids = new Set();
       data.solutions.forEach((q, i) => {
         if (!q.questionText || (!q.solutionHTML && !q.finalAnswerHTML)) throw new Error(`Incomplete solution at question ${i + 1}.`);
+        if (!q.sourceQuestionId?.startsWith(`${chapterId}-`) || !q.solutionId?.startsWith(`SOL-${chapterId}-`)) {
+          throw new Error(`Solution identity does not match the confirmed Chapter ID at question ${i + 1}.`);
+        }
+        if (ids.has(q.solutionId)) throw new Error(`Duplicate Solution ID at question ${i + 1}.`);
+        ids.add(q.solutionId);
       });
     }
   }

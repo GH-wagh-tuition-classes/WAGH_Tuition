@@ -1,0 +1,1173 @@
+/*
+WAGH Tuition Classes — WTC_AI_CONTENT_ENGINE API
+Architecture: LOCKED v1.4
+Phase 2.3B: OCR + AI Chapter Extraction Engine
+
+Purpose:
+- Accept PDF / image / pasted text uploads from admin.
+- Extract OCR/raw text.
+- Parse chapter metadata.
+- Detect inside-chapter questions and end-exercise questions separately.
+- Generate lesson, MCQ, worksheet, and solution content.
+- Publish content dynamically for student feature buttons.
+
+Important:
+- Apps Script alone cannot perform high-quality OCR unless an OCR/AI service is configured.
+- For pasted text or digital extracted text, this backend works directly.
+- For image/PDF OCR, set Script Properties:
+  OPENAI_API_KEY = your key
+  OPENAI_VISION_MODEL = gpt-4o-mini or vision-capable model
+  OPENAI_TEXT_MODEL = gpt-4o-mini or text model
+*/
+
+const WTC_AI_VERSION = 'v1.5.3-published-feature-visibility';
+const IST = 'Asia/Kolkata';
+
+const WTC_AI_SHEETS = {
+  AI_INPUT_QUEUE: ['uploadId','sourceType','board','className','medium','subjectId','chapterId','rawContent','uploadedBy','fileName','fileMimeType','fileBase64','createdAt','processingStatus','ocrStatus','extractionStatus','generationStatus','publishStatus'],
+  OCR_RAW_TEXT: ['ocrId','uploadId','sourceType','fileName','rawExtractedText','ocrProvider','ocrConfidence','pageCount','createdAt','status','remarks'],
+  CHAPTER_METADATA: ['metadataId','uploadId','board','className','medium','subjectId','subjectName','chapterId','chapterNo','chapterName','detectedLanguage','status','createdAt','updatedAt'],
+  LESSON_ENGINE: ['lessonId','uploadId','chapterId','subjectType','lessonTitle','formattedHTML','notesHTML','definitionsJSON','formulasJSON','diagramNotes','status','createdBy','createdAt','updatedAt'],
+  MCQ_ENGINE: ['mcqId','mcqSetId','uploadId','chapterId','sourceQuestionId','sortOrder','topic','questionText','optionA','optionB','optionC','optionD','correctOption','explanation','difficulty','marks','tags','contentHash','sourcePage','status','createdAt','updatedAt'],
+  MCQ_TEST_ENGINE: ['testId','mcqSetId','uploadId','chapterId','testTitle','testType','topic','questionLabel','instructions','questionCount','sortOrder','status','createdAt','updatedAt'],
+  MCQ_TEST_QUESTION_MAP: ['mapId','testId','mcqId','questionOrder','status','createdAt','updatedAt'],
+  SOLUTION_ENGINE: ['solutionId','solutionSetId','uploadId','chapterId','sourceQuestionId','sortOrder','questionSource','questionGroup','questionNumber','questionText','solutionHTML','stepByStepSolution','finalAnswerHTML','gujaratiFinalHTML','diagramHTML','marks','difficulty','contentHash','sourcePage','status','createdAt','updatedAt'],
+  WORKSHEET_ENGINE: ['worksheetId','worksheetSetId','uploadId','chapterId','questionType','questionText','answerKeyHTML','marks','difficulty','status','createdAt','updatedAt'],
+  FEATURE_MAP: ['chapterId','lessonId','mcqSetId','worksheetSetId','solutionSetId','answerWritingSetId','updatedAt','status'],
+  REVIEW_AND_PUBLISH: ['reviewId','uploadId','chapterId','reviewStatus','approvedBy','publishToStudents','remarks','publishedAt','createdAt','updatedAt'],
+  SETTINGS: ['key','value','notes']
+};
+
+const WTC_AI_PUBLIC_CACHE_SECONDS = 300;
+let WTC_AI_REQUEST_ROWS_CACHE = {};
+
+function doGet() {
+  return json_({ ok:true, app:'WTC AI Content Engine', version:WTC_AI_VERSION, message:'API is live' });
+}
+
+function doPost(e) {
+  WTC_AI_REQUEST_ROWS_CACHE = {};
+  try {
+    const d = JSON.parse((e.postData && e.postData.contents) || '{}');
+    const routes = {
+      setup: setupWtcAiContentEngine,
+      submitAIInput,
+      listAIQueue,
+      extractOCRContent,
+      parseChapterStructure,
+      detectInsideChapterQuestions,
+      detectEndExerciseQuestions,
+      generateAIContent,
+      formatGeneratedContent,
+      reviewContent,
+      publishContent,
+      fullExtractAndGenerate,
+      importStaticContent,
+      publishStaticImport,
+      getFeatureMap,
+      getLesson,
+      getSolutions,
+      getMCQ,
+      getWorksheet
+    };
+    if (!routes[d.action]) return json_({ success:false, message:'Unknown action: ' + d.action });
+    return json_(routes[d.action](d));
+  } catch (err) {
+    return json_({ success:false, message:err.message, stack: String(err.stack || '') });
+  }
+}
+
+function setupWtcAiContentEngine() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  Object.keys(WTC_AI_SHEETS).forEach(name => {
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) sheet = ss.insertSheet(name);
+    const headers = WTC_AI_SHEETS[name];
+    const existing = sheet.getLastColumn()
+      ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String).filter(Boolean)
+      : [];
+    const merged = existing.concat(headers.filter(h => existing.indexOf(h) < 0));
+    if (merged.length) sheet.getRange(1, 1, 1, merged.length).setValues([merged]);
+    sheet.getRange(1, 1, 1, merged.length)
+      .setFontWeight('bold').setBackground('#0F172A').setFontColor('#FFFFFF')
+      .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true);
+    sheet.setFrozenRows(1);
+    merged.forEach((h, i) => sheet.setColumnWidth(i + 1, longColumn_(h) ? 320 : 170));
+  });
+  seedSettings_();
+  return { success:true, message:'WTC_AI_CONTENT_ENGINE v1.5 schema verified without clearing existing data.' };
+}
+
+function submitAIInput(d) {
+  const uploadId = d.uploadId || id_('UP');
+  append_('AI_INPUT_QUEUE', {
+    uploadId,
+    sourceType: d.sourceType || 'text',
+    board: d.board || '',
+    className: d.className || '',
+    medium: d.medium || '',
+    subjectId: d.subjectId || '',
+    chapterId: d.chapterId || '',
+    rawContent: d.rawContent || '',
+    uploadedBy: d.uploadedBy || 'Admin',
+    fileName: d.fileName || '',
+    fileMimeType: d.fileMimeType || '',
+    fileBase64: d.fileBase64 || '',
+    createdAt: now_(),
+    processingStatus: 'Queued',
+    ocrStatus: 'Pending',
+    extractionStatus: 'Pending',
+    generationStatus: 'Pending',
+    publishStatus: 'Draft'
+  });
+  return { success:true, uploadId, message:'Input saved to AI_INPUT_QUEUE.' };
+}
+
+function listAIQueue() {
+  return { success:true, queue: rows_('AI_INPUT_QUEUE').reverse().slice(0, 100) };
+}
+
+function extractOCRContent(d) {
+  const uploadId = d.uploadId;
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Upload not found.' };
+
+  let rawText = String(input.rawContent || '').trim();
+  let provider = 'PastedText';
+  let status = 'Extracted';
+  let remarks = 'Used rawContent/pasted text.';
+  let confidence = rawText ? 100 : '';
+
+  if (!rawText && input.fileBase64) {
+    const ocr = callVisionOcrOrFallback_(input);
+    rawText = ocr.text || '';
+    provider = ocr.provider;
+    status = ocr.status;
+    remarks = ocr.remarks;
+    confidence = ocr.confidence || '';
+  }
+
+  const ocrId = id_('OCR');
+  append_('OCR_RAW_TEXT', {
+    ocrId,
+    uploadId,
+    sourceType: input.sourceType,
+    fileName: input.fileName,
+    rawExtractedText: rawText,
+    ocrProvider: provider,
+    ocrConfidence: confidence,
+    pageCount: d.pageCount || '',
+    createdAt: now_(),
+    status,
+    remarks
+  });
+  updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, {
+    rawContent: rawText || input.rawContent,
+    ocrStatus: status,
+    processingStatus: rawText ? 'OCR Extracted' : 'OCR Pending',
+    extractionStatus: rawText ? 'Ready To Parse' : 'Waiting OCR'
+  });
+  return { success:!!rawText, uploadId, ocrId, rawText, provider, status, message: rawText ? 'OCR/text extraction completed.' : remarks };
+}
+
+function parseChapterStructure(d) {
+  const uploadId = d.uploadId;
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Upload not found.' };
+  const text = latestTextForUpload_(uploadId) || input.rawContent || '';
+  if (!text) return { success:false, message:'No extracted text found. Run OCR/text extraction first.' };
+
+  const detected = callTextAiForMetadataOrFallback_(text, input);
+  const metadataId = id_('META');
+  const chapterId = input.chapterId || detected.chapterId || makeChapterId_(detected.subjectName || input.subjectId, detected.chapterNo);
+
+  append_('CHAPTER_METADATA', {
+    metadataId,
+    uploadId,
+    board: input.board || detected.board,
+    className: input.className || detected.className,
+    medium: input.medium || detected.medium,
+    subjectId: input.subjectId || detected.subjectId,
+    subjectName: detected.subjectName || input.subjectId,
+    chapterId,
+    chapterNo: detected.chapterNo,
+    chapterName: detected.chapterName,
+    detectedLanguage: detected.detectedLanguage || detectLanguage_(text),
+    status: 'Detected',
+    createdAt: now_(),
+    updatedAt: now_()
+  });
+  updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, { chapterId, extractionStatus:'Metadata Detected' });
+  return { success:true, metadataId, chapterId, metadata: detected, message:'Chapter metadata detected.' };
+}
+
+function detectInsideChapterQuestions(d) {
+  const uploadId = d.uploadId;
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Upload not found.' };
+  const text = latestTextForUpload_(uploadId) || input.rawContent || '';
+  const questions = extractInsideQuestions_(text);
+  return { success:true, uploadId, questions, count:questions.length };
+}
+
+function detectEndExerciseQuestions(d) {
+  const uploadId = d.uploadId;
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Upload not found.' };
+  const text = latestTextForUpload_(uploadId) || input.rawContent || '';
+  const questions = extractEndExerciseQuestions_(text);
+  return { success:true, uploadId, questions, count:questions.length };
+}
+
+function generateAIContent(d) {
+  const uploadId = d.uploadId;
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Upload not found.' };
+  const text = latestTextForUpload_(uploadId) || input.rawContent || '';
+  if (!text) return { success:false, message:'No text available for generation.' };
+
+  const metadata = latestMetadata_(uploadId) || {};
+  const chapterId = input.chapterId || metadata.chapterId || makeChapterId_(input.subjectId || metadata.subjectName, metadata.chapterNo);
+  const subjectType = detectSubjectType_(input.subjectId || metadata.subjectName, metadata.chapterName || '', text);
+  const insideQuestions = extractInsideQuestions_(text);
+  const endQuestions = extractEndExerciseQuestions_(text);
+  const generated = callAiGeneratorOrFallback_(text, input, metadata, insideQuestions, endQuestions, subjectType);
+
+  const lessonId = 'LES-' + chapterId;
+  const solutionSetId = 'SOLSET-' + chapterId;
+  const mcqSetId = 'MCQSET-' + chapterId;
+  const worksheetSetId = 'WSSET-' + chapterId;
+
+  append_('LESSON_ENGINE', {
+    lessonId,
+    uploadId,
+    chapterId,
+    subjectType,
+    lessonTitle: metadata.chapterName || input.chapterName || 'Chapter Lesson',
+    formattedHTML: generated.lessonHTML,
+    notesHTML: generated.notesHTML,
+    definitionsJSON: JSON.stringify(generated.definitions || []),
+    formulasJSON: JSON.stringify(generated.formulas || []),
+    diagramNotes: generated.diagramNotes || '',
+    status:'Draft',
+    createdBy: input.uploadedBy || 'Admin',
+    createdAt: now_(),
+    updatedAt: now_()
+  });
+
+  const allSolutions = normalizeSolutionRows_(generated.solutions, insideQuestions, endQuestions);
+  allSolutions.forEach((q, idx) => append_('SOLUTION_ENGINE', {
+    solutionId: 'SOL-' + chapterId + '-' + (idx + 1),
+    solutionSetId,
+    uploadId,
+    chapterId,
+    questionSource: q.questionSource,
+    questionGroup: q.questionGroup,
+    questionNumber: q.questionNumber,
+    questionText: q.questionText,
+    solutionHTML: q.solutionHTML || makeSolutionHtml_(q),
+    stepByStepSolution: q.stepByStepSolution || '',
+    marks: q.marks || '',
+    difficulty: q.difficulty || '',
+    status:'Draft',
+    createdAt: now_(),
+    updatedAt: now_()
+  }));
+
+  generated.mcq.forEach((q, idx) => append_('MCQ_ENGINE', {
+    mcqId: 'MCQ-' + chapterId + '-' + (idx + 1),
+    mcqSetId,
+    uploadId,
+    chapterId,
+    questionText: q.questionText,
+    optionA: q.optionA,
+    optionB: q.optionB,
+    optionC: q.optionC,
+    optionD: q.optionD,
+    correctOption: q.correctOption,
+    explanation: q.explanation,
+    difficulty: q.difficulty || 'Medium',
+    marks: q.marks || 1,
+    tags: q.tags || '',
+    status:'Draft',
+    createdAt: now_(),
+    updatedAt: now_()
+  }));
+
+  generated.worksheet.forEach((q, idx) => append_('WORKSHEET_ENGINE', {
+    worksheetId: 'WS-' + chapterId + '-' + (idx + 1),
+    worksheetSetId,
+    uploadId,
+    chapterId,
+    questionType: q.questionType || 'Short Answer',
+    questionText: q.questionText,
+    answerKeyHTML: q.answerKeyHTML || '',
+    marks: q.marks || '',
+    difficulty: q.difficulty || '',
+    status:'Draft',
+    createdAt: now_(),
+    updatedAt: now_()
+  }));
+
+  upsertFeatureMap_(chapterId, { lessonId, mcqSetId, worksheetSetId, solutionSetId, answerWritingSetId: worksheetSetId, status:'Draft', updatedAt:now_() });
+  append_('REVIEW_AND_PUBLISH', { reviewId:id_('REV'), uploadId, chapterId, reviewStatus:'Pending Review', approvedBy:'', publishToStudents:'No', remarks:'Generated content awaiting admin review', publishedAt:'', createdAt:now_(), updatedAt:now_() });
+  updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, { generationStatus:'Generated', publishStatus:'Draft', processingStatus:'Awaiting Review', extractionStatus:'Generated' });
+
+  return { success:true, chapterId, lessonId, mcqSetId, worksheetSetId, solutionSetId, insideQuestionCount:insideQuestions.length, endExerciseQuestionCount:endQuestions.length, message:'AI content generated as Draft and is awaiting admin review.' };
+}
+
+function fullExtractAndGenerate(d) {
+  const ocr = extractOCRContent(d);
+  if (!ocr.success) return ocr;
+  const meta = parseChapterStructure(d);
+  if (!meta.success) return meta;
+  return generateAIContent(d);
+}
+
+/* Static GitHub page migration: HTML is parsed in the trusted admin browser.
+   This API validates and upserts the normalized rows as Draft content. */
+function importStaticContent(d) {
+  setupWtcAiContentEngine();
+  const data = typeof d.importData === 'string' ? JSON.parse(d.importData) : (d.importData || {});
+  const pageType = norm_(data.pageType).toUpperCase();
+  const meta = data.metadata || {};
+  const chapterId = norm_(meta.chapterId);
+  if (!chapterId) return { success:false, message:'chapterId is required before import.' };
+  if (['MCQ','SOLUTION'].indexOf(pageType) < 0) return { success:false, message:'Unsupported static page type.' };
+
+  const uploadId = id_('STATIC');
+  const sourcePage = norm_(data.sourcePage || data.sourceName);
+  append_('AI_INPUT_QUEUE', {
+    uploadId,
+    sourceType:'static-html',
+    board:meta.board || '',
+    className:meta.className || '',
+    medium:meta.medium || '',
+    subjectId:meta.subjectId || '',
+    chapterId,
+    rawContent:'',
+    uploadedBy:d.uploadedBy || 'Admin',
+    fileName:data.sourceName || '',
+    fileMimeType:'text/html',
+    fileBase64:'',
+    createdAt:now_(),
+    processingStatus:'Awaiting Review',
+    ocrStatus:'Not Required',
+    extractionStatus:'Static Page Parsed',
+    generationStatus:'Imported',
+    publishStatus:'Draft'
+  });
+  append_('CHAPTER_METADATA', {
+    metadataId:id_('META'), uploadId,
+    board:meta.board || '', className:meta.className || '', medium:meta.medium || '',
+    subjectId:meta.subjectId || '', subjectName:meta.subjectName || '', chapterId,
+    chapterNo:meta.chapterNo || '', chapterName:meta.chapterName || '',
+    detectedLanguage:meta.detectedLanguage || detectLanguage_(JSON.stringify(data)),
+    status:'Imported Draft', createdAt:now_(), updatedAt:now_()
+  });
+
+  const result = pageType === 'MCQ'
+    ? importStaticMcqDraft_(data, uploadId, sourcePage)
+    : importStaticSolutionDraft_(data, uploadId, sourcePage);
+
+  if (!result.success) {
+    updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, { processingStatus:'Validation Failed', extractionStatus:'Import Failed' });
+    return result;
+  }
+  append_('REVIEW_AND_PUBLISH', {
+    reviewId:id_('REV'), uploadId, chapterId, reviewStatus:'Pending Review', approvedBy:'',
+    publishToStudents:'No', remarks:'Imported from static GitHub page; review before publishing.',
+    publishedAt:'', createdAt:now_(), updatedAt:now_()
+  });
+  return Object.assign({ success:true, uploadId, pageType, chapterId, publishStatus:'Draft' }, result);
+}
+
+function importStaticMcqDraft_(data, uploadId, sourcePage) {
+  const meta = data.metadata || {};
+  const chapterId = norm_(meta.chapterId);
+  const questions = Array.isArray(data.questions) ? data.questions : [];
+  if (!questions.length) return { success:false, message:'No MCQ questions were detected.' };
+  const mcqSetId = norm_(data.mcqSetId) || ('MCQSET-' + chapterId);
+  questions.forEach((q, index) => {
+    const correct = norm_(q.correctOption || q.correct).toUpperCase();
+    if (['A','B','C','D'].indexOf(correct) < 0) throw new Error('Invalid correct option at question ' + (index + 1));
+    if (!(q.questionText || q.question) || !(q.optionA || option_(q, 'A', 0)) || !(q.optionB || option_(q, 'B', 1)) || !(q.optionC || option_(q, 'C', 2)) || !(q.optionD || option_(q, 'D', 3))) {
+      throw new Error('Incomplete MCQ data at question ' + (index + 1));
+    }
+  });
+  const suppliedIds = {};
+  questions.forEach(q => suppliedIds[norm_(q.id || q.sourceQuestionId)] = true);
+  (Array.isArray(data.tests) ? data.tests : []).forEach(test => (test.questionIds || []).forEach(id => {
+    if (!suppliedIds[norm_(id)]) throw new Error('Test ' + (test.testId || test.id || '') + ' references missing question ' + id);
+  }));
+  const previousTestIds = rows_('MCQ_TEST_ENGINE').filter(r => norm_(r.mcqSetId) === mcqSetId).map(r => norm_(r.testId));
+  updateRowsWhere_('MCQ_ENGINE', r => norm_(r.mcqSetId) === mcqSetId, { status:'Archived', updatedAt:now_() });
+  updateRowsWhere_('MCQ_TEST_ENGINE', r => norm_(r.mcqSetId) === mcqSetId, { status:'Archived', updatedAt:now_() });
+  updateRowsWhere_('MCQ_TEST_QUESTION_MAP', r => previousTestIds.indexOf(norm_(r.testId)) >= 0, { status:'Archived', updatedAt:now_() });
+  const idMap = {};
+  const stats = { inserted:0, updated:0, unchanged:0 };
+
+  questions.forEach((q, index) => {
+    const correct = norm_(q.correctOption || q.correct).toUpperCase();
+    const sourceQuestionId = norm_(q.sourceQuestionId || q.id) || (chapterId + '-Q' + pad3_(index + 1));
+    const mcqId = sourceQuestionId;
+    idMap[norm_(q.id || sourceQuestionId)] = mcqId;
+    const row = {
+      mcqId, mcqSetId, uploadId, chapterId, sourceQuestionId, sortOrder:index + 1,
+      topic:q.topic || '', questionText:q.questionText || q.question || '',
+      optionA:q.optionA || option_(q, 'A', 0), optionB:q.optionB || option_(q, 'B', 1),
+      optionC:q.optionC || option_(q, 'C', 2), optionD:q.optionD || option_(q, 'D', 3),
+      correctOption:correct, explanation:q.explanation || '', difficulty:q.difficulty || 'Medium',
+      marks:q.marks || 1, tags:q.tags || q.topic || '', sourcePage, status:'Draft', updatedAt:now_()
+    };
+    row.contentHash = contentHash_([chapterId,row.questionText,row.optionA,row.optionB,row.optionC,row.optionD,correct].join('|'));
+    countUpsert_(stats, upsertRow_('MCQ_ENGINE', 'mcqId', mcqId, row));
+  });
+
+  let tests = Array.isArray(data.tests) ? data.tests : [];
+  if (!tests.length) tests = [{
+    testId:chapterId + '-STATIC-ALL', testTitle:'Complete Chapter MCQ', testType:'FULL_LENGTH',
+    topic:'Complete Chapter', instructions:'Imported from static page',
+    questionIds:questions.map(q => norm_(q.id || q.sourceQuestionId))
+  }];
+  tests.forEach((test, testIndex) => {
+    const testId = norm_(test.testId || test.id) || (chapterId + '-T' + pad3_(testIndex + 1));
+    const questionIds = Array.isArray(test.questionIds) ? test.questionIds : [];
+    const resolved = questionIds.map(id => idMap[norm_(id)] || norm_(id)).filter(Boolean);
+    const testRow = {
+      testId, mcqSetId, uploadId, chapterId, testTitle:test.testTitle || test.title || ('Test ' + (testIndex + 1)),
+      testType:test.testType || test.type || 'TOPIC_TEST', topic:test.topic || '',
+      questionLabel:test.questionLabel || '', instructions:test.instructions || '',
+      questionCount:resolved.length, sortOrder:testIndex + 1, status:'Draft', updatedAt:now_()
+    };
+    upsertRow_('MCQ_TEST_ENGINE', 'testId', testId, testRow);
+    updateRowsWhere_('MCQ_TEST_QUESTION_MAP', r => norm_(r.testId) === testId, { status:'Archived', updatedAt:now_() });
+    resolved.forEach((mcqId, qIndex) => upsertRow_('MCQ_TEST_QUESTION_MAP', 'mapId', testId + '-' + pad3_(qIndex + 1), {
+      mapId:testId + '-' + pad3_(qIndex + 1), testId, mcqId, questionOrder:qIndex + 1,
+      status:'Draft', updatedAt:now_()
+    }));
+  });
+  upsertFeatureMap_(chapterId, { mcqSetId, status:'Draft', updatedAt:now_() });
+  return { success:true, mcqSetId, questionCount:questions.length, testCount:tests.length, stats,
+    message:'Static MCQ content imported as Draft. Review it before publishing.' };
+}
+
+function importStaticSolutionDraft_(data, uploadId, sourcePage) {
+  const meta = data.metadata || {};
+  const chapterId = norm_(meta.chapterId);
+  const solutions = Array.isArray(data.solutions) ? data.solutions : [];
+  if (!chapterId) return { success:false, message:'Exact Chapter ID is required for Solution import.' };
+  if (!solutions.length) return { success:false, message:'No Solution Engine question cards were detected.' };
+
+  const solutionSetId = canonicalSolutionSetId_(chapterId);
+  solutions.forEach((q, index) => {
+    if (!q.questionText || (!q.solutionHTML && !q.finalAnswerHTML)) throw new Error('Incomplete Solution Engine data at question ' + (index + 1));
+  });
+
+  /*
+   * Archive only rows belonging to this exact chapter. Never archive by an
+   * incoming solutionSetId because an older importer could reuse the same set
+   * ID for another board or medium.
+   */
+  updateRowsWhere_('SOLUTION_ENGINE', r => norm_(r.chapterId) === chapterId, {
+    status:'Archived',
+    updatedAt:now_()
+  });
+
+  const stats = { inserted:0, updated:0, unchanged:0 };
+  solutions.forEach((q, index) => {
+    const sourceQuestionId = canonicalSolutionSourceId_(chapterId, q, index);
+    const solutionId = 'SOL-' + sourceQuestionId;
+    const row = {
+      solutionId, solutionSetId, uploadId, chapterId, sourceQuestionId, sortOrder:index + 1,
+      questionSource:q.questionSource || 'Inside Chapter', questionGroup:q.questionGroup || 'Question',
+      questionNumber:q.questionNumber || String(index + 1), questionText:q.questionText || '',
+      solutionHTML:q.solutionHTML || '', stepByStepSolution:q.stepByStepSolution || '',
+      finalAnswerHTML:q.finalAnswerHTML || '', gujaratiFinalHTML:q.gujaratiFinalHTML || '',
+      diagramHTML:q.diagramHTML || '', marks:q.marks || '', difficulty:q.difficulty || '',
+      sourcePage, status:'Draft', updatedAt:now_()
+    };
+    row.contentHash = contentHash_([chapterId,row.questionText,row.solutionHTML,row.finalAnswerHTML,row.gujaratiFinalHTML].join('|'));
+    countUpsert_(stats, upsertRow_('SOLUTION_ENGINE', 'solutionId', solutionId, row));
+  });
+  upsertFeatureMap_(chapterId, { solutionSetId, status:'Draft', updatedAt:now_() });
+  return {
+    success:true,
+    solutionSetId,
+    solutionCount:solutions.length,
+    stats,
+    identityIsolated:true,
+    message:'Static solutions imported as Draft with Chapter ID isolated identifiers. Review them before publishing.'
+  };
+}
+
+function publishStaticImport(d) {
+  const uploadId = norm_(d.uploadId);
+  if (!uploadId) return { success:false, message:'uploadId is required.' };
+  const input = findBy_('AI_INPUT_QUEUE', 'uploadId', uploadId);
+  if (!input) return { success:false, message:'Static import was not found.' };
+  const chapterId = norm_(input.chapterId);
+  ['LESSON_ENGINE','MCQ_ENGINE','MCQ_TEST_ENGINE','SOLUTION_ENGINE','WORKSHEET_ENGINE'].forEach(name =>
+    updateRowsWhere_(name, r => norm_(r.uploadId) === uploadId, { status:'Published', updatedAt:now_() })
+  );
+  const testIds = rows_('MCQ_TEST_ENGINE').filter(r => norm_(r.uploadId) === uploadId).map(r => norm_(r.testId));
+  if (testIds.length) updateRowsWhere_('MCQ_TEST_QUESTION_MAP', r => testIds.indexOf(norm_(r.testId)) >= 0 && norm_(r.status) !== 'Archived', { status:'Published', updatedAt:now_() });
+  const feature = findBy_('FEATURE_MAP', 'chapterId', chapterId) || {};
+  upsertFeatureMap_(chapterId, { mcqSetId:feature.mcqSetId || '', solutionSetId:feature.solutionSetId || '', status:'Active', updatedAt:now_() });
+  updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, { processingStatus:'Completed', publishStatus:'Published', updatedAt:now_() });
+  updateRowsWhere_('REVIEW_AND_PUBLISH', r => norm_(r.uploadId) === uploadId, {
+    reviewStatus:'Approved', approvedBy:d.approvedBy || 'Admin', publishToStudents:'Yes',
+    remarks:d.remarks || 'Static import reviewed and published.', publishedAt:now_(), updatedAt:now_()
+  });
+  bumpWtcAiPublicCacheVersion_();
+  return { success:true, uploadId, chapterId, message:'Static content approved and published.' };
+}
+
+function formatGeneratedContent(d) {
+  return generateAIContent(d);
+}
+
+function reviewContent(d) {
+  const uploadId = norm_(d.uploadId);
+  if (!uploadId) return { success:false, message:'uploadId is required.' };
+  updateRowsWhere_('REVIEW_AND_PUBLISH', r => norm_(r.uploadId) === uploadId, {
+    reviewStatus:'Under Review', approvedBy:d.reviewedBy || 'Admin',
+    remarks:d.remarks || 'Admin review started.', updatedAt:now_()
+  });
+  updateByKey_('AI_INPUT_QUEUE', 'uploadId', uploadId, { processingStatus:'Under Review' });
+  return { success:true, uploadId, message:'Content marked as Under Review.' };
+}
+
+function publishContent(d) {
+  if (d.uploadId) return publishStaticImport(d);
+  const chapterId = d.chapterId;
+  if (!chapterId) return { success:false, message:'chapterId required.' };
+  upsertFeatureMap_(chapterId, { status:'Active', updatedAt:now_() });
+  bumpWtcAiPublicCacheVersion_();
+  return { success:true, message:'Feature map activated. Publish by uploadId to approve its content rows.' };
+}
+
+function getFeatureMap(d) {
+  const chapterId = norm_(d.chapterId);
+  if (!chapterId) return { success:false, chapterId:'', features:[], message:'chapterId is required.' };
+
+  return withWtcAiPublicCache_('feature-map', chapterId, () => ({
+    success:true,
+    chapterId,
+    version:WTC_AI_VERSION,
+    features:publishedFeaturesForChapter_(chapterId)
+  }));
+}
+
+/*
+ * Student feature buttons are driven by real published rows, not by default IDs.
+ * Draft, Archived, Rejected, or missing content never creates a student button.
+ * Exact chapterId + exact content ID matching also prevents board/medium leakage.
+ */
+function publishedFeaturesForChapter_(chapterId) {
+  chapterId = norm_(chapterId);
+  if (!chapterId) return [];
+
+  const map = findBy_('FEATURE_MAP', 'chapterId', chapterId) || {};
+  const lessonId = norm_(map.lessonId) || ('LES-' + chapterId);
+  const mcqSetId = norm_(map.mcqSetId) || ('MCQSET-' + chapterId);
+  const worksheetSetId = norm_(map.worksheetSetId) || ('WSSET-' + chapterId);
+  const solutionSetId = canonicalSolutionSetId_(chapterId);
+  const answerWritingSetId = norm_(map.answerWritingSetId) || worksheetSetId;
+  const features = [];
+
+  const hasLesson = rows_('LESSON_ENGINE').some(r =>
+    norm_(r.chapterId) === chapterId &&
+    norm_(r.lessonId) === lessonId &&
+    isPublishedForStudents_(r)
+  );
+  if (hasLesson) {
+    features.push({ featureId:'LESSON', featureName:'Lesson', icon:'📖', type:'dynamic', action:'lesson', contentId:lessonId });
+  }
+
+  const hasMcq = rows_('MCQ_ENGINE').some(r =>
+    norm_(r.chapterId) === chapterId &&
+    norm_(r.mcqSetId) === mcqSetId &&
+    isPublishedForStudents_(r)
+  );
+  if (hasMcq) {
+    features.push({ featureId:'MCQ', featureName:'MCQ Test', icon:'📝', type:'dynamic', action:'mcq', contentId:mcqSetId });
+  }
+
+  const hasWorksheet = rows_('WORKSHEET_ENGINE').some(r =>
+    norm_(r.chapterId) === chapterId &&
+    norm_(r.worksheetSetId) === worksheetSetId &&
+    isPublishedForStudents_(r)
+  );
+  if (hasWorksheet) {
+    features.push({ featureId:'WORKSHEET', featureName:'Worksheet', icon:'📄', type:'dynamic', action:'worksheet', contentId:worksheetSetId });
+  }
+
+  const hasExactPublishedSolutions = rows_('SOLUTION_ENGINE').some(r =>
+    norm_(r.chapterId) === chapterId &&
+    norm_(r.solutionSetId) === solutionSetId &&
+    isPublishedForStudents_(r)
+  );
+  if (hasExactPublishedSolutions) {
+    features.push({ featureId:'SOLUTION', featureName:'Solution', icon:'📘', type:'dynamic', action:'solutions', contentId:solutionSetId });
+  }
+
+  const hasAnswerWriting = rows_('WORKSHEET_ENGINE').some(r =>
+    norm_(r.chapterId) === chapterId &&
+    norm_(r.worksheetSetId) === answerWritingSetId &&
+    isPublishedForStudents_(r)
+  );
+  if (hasAnswerWriting) {
+    features.push({ featureId:'ANSWER_WRITING', featureName:'Answer Writing', icon:'✍️', type:'dynamic', action:'answerWriting', contentId:answerWritingSetId });
+  }
+
+  return features;
+}
+
+/* Optional read-only Apps Script audit. It changes no workbook data. */
+function auditPublishedFeatureVisibility() {
+  WTC_AI_REQUEST_ROWS_CACHE = {};
+  const chapterIds = {};
+  rows_('FEATURE_MAP').forEach(r => { if (norm_(r.chapterId)) chapterIds[norm_(r.chapterId)] = true; });
+  ['LESSON_ENGINE','MCQ_ENGINE','SOLUTION_ENGINE','WORKSHEET_ENGINE'].forEach(sheetName => {
+    rows_(sheetName).forEach(r => { if (norm_(r.chapterId)) chapterIds[norm_(r.chapterId)] = true; });
+  });
+  const chapters = Object.keys(chapterIds).sort().map(chapterId => ({
+    chapterId,
+    publishedFeatures:publishedFeaturesForChapter_(chapterId).map(feature => feature.featureId)
+  }));
+  const result = { success:true, version:WTC_AI_VERSION, chapterCount:chapters.length, chapters };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+function getLesson(d) {
+  const lessonId = norm_(d.lessonId || d.contentId);
+  return withWtcAiPublicCache_('lesson', lessonId, () => {
+    const row = findBy_('LESSON_ENGINE', 'lessonId', lessonId);
+    return { success:true, lesson:row && isVisible_(row) ? row : null };
+  });
+}
+
+function getSolutions(d) {
+  const requestedSetId = norm_(d.solutionSetId || d.contentId);
+  const requestedChapterId = norm_(d.chapterId);
+  const derivedChapterId = requestedSetId.replace(/^SOLSET-/, '');
+  const chapterId = requestedChapterId || derivedChapterId;
+  const canonicalSetId = canonicalSolutionSetId_(chapterId);
+  const cacheId = chapterId + '|' + canonicalSetId;
+
+  return withWtcAiPublicCache_('solutions', cacheId, () => {
+    /*
+     * Both the exact chapterId and its canonical solutionSetId must match.
+     * This prevents a set ID created for one board/medium from serving rows
+     * belonging to another board/medium.
+     */
+    const all = rows_('SOLUTION_ENGINE').filter(r =>
+      norm_(r.chapterId) === chapterId &&
+      norm_(r.solutionSetId) === canonicalSetId &&
+      isVisible_(r)
+    );
+    return {
+      success:true,
+      chapterId,
+      solutionSetId:canonicalSetId,
+      solutions:{
+        insideChapter:all.filter(r => norm_(r.questionSource).toLowerCase() === 'inside chapter'),
+        endExercise:all.filter(r => norm_(r.questionSource).toLowerCase() === 'end exercise')
+      }
+    };
+  });
+}
+
+function getMCQ(d) {
+  const mcqSetId = norm_(d.mcqSetId || d.contentId);
+  return withWtcAiPublicCache_('mcq', mcqSetId, () => {
+    const mcq = rows_('MCQ_ENGINE').filter(r => norm_(r.mcqSetId) === mcqSetId && isVisible_(r));
+    const mapRows = rows_('MCQ_TEST_QUESTION_MAP').filter(isVisible_);
+    const mapByTest = {};
+    mapRows.forEach(map => {
+      const testId = norm_(map.testId);
+      if (!mapByTest[testId]) mapByTest[testId] = [];
+      mapByTest[testId].push(map);
+    });
+    const tests = rows_('MCQ_TEST_ENGINE')
+      .filter(r => norm_(r.mcqSetId) === mcqSetId && isVisible_(r))
+      .sort((a,b) => (Number(a.sortOrder) || 999) - (Number(b.sortOrder) || 999))
+      .map(test => {
+        const questionIds = (mapByTest[norm_(test.testId)] || [])
+          .sort((a,b) => (Number(a.questionOrder) || 999) - (Number(b.questionOrder) || 999))
+          .map(map => map.mcqId);
+        return Object.assign({}, test, { questionIds });
+      });
+    return { success:true, mcq, tests };
+  });
+}
+
+function getWorksheet(d) {
+  const worksheetSetId = norm_(d.worksheetSetId || d.contentId);
+  return withWtcAiPublicCache_('worksheet', worksheetSetId, () => {
+    const worksheet = rows_('WORKSHEET_ENGINE').filter(r => norm_(r.worksheetSetId) === worksheetSetId && isVisible_(r));
+    return { success:true, worksheet };
+  });
+}
+
+/* AI / OCR helpers */
+function callVisionOcrOrFallback_(input) {
+  const key = prop_('OPENAI_API_KEY');
+  const model = prop_('OPENAI_VISION_MODEL') || 'gpt-4o-mini';
+  if (!key) return { text:'', provider:'NotConfigured', status:'Needs OCR Service', remarks:'Set OPENAI_API_KEY in Apps Script Properties for image/PDF OCR.', confidence:'' };
+  try {
+    const mime = input.fileMimeType || 'image/jpeg';
+    const prompt = 'Extract all readable textbook text from this image/PDF page. Preserve question numbers, examples, activities, exercises, formulas, and line breaks. Return only extracted text.';
+    const payload = {
+      model,
+      messages:[{ role:'user', content:[
+        { type:'text', text: prompt },
+        { type:'image_url', image_url:{ url:'data:' + mime + ';base64,' + input.fileBase64 } }
+      ]}],
+      temperature:0
+    };
+    const res = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', { method:'post', contentType:'application/json', headers:{ Authorization:'Bearer ' + key }, payload:JSON.stringify(payload), muteHttpExceptions:true });
+    const obj = JSON.parse(res.getContentText());
+    const text = (((obj.choices || [])[0] || {}).message || {}).content || '';
+    return { text, provider:'OpenAI Vision', status:text ? 'Extracted' : 'Empty OCR', remarks:text ? 'OCR completed.' : res.getContentText(), confidence:'' };
+  } catch (err) {
+    return { text:'', provider:'OpenAI Vision', status:'OCR Error', remarks:err.message, confidence:'' };
+  }
+}
+
+function callTextAiForMetadataOrFallback_(text, input) {
+  const fallback = fallbackMetadata_(text, input);
+  const key = prop_('OPENAI_API_KEY');
+  const model = prop_('OPENAI_TEXT_MODEL') || 'gpt-4o-mini';
+  if (!key) return fallback;
+  try {
+    const prompt = 'Detect textbook chapter metadata. Return only valid JSON with keys: board, className, medium, subjectId, subjectName, chapterId, chapterNo, chapterName, detectedLanguage. Text:\n' + text.slice(0, 6000);
+    const obj = callOpenAIJson_(key, model, prompt);
+    return Object.assign(fallback, obj || {});
+  } catch (err) { return fallback; }
+}
+
+function callAiGeneratorOrFallback_(text, input, metadata, insideQuestions, endQuestions, subjectType) {
+  const key = prop_('OPENAI_API_KEY');
+  const model = prop_('OPENAI_TEXT_MODEL') || 'gpt-4o-mini';
+  if (!key) return fallbackGenerated_(text, input, metadata, insideQuestions, endQuestions, subjectType);
+  try {
+    const prompt = [
+      'You are WAGH Tuition Classes AI Content Engine.',
+      'Create clean structured student-ready content from the chapter text.',
+      'Return only valid JSON with keys: lessonHTML, notesHTML, definitions, formulas, diagramNotes, solutions, mcq, worksheet.',
+      'Rules:',
+      '- solutions must include BOTH Inside Chapter and End Exercise questions.',
+      '- Each solution item must have questionSource, questionGroup, questionNumber, questionText, solutionHTML, stepByStepSolution.',
+      '- MCQ must have questionText, optionA-D, correctOption, explanation, difficulty, marks.',
+      '- Worksheet must have questionType, questionText, answerKeyHTML, marks.',
+      'Inside questions detected: ' + JSON.stringify(insideQuestions).slice(0, 6000),
+      'End exercise questions detected: ' + JSON.stringify(endQuestions).slice(0, 6000),
+      'Chapter text: ' + text.slice(0, 18000)
+    ].join('\n');
+    const obj = callOpenAIJson_(key, model, prompt);
+    return normalizeGeneratedObject_(obj, text, input, metadata, insideQuestions, endQuestions, subjectType);
+  } catch (err) {
+    return fallbackGenerated_(text, input, metadata, insideQuestions, endQuestions, subjectType);
+  }
+}
+
+function callOpenAIJson_(key, model, prompt) {
+  const payload = { model, messages:[{role:'user', content:prompt}], response_format:{type:'json_object'}, temperature:0.2 };
+  const res = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', { method:'post', contentType:'application/json', headers:{ Authorization:'Bearer ' + key }, payload:JSON.stringify(payload), muteHttpExceptions:true });
+  const txt = res.getContentText();
+  const obj = JSON.parse(txt);
+  const content = (((obj.choices || [])[0] || {}).message || {}).content || '{}';
+  return JSON.parse(content);
+}
+
+/* Rule-based extraction fallback */
+function extractInsideQuestions_(text) {
+  const lines = String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const results = [];
+  let inExercise = false;
+  lines.forEach((line, i) => {
+    if (/^(exercise|questions|review exercise|textual exercise)/i.test(line)) inExercise = true;
+    if (inExercise) return;
+    const m = line.match(/^(solved\s+example|example|activity|try\s+this|checkpoint|in[-\s]?text\s+question|question)\s*([\d\.A-Za-z]*)[:.)\-\s]*(.*)$/i);
+    if (m) results.push({ questionSource:'Inside Chapter', questionGroup:titleCase_(m[1]), questionNumber:m[2] || String(results.length + 1), questionText:m[3] || line, stepByStepSolution:'' });
+    else if (/\?$/.test(line) && results.length < 50 && i > 5) results.push({ questionSource:'Inside Chapter', questionGroup:'In-text Question', questionNumber:String(results.length + 1), questionText:line, stepByStepSolution:'' });
+  });
+  return uniqueQuestions_(results);
+}
+
+function extractEndExerciseQuestions_(text) {
+  const chunks = String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const results = [];
+  let inExercise = false;
+  chunks.forEach(line => {
+    if (/^(exercise|questions|review exercise|textual exercise|chapter exercise|swadhyay|સ્વાધ્યાય)/i.test(line)) { inExercise = true; return; }
+    if (!inExercise) return;
+    const m = line.match(/^(q\.?\s*)?([0-9]+|[A-Z])[:.)\-\s]+(.+)$/i);
+    if (m) results.push({ questionSource:'End Exercise', questionGroup:'Exercise', questionNumber:'Q' + m[2], questionText:m[3], stepByStepSolution:'' });
+    else if (/\?$/.test(line)) results.push({ questionSource:'End Exercise', questionGroup:'Exercise', questionNumber:'Q' + (results.length + 1), questionText:line, stepByStepSolution:'' });
+  });
+  return uniqueQuestions_(results);
+}
+
+function fallbackGenerated_(text, input, metadata, insideQuestions, endQuestions, subjectType) {
+  const title = metadata.chapterName || input.chapterName || 'Chapter';
+  const points = String(text || '').split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 8);
+  const lessonHTML = '<div class="lesson-page"><h1>' + esc_(title) + '</h1><div class="content-card"><h2>Chapter Overview</h2><ul>' + points.map(p => '<li>' + esc_(p) + '</li>').join('') + '</ul></div></div>';
+  const definitions = points.slice(0, 3).map((p, i) => ({ term:'Important Point ' + (i + 1), meaning:p }));
+  const questions = insideQuestions.concat(endQuestions);
+  const mcq = questions.slice(0, 10).map((q, i) => ({ questionText:q.questionText, optionA:'Option A', optionB:'Option B', optionC:'Option C', optionD:'Option D', correctOption:'A', explanation:'Explanation will be improved by AI after API key setup.', difficulty:'Medium', marks:1, tags:q.questionGroup }));
+  const worksheet = questions.slice(0, 15).map(q => ({ questionType:q.questionGroup || 'Question', questionText:q.questionText, answerKeyHTML:'<p>Answer key will be generated during AI review.</p>', marks:2, difficulty:'Medium' }));
+  const solutions = questions.map(q => Object.assign({}, q, { solutionHTML:makeSolutionHtml_(q), stepByStepSolution:q.stepByStepSolution || 'Step-by-step solution will be generated after AI key setup.' }));
+  return { lessonHTML, notesHTML:lessonHTML, definitions, formulas:[], diagramNotes:'', solutions, mcq, worksheet };
+}
+
+function normalizeGeneratedObject_(obj, text, input, metadata, insideQuestions, endQuestions, subjectType) {
+  const fallback = fallbackGenerated_(text, input, metadata, insideQuestions, endQuestions, subjectType);
+  return {
+    lessonHTML: obj.lessonHTML || fallback.lessonHTML,
+    notesHTML: obj.notesHTML || obj.lessonHTML || fallback.notesHTML,
+    definitions: Array.isArray(obj.definitions) ? obj.definitions : fallback.definitions,
+    formulas: Array.isArray(obj.formulas) ? obj.formulas : [],
+    diagramNotes: obj.diagramNotes || '',
+    solutions: Array.isArray(obj.solutions) ? obj.solutions : fallback.solutions,
+    mcq: Array.isArray(obj.mcq) ? obj.mcq : fallback.mcq,
+    worksheet: Array.isArray(obj.worksheet) ? obj.worksheet : fallback.worksheet
+  };
+}
+
+function normalizeSolutionRows_(solutions, insideQuestions, endQuestions) {
+  const all = Array.isArray(solutions) && solutions.length ? solutions : insideQuestions.concat(endQuestions);
+  return all.map((q, i) => ({
+    questionSource: q.questionSource || (i < insideQuestions.length ? 'Inside Chapter' : 'End Exercise'),
+    questionGroup: q.questionGroup || 'Question',
+    questionNumber: q.questionNumber || String(i + 1),
+    questionText: q.questionText || '',
+    solutionHTML: q.solutionHTML || makeSolutionHtml_(q),
+    stepByStepSolution: q.stepByStepSolution || '',
+    marks: q.marks || '', difficulty: q.difficulty || ''
+  }));
+}
+
+function makeSolutionHtml_(q) {
+  return '<div class="solution-box"><h3>' + esc_(q.questionGroup || 'Question') + ' ' + esc_(q.questionNumber || '') + '</h3><p><b>Question:</b> ' + esc_(q.questionText || '') + '</p><p><b>Solution:</b> Step-by-step solution will be reviewed and improved by AI/admin.</p></div>';
+}
+
+function fallbackMetadata_(text, input) {
+  const chapterMatch = String(text || '').match(/chapter\s*([0-9]+)[:.\-\s]+([^\n]+)/i);
+  const classMatch = String(text || '').match(/class\s*([0-9]+)/i);
+  return {
+    board: input.board || '', className: input.className || (classMatch ? 'Class ' + classMatch[1] : ''), medium: input.medium || '',
+    subjectId: input.subjectId || '', subjectName: input.subjectId || '',
+    chapterId: input.chapterId || makeChapterId_(input.subjectId, chapterMatch ? chapterMatch[1] : ''),
+    chapterNo: chapterMatch ? chapterMatch[1] : '',
+    chapterName: input.chapterName || (chapterMatch ? chapterMatch[2].trim() : 'Chapter'),
+    detectedLanguage: detectLanguage_(text)
+  };
+}
+
+
+function canonicalSolutionSetId_(chapterId) {
+  return 'SOLSET-' + norm_(chapterId);
+}
+
+function canonicalSolutionSourceId_(chapterId, solution, index) {
+  const source = safeIdentityToken_(solution.questionSource || 'Question');
+  const group = safeIdentityToken_(solution.questionGroup || 'Question');
+  const number = safeIdentityToken_(solution.questionNumber || (index + 1));
+  return [
+    norm_(chapterId),
+    source,
+    group,
+    number,
+    pad3_(index + 1)
+  ].join('-');
+}
+
+function safeIdentityToken_(value) {
+  return norm_(value)
+    .replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toUpperCase()
+    .slice(0, 36) || 'Q';
+}
+
+/**
+ * READ-ONLY AUDIT.
+ *
+ * Run manually before repair:
+ *   auditSolutionIdentityIsolation
+ */
+function auditSolutionIdentityIsolation() {
+  WTC_AI_REQUEST_ROWS_CACHE = {};
+  const rows = rows_('SOLUTION_ENGINE');
+  const setChapters = {};
+  let mismatchedRows = 0;
+
+  rows.forEach(row => {
+    const chapterId = norm_(row.chapterId);
+    const solutionSetId = norm_(row.solutionSetId);
+    if (!chapterId) return;
+    if (solutionSetId !== canonicalSolutionSetId_(chapterId)) mismatchedRows++;
+    if (!setChapters[solutionSetId]) setChapters[solutionSetId] = {};
+    setChapters[solutionSetId][chapterId] = true;
+  });
+
+  const collisions = Object.keys(setChapters)
+    .map(solutionSetId => ({
+      solutionSetId,
+      chapterIds:Object.keys(setChapters[solutionSetId])
+    }))
+    .filter(item => item.chapterIds.length > 1);
+
+  const featureMapMismatches = rows_('FEATURE_MAP').filter(row => {
+    const chapterId = norm_(row.chapterId);
+    const solutionSetId = norm_(row.solutionSetId);
+    return chapterId && solutionSetId && solutionSetId !== canonicalSolutionSetId_(chapterId);
+  }).map(row => ({
+    chapterId:norm_(row.chapterId),
+    currentSolutionSetId:norm_(row.solutionSetId),
+    expectedSolutionSetId:canonicalSolutionSetId_(row.chapterId)
+  }));
+
+  const result = {
+    success:true,
+    solutionRows:rows.length,
+    mismatchedRows,
+    collisionCount:collisions.length,
+    collisions,
+    featureMapMismatchCount:featureMapMismatches.length,
+    featureMapMismatches
+  };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/**
+ * ONE-TIME, IDEMPOTENT REPAIR.
+ *
+ * Run manually from the Apps Script editor after deploying v1.5.2:
+ *   repairSolutionIdentityIsolation
+ *
+ * It rewrites existing Solution rows and FEATURE_MAP solutionSetId values
+ * so every identity is derived from its exact chapterId. It never deletes
+ * rows or changes solution content/status.
+ */
+function repairSolutionIdentityIsolation() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    WTC_AI_REQUEST_ROWS_CACHE = {};
+    const solutionSheet = sh_('SOLUTION_ENGINE');
+    const values = solutionSheet.getDataRange().getValues();
+    if (values.length < 2) {
+      const emptyResult = { success:true, repairedRows:0, featureMapsUpdated:0, message:'No Solution rows found.' };
+      console.log(JSON.stringify(emptyResult));
+      return emptyResult;
+    }
+
+    const headers = values[0].map(String);
+    const col = {};
+    headers.forEach((header, index) => col[header] = index);
+    ['solutionId','solutionSetId','chapterId','sourceQuestionId','sortOrder','status','updatedAt'].forEach(required => {
+      if (col[required] === undefined) throw new Error('Missing SOLUTION_ENGINE column: ' + required);
+    });
+
+    const sequenceByChapter = {};
+    const visibleChapters = {};
+    let repairedRows = 0;
+    const now = now_();
+
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      const row = values[rowIndex];
+      const chapterId = norm_(row[col.chapterId]);
+      if (!chapterId) continue;
+
+      sequenceByChapter[chapterId] = (sequenceByChapter[chapterId] || 0) + 1;
+      const sequence = sequenceByChapter[chapterId];
+      const canonicalSetId = canonicalSolutionSetId_(chapterId);
+      const sourceQuestionId = chapterId + '-SOLQ' + pad3_(sequence);
+      const solutionId = 'SOL-' + sourceQuestionId;
+
+      const changed =
+        norm_(row[col.solutionSetId]) !== canonicalSetId ||
+        norm_(row[col.sourceQuestionId]) !== sourceQuestionId ||
+        norm_(row[col.solutionId]) !== solutionId;
+
+      if (changed) {
+        row[col.solutionSetId] = canonicalSetId;
+        row[col.sourceQuestionId] = sourceQuestionId;
+        row[col.solutionId] = solutionId;
+        row[col.updatedAt] = now;
+        repairedRows++;
+      }
+
+      const status = norm_(row[col.status]).toLowerCase();
+      if (!status || ['published','active','ready'].indexOf(status) >= 0) {
+        visibleChapters[chapterId] = true;
+      }
+    }
+
+    if (repairedRows) {
+      solutionSheet.getRange(2, 1, values.length - 1, headers.length).setValues(values.slice(1));
+      invalidateRows_('SOLUTION_ENGINE');
+    }
+
+    let featureMapsUpdated = 0;
+    Object.keys(visibleChapters).forEach(chapterId => {
+      const canonicalSetId = canonicalSolutionSetId_(chapterId);
+      const current = findBy_('FEATURE_MAP', 'chapterId', chapterId);
+      if (!current || norm_(current.solutionSetId) !== canonicalSetId) {
+        upsertFeatureMap_(chapterId, { solutionSetId:canonicalSetId, updatedAt:now });
+        featureMapsUpdated++;
+      }
+    });
+
+    const cacheVersion = bumpWtcAiPublicCacheVersion_();
+    const result = {
+      success:true,
+      repairedRows,
+      featureMapsUpdated,
+      cacheVersion,
+      message:'Solution identities are isolated by exact chapterId. No content rows were deleted.'
+    };
+    console.log(JSON.stringify(result));
+    return result;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* Data helpers */
+function rows_(sheetName) {
+  if (WTC_AI_REQUEST_ROWS_CACHE[sheetName]) return WTC_AI_REQUEST_ROWS_CACHE[sheetName];
+  const s = sh_(sheetName);
+  const values = s.getDataRange().getValues();
+  if (values.length < 2) return WTC_AI_REQUEST_ROWS_CACHE[sheetName] = [];
+  const headers = values[0].map(String);
+  return WTC_AI_REQUEST_ROWS_CACHE[sheetName] = values.slice(1).filter(r => r.join('') !== '').map((r, idx) => {
+    const o = { _row:idx + 2 };
+    headers.forEach((h, i) => o[h] = r[i]);
+    return o;
+  });
+}
+function invalidateRows_(sheetName) { delete WTC_AI_REQUEST_ROWS_CACHE[sheetName]; }
+function append_(sheetName, obj) {
+  const s = sh_(sheetName);
+  const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(String);
+  s.getRange(s.getLastRow() + 1, 1, 1, headers.length).setValues([headers.map(h => obj[h] !== undefined ? obj[h] : '')]);
+  invalidateRows_(sheetName);
+}
+function updateByKey_(sheetName, key, value, obj) {
+  const row = rows_(sheetName).find(r => norm_(r[key]) === norm_(value));
+  if (!row) return false;
+  const s = sh_(sheetName);
+  const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0].map(String);
+  const values = s.getRange(row._row, 1, 1, headers.length).getValues()[0];
+  headers.forEach((h, i) => { if (obj[h] !== undefined) values[i] = obj[h]; });
+  s.getRange(row._row, 1, 1, headers.length).setValues([values]);
+  invalidateRows_(sheetName);
+  return true;
+}
+function upsertRow_(sheetName, key, value, obj) {
+  const existing = findBy_(sheetName, key, value);
+  if (!existing) {
+    append_(sheetName, Object.assign({ createdAt:now_() }, obj));
+    return 'inserted';
+  }
+  const same = obj.contentHash && norm_(existing.contentHash) === norm_(obj.contentHash);
+  if (same) {
+    updateByKey_(sheetName, key, value, {
+      uploadId:obj.uploadId, sourcePage:obj.sourcePage, status:obj.status, updatedAt:now_()
+    });
+    return 'unchanged';
+  }
+  updateByKey_(sheetName, key, value, obj);
+  return 'updated';
+}
+function updateRowsWhere_(sheetName, predicate, changes) {
+  const s = sh_(sheetName);
+  const values = s.getDataRange().getValues();
+  if (values.length < 2) return 0;
+  const headers = values[0].map(String);
+  let count = 0;
+  for (let i = 1; i < values.length; i++) {
+    const row = {};
+    headers.forEach((h, j) => row[h] = values[i][j]);
+    if (!predicate(row)) continue;
+    headers.forEach((h, j) => { if (changes[h] !== undefined) values[i][j] = changes[h]; });
+    count++;
+  }
+  if (count) {
+    s.getRange(2, 1, values.length - 1, headers.length).setValues(values.slice(1));
+    invalidateRows_(sheetName);
+  }
+  return count;
+}
+function findBy_(sheetName, key, value) { return rows_(sheetName).find(r => norm_(r[key]) === norm_(value)); }
+function sh_(name) { const s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name); if (!s) throw new Error('Missing sheet: ' + name); return s; }
+function upsertFeatureMap_(chapterId, obj) {
+  if (findBy_('FEATURE_MAP', 'chapterId', chapterId)) updateByKey_('FEATURE_MAP', 'chapterId', chapterId, obj);
+  else append_('FEATURE_MAP', Object.assign({ chapterId }, obj));
+}
+function latestTextForUpload_(uploadId) { const rows = rows_('OCR_RAW_TEXT').filter(r => norm_(r.uploadId) === norm_(uploadId)); return rows.length ? rows[rows.length - 1].rawExtractedText : ''; }
+function latestMetadata_(uploadId) { const rows = rows_('CHAPTER_METADATA').filter(r => norm_(r.uploadId) === norm_(uploadId)); return rows.length ? rows[rows.length - 1] : null; }
+function isVisible_(r) { return !r.status || ['published','active','ready'].indexOf(norm_(r.status).toLowerCase()) >= 0; }
+function isPublishedForStudents_(r) { return ['published','active','ready'].indexOf(norm_(r.status).toLowerCase()) >= 0; }
+
+
+function wtcAiPublicCacheVersion_() {
+  return PropertiesService.getScriptProperties().getProperty('WTC_AI_PUBLIC_CACHE_VERSION') || '1';
+}
+function bumpWtcAiPublicCacheVersion_() {
+  const next = String(Number(wtcAiPublicCacheVersion_()) + 1);
+  PropertiesService.getScriptProperties().setProperty('WTC_AI_PUBLIC_CACHE_VERSION', next);
+  return next;
+}
+function wtcAiPublicCacheKey_(type, id) {
+  // Include deployed code version so a new backend release never reuses an old response shape.
+  const raw = [WTC_AI_VERSION, wtcAiPublicCacheVersion_(), type, id].join('|');
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+  return 'WTC_AI_PUBLIC_' + Utilities.base64EncodeWebSafe(digest).replace(/=+$/g, '').slice(0, 40);
+}
+function withWtcAiPublicCache_(type, id, loader) {
+  const cache = CacheService.getScriptCache();
+  const key = wtcAiPublicCacheKey_(type, id);
+  const cached = cache.get(key);
+  if (cached) { try { return JSON.parse(cached); } catch (ignore) {} }
+  const value = loader();
+  try { cache.put(key, JSON.stringify(value), WTC_AI_PUBLIC_CACHE_SECONDS); } catch (ignore) {}
+  return value;
+}
+
+function seedSettings_() {
+  if (rows_('SETTINGS').length) return;
+  append_('SETTINGS', { key:'VERSION', value:'v1.4', notes:'OCR + AI Chapter Extraction Engine' });
+  append_('SETTINGS', { key:'DISPLAY_RULE', value:'FormattedOnly', notes:'Students never see raw AI output' });
+  append_('SETTINGS', { key:'SOLUTION_RULE', value:'InsideChapterAndEndExercise', notes:'Solution button includes both question sources' });
+}
+function prop_(key) { return PropertiesService.getScriptProperties().getProperty(key); }
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function now_() { return Utilities.formatDate(new Date(), IST, 'yyyy-MM-dd HH:mm:ss'); }
+function id_(prefix) { return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(); }
+function pad3_(n) { return ('000' + Number(n || 0)).slice(-3); }
+function option_(q, letter, index) {
+  if (q.options && !Array.isArray(q.options)) return q.options[letter] || q.options[letter.toLowerCase()] || '';
+  if (Array.isArray(q.options)) return q.options[index] || '';
+  return '';
+}
+function contentHash_(value) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(value || ''), Utilities.Charset.UTF_8);
+  return bytes.map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+}
+function countUpsert_(stats, result) { stats[result] = (stats[result] || 0) + 1; }
+function norm_(v) { return String(v || '').trim(); }
+function esc_(s) { return String(s || '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function longColumn_(h) { return /raw|html|json|content|text|solution|base64|notes/i.test(h); }
+function titleCase_(s) { return String(s || '').replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase()); }
+function uniqueQuestions_(arr) { const seen = {}; return arr.filter(q => { const k = norm_(q.questionText).toLowerCase(); if (!k || seen[k]) return false; seen[k] = true; return true; }); }
+function detectLanguage_(text) { return /[\u0A80-\u0AFF]/.test(String(text || '')) ? 'Gujarati' : 'English'; }
+function detectSubjectType_(subjectId, chapterName, text) { const s = (subjectId + ' ' + chapterName + ' ' + text.slice(0, 1000)).toLowerCase(); if (/math|number|algebra|geometry|ગણિત/.test(s)) return 'Mathematics'; if (/science|chemical|physics|biology|વિજ્ઞાન/.test(s)) return 'Science'; if (/english|poem|story|grammar/.test(s)) return 'English'; if (/social|history|geography|civics/.test(s)) return 'Social Science'; return 'General'; }
+function makeChapterId_(subject, no) { const clean = String(subject || 'CH').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8); return clean + 'CH' + (no || Date.now()); }

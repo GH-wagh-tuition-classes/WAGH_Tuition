@@ -1,4 +1,4 @@
-/* WTC Assessment API client Stage 1 Performance v1.1 — Solution Identity Isolation */
+/* WTC Assessment API client Stage 1 Performance v1.2 — Static Import Reliability */
 window.WTC_ASSESSMENT_API = (() => {
   const inFlight = new Map();
   const memoryCache = new Map();
@@ -66,7 +66,13 @@ window.WTC_ASSESSMENT_API = (() => {
       try { return JSON.parse(text); }
       catch (error) { throw new Error('Assessment API returned an invalid response.'); }
     } catch (error) {
-      if (error?.name === 'AbortError') throw new Error('Content request timed out. Please try again.');
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error(payload?.action === 'importStaticContent'
+          ? 'Static import is taking longer than expected. The server may still finish. Wait a moment, then tap Import as Draft again; duplicate-safe mode will reuse the same import.'
+          : 'Content request timed out. Please try again.');
+        timeoutError.code = payload?.action === 'importStaticContent' ? 'STATIC_IMPORT_TIMEOUT' : 'REQUEST_TIMEOUT';
+        throw timeoutError;
+      }
       throw error;
     } finally {
       if (timer) window.clearTimeout(timer);
@@ -103,8 +109,12 @@ window.WTC_ASSESSMENT_API = (() => {
     return data;
   }
 
-  async function write(payload) {
-    const data = await call(payload, { retries:0, dedupe:true });
+  async function write(payload, options={}) {
+    const data = await call(payload, {
+      retries:0,
+      dedupe:true,
+      timeoutMs:Number(options.timeoutMs || perf().WRITE_TIMEOUT_MS || 30000)
+    });
     return data;
   }
 
@@ -120,9 +130,12 @@ window.WTC_ASSESSMENT_API = (() => {
     generateAIContent: uploadId => write({ action:'generateAIContent', uploadId }),
     formatGeneratedContent: uploadId => write({ action:'formatGeneratedContent', uploadId }),
     fullExtractAndGenerate: uploadId => write({ action:'fullExtractAndGenerate', uploadId }),
-    importStaticContent: importData => write({ action:'importStaticContent', importData, uploadedBy:'Admin' }),
+    importStaticContent: importData => write(
+      { action:'importStaticContent', importData, uploadedBy:'Admin' },
+      { timeoutMs:Number(perf().STATIC_IMPORT_TIMEOUT_MS || 120000) }
+    ),
     publishStaticImport: async uploadId => {
-      const data = await write({ action:'publishStaticImport', uploadId, approvedBy:'Admin' });
+      const data = await write({ action:'publishStaticImport', uploadId, approvedBy:'Admin' }, { timeoutMs:Number(perf().STATIC_PUBLISH_TIMEOUT_MS || 60000) });
       if (data?.success !== false) clearReadCache();
       return data;
     },

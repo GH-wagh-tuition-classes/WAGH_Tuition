@@ -1,5 +1,5 @@
 /*
-WAGH Tuition Classes - Static Page Importer v1.2 Solution Identity Isolation
+WAGH Tuition Classes - Static Page Importer v1.3 Duplicate-Safe Import
 Reads trusted WTC static HTML in the admin browser and sends normalized Draft
 rows to WTC_AI_CONTENT_ENGINE. Static student pages are never modified.
 */
@@ -8,6 +8,8 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
   let selectedName = '';
   let parsed = null;
   let importedUploadId = '';
+  let importBusy = false;
+  let publishBusy = false;
 
   function init() {
     const file = document.getElementById('staticImportFile');
@@ -20,6 +22,8 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
       selectedHtml = await chosen.text();
       selectedName = chosen.name;
       parsed = null;
+      importedUploadId = '';
+      document.getElementById('staticImportUploadId').value = '';
       document.getElementById('staticImportFileName').textContent = `${chosen.name} (${Math.round(chosen.size / 1024)} KB)`;
       status('HTML loaded. Tap Analyze Static Page.', 'info');
     });
@@ -36,6 +40,8 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
       selectedHtml = await res.text();
       selectedName = url.split('/').pop() || 'static-page.html';
       parsed = null;
+      importedUploadId = '';
+      document.getElementById('staticImportUploadId').value = '';
       document.getElementById('staticImportFileName').textContent = selectedName;
       status('Static page loaded. Tap Analyze Static Page.', 'info');
     } catch (error) {
@@ -66,23 +72,38 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
 
   async function importDraft() {
     if (!parsed) return status('Analyze the static page before importing.', 'error');
+    if (importBusy) return status('The static import is already running.', 'info');
+    importBusy = true;
+    setActionBusy('importDraft', true, 'Importing Draft...');
     try {
       validateParsed(parsed, false);
-      status('Importing validated content as Draft...', 'info');
+      status('Importing validated content as Draft. Please keep this page open...', 'info');
       const result = await WTC_ASSESSMENT_API.importStaticContent(parsed);
       if (!result.success) throw new Error(result.message || 'Static import failed.');
       importedUploadId = result.uploadId;
       document.getElementById('staticImportUploadId').value = importedUploadId;
       renderImportResult(result);
-      status(`Draft imported. Upload ID: ${importedUploadId}`, 'success');
+      status(result.reusedExistingImport
+        ? `Identical content already exists. Reused Upload ID: ${importedUploadId}`
+        : `Draft imported. Upload ID: ${importedUploadId}`, 'success');
       if (window.WTC_AI_CONTENT_ADMIN?.refreshQueue) await WTC_AI_CONTENT_ADMIN.refreshQueue();
-    } catch (error) { status(error.message, 'error'); }
+    } catch (error) {
+      status(error?.code === 'STATIC_IMPORT_TIMEOUT'
+        ? error.message
+        : (error.message || 'Static import failed.'), error?.code === 'STATIC_IMPORT_TIMEOUT' ? 'info' : 'error');
+    } finally {
+      importBusy = false;
+      setActionBusy('importDraft', false);
+    }
   }
 
   async function publishImported() {
     const uploadId = importedUploadId || String(document.getElementById('staticImportUploadId')?.value || '').trim();
     if (!uploadId) return status('Import the page as Draft first.', 'error');
+    if (publishBusy) return status('Publishing is already running.', 'info');
     if (!confirm('Publish this reviewed static-page import to the dynamic content bank?')) return;
+    publishBusy = true;
+    setActionBusy('publishImported', true, 'Publishing...');
     try {
       status('Publishing reviewed content...', 'info');
       const result = await WTC_ASSESSMENT_API.publishStaticImport(uploadId);
@@ -90,7 +111,12 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
       status('Reviewed content published successfully.', 'success');
       renderImportResult(result);
       if (window.WTC_AI_CONTENT_ADMIN?.refreshQueue) await WTC_AI_CONTENT_ADMIN.refreshQueue();
-    } catch (error) { status(error.message, 'error'); }
+    } catch (error) {
+      status(error.message || 'Publish failed.', 'error');
+    } finally {
+      publishBusy = false;
+      setActionBusy('publishImported', false);
+    }
   }
 
   function parseStaticHtml(html, sourceName) {
@@ -290,7 +316,10 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
   function renderImportResult(result) {
     const box = document.getElementById('staticImportPreview');
     const stats = result.stats ? `<p>Inserted: ${result.stats.inserted || 0} • Updated: ${result.stats.updated || 0} • Unchanged: ${result.stats.unchanged || 0}</p>` : '';
-    box.innerHTML = `<div class="static-result"><h3>${escapeHtml(result.message || 'Completed')}</h3><p><b>Upload ID:</b> ${escapeHtml(result.uploadId || importedUploadId)}</p>${stats}<pre>${escapeHtml(JSON.stringify(result, null, 2))}</pre></div>`;
+    const duplicateNote = result.duplicateSafe
+      ? `<p><b>Duplicate protection:</b> ${result.reusedExistingImport ? 'Existing identical import reused' : 'Enabled'}</p>`
+      : '';
+    box.innerHTML = `<div class="static-result"><h3>${escapeHtml(result.message || 'Completed')}</h3><p><b>Upload ID:</b> ${escapeHtml(result.uploadId || importedUploadId)}</p>${duplicateNote}${stats}<pre>${escapeHtml(JSON.stringify(result, null, 2))}</pre></div>`;
   }
 
   function collectMetadataOverrides() {
@@ -425,13 +454,28 @@ const WTC_STATIC_CONTENT_IMPORTER = (() => {
   function slug(value) { return String(value || '').normalize('NFKD').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase() || 'Q'; }
   function text(node) { return String(node?.textContent || '').replace(/\s+/g, ' ').trim(); }
   function escapeHtml(value='') { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function setActionBusy(actionName, busy, busyText='Working...') {
+    const button = document.querySelector(
+      `[data-static-import-action="${actionName}"],button[onclick*="WTC_STATIC_CONTENT_IMPORTER.${actionName}"]`
+    );
+    if (!button) return;
+    if (!button.dataset.originalText) button.dataset.originalText = button.textContent.trim();
+    button.disabled = !!busy;
+    button.setAttribute('aria-busy', busy ? 'true' : 'false');
+    button.textContent = busy ? busyText : button.dataset.originalText;
+  }
+
   function status(message, type) {
     const el = document.getElementById('staticImportStatus');
     if (el) { el.className = `ai-status ${type || 'info'}`; el.textContent = message; }
     if (window.WTC_UI?.toast) WTC_UI.toast(message, type === 'error' ? 'error' : 'success');
   }
   function previewError(message) { const el = document.getElementById('staticImportPreview'); if (el) el.innerHTML = `<div class="ai-empty">${escapeHtml(message)}</div>`; }
-  function resetSelection() { selectedHtml=''; selectedName=''; parsed=null; document.getElementById('staticImportFileName').textContent='No HTML file selected'; }
+  function resetSelection() {
+    selectedHtml=''; selectedName=''; parsed=null; importedUploadId='';
+    document.getElementById('staticImportUploadId').value='';
+    document.getElementById('staticImportFileName').textContent='No HTML file selected';
+  }
 
   return { init, loadUrl, analyze, importDraft, publishImported };
 })();

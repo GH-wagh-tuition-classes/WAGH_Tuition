@@ -1,6 +1,6 @@
 @import url('portal.css');
 
-/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5B v1.0 */
+/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5C v1.0 */
 .teacher-page{min-height:100vh;background:#f4f7fb;color:#172033}
 .teacher-page button,.teacher-page input,.teacher-page select{font:inherit}
 .teacher-topbar{z-index:90;background:rgba(255,255,255,.95);box-shadow:0 1px 0 rgba(15,23,42,.06)}
@@ -303,4 +303,81 @@
   .teacher-history-card{grid-template-columns:1fr}.teacher-history-score{width:100%}
   .teacher-class-chapter-metrics{grid-template-columns:repeat(2,1fr)}
   .teacher-attention-card-head{display:grid}
+}
+
+
+/* ===== Phase 2.5C — Test Monitoring and Class Reports ===== */
+.teacher-stat-icon.tests{background:#fef3c7}.teacher-stat-icon.completion{background:#dbeafe;color:#1d4ed8}
+.teacher-dashboard-grid-third{margin-top:18px}
+.teacher-report-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.teacher-report-preview-grid>div{padding:13px;border:1px solid #e4ecef;border-radius:13px;background:#f8fbfc;text-align:center}
+.teacher-report-preview-grid small{display:block;color:#64748b;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.teacher-report-preview-grid b{display:block;margin-top:4px;color:#0f172a;font-size:19px}
+.teacher-test-list{display:grid;gap:13px}
+.teacher-test-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:18px;border:1px solid #e0eaed;border-radius:18px;background:#fff;transition:.18s ease}
+.teacher-test-card:hover{border-color:#9ecbd5;box-shadow:0 9px 22px rgba(20,73,91,.08)}
+.teacher-test-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.teacher-test-card-head h3{margin:0 0 4px;color:#0f172a;font-size:17px}.teacher-test-card-head p{margin:0;color:#64748b;font-size:11px}
+.teacher-test-completion{height:9px;margin:12px 0}
+.teacher-test-metrics{display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:7px}
+.teacher-test-metrics>div{padding:9px 7px;border-radius:11px;background:#f5f8fa;text-align:center}
+.teacher-test-metrics small{display:block;color:#71818d;font-size:8px;font-weight:900;text-transform:uppercase}.teacher-test-metrics b{display:block;margin-top:3px;color:#172033;font-size:13px}
+.teacher-test-card-action{display:grid;justify-items:end;gap:10px;min-width:145px}.teacher-test-card-action small{color:#71818d;font-size:10px}
+.teacher-report-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.teacher-report-toolbar>div,.teacher-report-actions{display:flex;gap:8px;flex-wrap:wrap}
+.teacher-report-build{align-self:end;min-height:42px}
+.teacher-class-report-shell{overflow:hidden}
+.teacher-print-report{display:grid;gap:18px}
+.teacher-report-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px;border:1px solid #dce8ec;border-radius:20px;background:linear-gradient(135deg,#eef9fb,#fff 65%,#fff8e8)}
+.teacher-report-heading h2{margin:0 0 6px;color:#0f172a;font-size:27px}.teacher-report-heading p{margin:0;color:#64748b}.teacher-report-date{color:#64748b;font-size:11px;font-weight:800;text-align:right}
+.teacher-report-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.teacher-report-stat{padding:14px;border:1px solid #e2ebee;border-radius:15px;background:#fff;text-align:center}
+.teacher-report-stat small{display:block;color:#64748b;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.teacher-report-stat strong{display:block;margin-top:5px;color:#0f172a;font-size:21px}
+.teacher-report-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(270px,.55fr);gap:18px}
+.teacher-report-section{padding:20px;border:1px solid #dce8ec;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(20,73,91,.06);overflow:hidden}
+.teacher-attempt-history-section{margin-top:0}
+.teacher-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
+.teacher-report-table{width:100%;min-width:760px;border-collapse:collapse}
+.teacher-report-table th,.teacher-report-table td{padding:11px 10px;border-bottom:1px solid #e7edf0;text-align:left;font-size:11px;vertical-align:top}
+.teacher-report-table th{background:#0f172a;color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.045em;white-space:nowrap}
+.teacher-report-table td b{display:block;color:#172033}.teacher-report-table td small{display:block;margin-top:3px;color:#71818d}
+.teacher-report-table td.positive{color:#15803d;font-weight:900}.teacher-report-table td.negative{color:#b91c1c;font-weight:900}
+.teacher-non-attempt-list{display:grid;gap:8px;max-height:540px;overflow:auto}
+.teacher-non-attempt-list>div{display:grid;gap:3px;padding:11px;border:1px solid #e7edf0;border-radius:12px;background:#fafcfd}
+.teacher-non-attempt-list b{color:#172033;font-size:12px}.teacher-non-attempt-list span{color:#71818d;font-size:10px}
+.class-report-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+.test-monitor-filters{grid-template-columns:minmax(220px,1.4fr) repeat(4,minmax(130px,.7fr))}
+.teacher-count-pill.warning{background:#ffedd5;color:#9a3412}
+
+@media(max-width:1280px){
+  .test-monitor-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.test-monitor-filters .search-field{grid-column:span 2}
+  .teacher-test-metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:980px){
+  .teacher-report-grid{grid-template-columns:1fr}.teacher-report-stats{grid-template-columns:repeat(4,1fr)}
+  .teacher-test-card{grid-template-columns:1fr}.teacher-test-card-action{justify-items:start;min-width:0}
+}
+@media(max-width:760px){
+  .test-monitor-filters,.class-report-filters{grid-template-columns:1fr}.test-monitor-filters .search-field{grid-column:auto}
+  .teacher-report-heading{display:grid}.teacher-report-date{text-align:left}
+  .teacher-report-stats{grid-template-columns:repeat(2,1fr)}
+  .teacher-report-toolbar{align-items:flex-start;display:grid}.teacher-report-toolbar>div,.teacher-report-actions{width:100%}.teacher-report-toolbar .btn,.teacher-report-actions .btn{flex:1}
+}
+@media(max-width:520px){
+  .teacher-test-metrics{grid-template-columns:repeat(2,1fr)}
+  .teacher-test-card-head{display:grid}.teacher-report-preview-grid{grid-template-columns:1fr 1fr}
+}
+
+@media print{
+  @page{size:A4;margin:12mm}
+  body.printing-test-report *,body.printing-class-report *{visibility:hidden!important}
+  body.printing-test-report #testDetailPanel,body.printing-test-report #testDetailPanel *,body.printing-class-report #classReportsPanel,body.printing-class-report #classReportsPanel *{visibility:visible!important}
+  body.printing-test-report #testDetailPanel,body.printing-class-report #classReportsPanel{display:block!important;position:absolute;inset:0;width:100%;padding:0;margin:0;background:#fff}
+  body.printing-test-report .teacher-print-report,body.printing-class-report .teacher-print-report{display:block!important}
+  .no-print,.teacher-topbar,.teacher-sidebar,.teacher-bottom-nav,.teacher-page-head,.teacher-status{display:none!important}
+  .teacher-main,.teacher-section-card,.teacher-report-section,.teacher-report-heading{padding:0!important;margin:0 0 12px!important;border:0!important;box-shadow:none!important;background:#fff!important}
+  .teacher-report-stats{grid-template-columns:repeat(4,1fr)!important;margin:10px 0}
+  .teacher-report-stat{break-inside:avoid;border:1px solid #cbd5e1!important}
+  .teacher-report-grid{display:block!important}.teacher-report-grid>.teacher-report-section{margin-bottom:12px!important}
+  .teacher-table-wrap{overflow:visible!important;border:0!important}.teacher-report-table{min-width:0!important;font-size:9px!important}.teacher-report-table th,.teacher-report-table td{padding:6px!important;color:#000!important;background:#fff!important;border:1px solid #cbd5e1!important}
+  .teacher-report-table thead{display:table-header-group}.teacher-report-table tr{break-inside:avoid}
 }

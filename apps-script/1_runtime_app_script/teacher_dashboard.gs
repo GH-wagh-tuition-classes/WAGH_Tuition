@@ -1,9 +1,9 @@
 /* ============================================================================
-   WAGH Tuition Classes — Teacher Dashboard Phase 2.5B v1.0
+   WAGH Tuition Classes — Teacher Dashboard Phase 2.5C v1.0
    FILE: teacher_dashboard.gs
-   SCOPE: Read-only Teacher Student Analytics
+   SCOPE: Read-only Test Monitoring, Student Analytics and Class Reports
 
-   Cumulative replacement for the Phase 2.5A teacher_dashboard.gs module.
+   Cumulative replacement for the Phase 2.5B teacher_dashboard.gs module.
    Reads existing WTC_CONTENT_ENGINE sheets through WTC_WorkbookRepository.
    Creates no Sheet, column, row, migration or content record.
 ============================================================================ */
@@ -15,7 +15,10 @@ var WTC_TEACHER_25B = {
   EXCELLENT_PERCENT: 85,
   INACTIVE_DAYS: 14,
   MAX_DASHBOARD_RESULTS: 100,
-  MAX_STUDENT_HISTORY: 200
+  MAX_STUDENT_HISTORY: 200,
+  MAX_TEST_CATALOG: 250,
+  MAX_RECENT_ATTEMPTS: 200,
+  MAX_REPORT_ATTEMPTS: 1000
 };
 
 function teacherDashboard(d) {
@@ -26,10 +29,15 @@ function teacherDashboard(d) {
   var attentionStudents = students.filter(function(student) { return student.needsAttention; });
   var resultPercentages = scope.results.map(wtcTeacher25BPercent_).filter(wtcTeacher25BNotNull_);
   var activeStudentCount = scope.students.filter(wtcTeacher25BActive_).length;
+  var testCatalog = wtcTeacher25CTestCatalog_(scope).slice(0, WTC_TEACHER_25B.MAX_TEST_CATALOG);
+  var averageTestCompletion = testCatalog.length
+    ? wtcTeacher25BRound_(wtcTeacher25BSum_(testCatalog.map(function(test) { return test.completionRate; })) / testCatalog.length)
+    : 0;
+  var studentsWithAttempts = students.filter(function(student) { return student.attemptCount > 0; }).length;
 
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     teacher: wtcTeacher25BTeacherPayload_(scope.teacher),
     assignment: wtcTeacher25BAssignmentPayload_(scope),
@@ -41,12 +49,19 @@ function teacherDashboard(d) {
       needsAttention: attentionStudents.length,
       assignedChapters: scope.chapters.length,
       attemptedChapters: classChapters.filter(function(item) { return item.attemptCount > 0; }).length,
-      activeLast14Days: students.filter(function(student) { return student.daysSinceActivity !== null && student.daysSinceActivity <= WTC_TEACHER_25B.INACTIVE_DAYS; }).length
+      activeLast14Days: students.filter(function(student) { return student.daysSinceActivity !== null && student.daysSinceActivity <= WTC_TEACHER_25B.INACTIVE_DAYS; }).length,
+      uniqueTests: testCatalog.length,
+      averageTestCompletion: averageTestCompletion,
+      studentsWithAttempts: studentsWithAttempts,
+      studentsWithoutAttempts: Math.max(0, scope.students.length - studentsWithAttempts)
     },
     students: students,
     recentResults: recentResults,
+    recentAttempts: recentResults,
     chapterAnalytics: classChapters,
     attentionStudents: attentionStudents,
+    testCatalog: testCatalog,
+    classReportSummary: wtcTeacher25CClassSummary_(scope, students, testCatalog),
     assignmentWarnings: scope.warnings
   };
 }
@@ -55,7 +70,7 @@ function teacherGetStudents(d) {
   var scope = wtcTeacher25BBuildScope_(d || {});
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     students: wtcTeacher25BStudentSummaries_(scope),
     assignment: wtcTeacher25BAssignmentPayload_(scope)
@@ -76,7 +91,7 @@ function teacherGetStudentTestHistory(d) {
   var report = wtcTeacher25BStudentReportPayload_(scope, student);
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     student: report.student,
     summary: report.summary,
@@ -88,7 +103,7 @@ function teacherGetChapterAnalytics(d) {
   var scope = wtcTeacher25BBuildScope_(d || {});
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     assignment: wtcTeacher25BAssignmentPayload_(scope),
     chapterAnalytics: wtcTeacher25BClassChapterAnalytics_(scope)
@@ -99,9 +114,86 @@ function teacherGetAttentionStudents(d) {
   var scope = wtcTeacher25BBuildScope_(d || {});
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     attentionStudents: wtcTeacher25BStudentSummaries_(scope).filter(function(student) { return student.needsAttention; })
+  };
+}
+
+
+
+function teacherGetTestCatalog(d) {
+  var request = d || {};
+  var scope = wtcTeacher25BBuildScope_(request);
+  var tests = wtcTeacher25CTestCatalog_(scope);
+  tests = wtcTeacher25CFilterTestCatalog_(tests, request);
+  return {
+    success: true,
+    phase: '2.5C',
+    mode: 'READ_ONLY',
+    assignment: wtcTeacher25BAssignmentPayload_(scope),
+    tests: tests.slice(0, WTC_TEACHER_25B.MAX_TEST_CATALOG),
+    total: tests.length
+  };
+}
+
+function teacherGetTestReport(d) {
+  var request = d || {};
+  var scope = wtcTeacher25BBuildScope_(request);
+  var test = wtcTeacher25CRequireTest_(scope, request);
+  return wtcTeacher25CTestReportPayload_(scope, test);
+}
+
+function teacherGetClassReport(d) {
+  var request = d || {};
+  var scope = wtcTeacher25BBuildScope_(request);
+  var reportScope = wtcTeacher25CFilteredScope_(scope, request);
+  var students = wtcTeacher25BStudentSummaries_(reportScope);
+  var tests = wtcTeacher25CTestCatalog_(reportScope);
+  var chapters = wtcTeacher25BClassChapterAnalytics_(reportScope);
+  var recent = wtcTeacher25BResultPayload_(reportScope, reportScope.results.slice(0, WTC_TEACHER_25B.MAX_RECENT_ATTEMPTS));
+
+  return {
+    success: true,
+    phase: '2.5C',
+    mode: 'READ_ONLY',
+    generatedAt: new Date().toISOString(),
+    assignment: wtcTeacher25BAssignmentPayload_(scope),
+    filters: wtcTeacher25CFilterPayload_(request),
+    summary: wtcTeacher25CClassSummary_(reportScope, students, tests),
+    students: wtcTeacher25CClassStudentRows_(reportScope, students, tests),
+    tests: tests.slice(0, WTC_TEACHER_25B.MAX_TEST_CATALOG),
+    chapters: chapters,
+    recentAttempts: recent
+  };
+}
+
+function teacherGetNonAttemptedStudents(d) {
+  var request = d || {};
+  var scope = wtcTeacher25BBuildScope_(request);
+  var test = wtcTeacher25CRequireTest_(scope, request);
+  var report = wtcTeacher25CTestReportPayload_(scope, test);
+  return {
+    success: true,
+    phase: '2.5C',
+    mode: 'READ_ONLY',
+    test: report.test,
+    summary: report.summary,
+    students: report.nonAttemptedStudents
+  };
+}
+
+function teacherGetRecentAttempts(d) {
+  var request = d || {};
+  var scope = wtcTeacher25BBuildScope_(request);
+  var rows = wtcTeacher25CFilterResults_(scope.results, request);
+  var limit = Math.max(1, Math.min(Number(request.limit || WTC_TEACHER_25B.MAX_RECENT_ATTEMPTS), WTC_TEACHER_25B.MAX_REPORT_ATTEMPTS));
+  return {
+    success: true,
+    phase: '2.5C',
+    mode: 'READ_ONLY',
+    attempts: wtcTeacher25BResultPayload_(scope, rows.slice(0, limit)),
+    total: rows.length
   };
 }
 
@@ -238,7 +330,7 @@ function wtcTeacher25BStudentReportPayload_(scope, student) {
 
   return {
     success: true,
-    phase: '2.5B',
+    phase: '2.5C',
     mode: 'READ_ONLY',
     student: {
       studentId: student.studentId || '',
@@ -473,6 +565,350 @@ function wtcTeacher25BResultPayload_(scope, rows) {
       createdAt: wtcTeacher25BDateValue_(result)
     };
   });
+}
+
+
+
+function wtcTeacher25CTestCatalog_(scope) {
+  var groups = {};
+  (scope.results || []).forEach(function(result) {
+    var key = wtcTeacher25CTestKey_(result);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(result);
+  });
+
+  var tests = Object.keys(groups).map(function(key) {
+    var rows = groups[key].slice().sort(function(a, b) { return wtcTeacher25BTime_(wtcTeacher25BDateValue_(b)) - wtcTeacher25BTime_(wtcTeacher25BDateValue_(a)); });
+    var first = rows[0] || {};
+    var chapter = scope.chapterMap[wtcTeacher25BNorm_(first.chapterId)] || {};
+    var subject = scope.subjectMap[wtcTeacher25BNorm_(chapter.subjectId || first.subjectId)] || {};
+    var eligible = wtcTeacher25CEligibleStudentsForTest_(scope, first);
+    var studentGroups = {};
+
+    rows.forEach(function(row) {
+      var studentId = wtcTeacher25BNorm_(row.studentId || row.userId);
+      if (!studentId) return;
+      if (!studentGroups[studentId]) studentGroups[studentId] = [];
+      studentGroups[studentId].push(row);
+    });
+
+    var studentStats = Object.keys(studentGroups).map(function(studentId) {
+      return wtcTeacher25CTestStudentStat_(scope, studentId, studentGroups[studentId]);
+    }).filter(Boolean);
+    var latestPercentages = studentStats.map(function(item) { return item.latestPercent; }).filter(wtcTeacher25BNotNull_);
+    var allPercentages = rows.map(wtcTeacher25BPercent_).filter(wtcTeacher25BNotNull_);
+    var average = latestPercentages.length ? wtcTeacher25BRound_(wtcTeacher25BSum_(latestPercentages) / latestPercentages.length) : 0;
+    var status = wtcTeacher25BPerformanceStatus_(studentStats.length, average);
+    var attemptedIds = {};
+    studentStats.forEach(function(item) { attemptedIds[wtcTeacher25BNorm_(item.studentId)] = true; });
+    var nonAttempted = eligible.filter(function(student) { return !attemptedIds[wtcTeacher25BNorm_(student.studentId)]; }).length;
+
+    return {
+      testKey: key,
+      testId: first.testId || first.assessmentId || '',
+      testTitle: first.testTitle || first.title || first.testName || first.testType || first.assessmentType || 'Assessment',
+      testType: first.testType || first.assessmentType || first.type || 'Assessment',
+      topic: first.topic || '',
+      chapterId: first.chapterId || chapter.chapterId || '',
+      chapterNo: chapter.chapterNo || chapter.sortOrder || '',
+      chapterName: chapter.chapterName || first.chapterName || '',
+      subjectId: chapter.subjectId || first.subjectId || '',
+      subjectName: subject.subjectName || first.subjectName || first.subject || '',
+      attemptCount: rows.length,
+      eligibleStudents: eligible.length,
+      attemptedStudents: studentStats.length,
+      nonAttemptedStudents: nonAttempted,
+      completionRate: eligible.length ? wtcTeacher25BRound_((studentStats.length / eligible.length) * 100) : 0,
+      averagePercent: average,
+      attemptAveragePercent: allPercentages.length ? wtcTeacher25BRound_(wtcTeacher25BSum_(allPercentages) / allPercentages.length) : 0,
+      highestPercent: latestPercentages.length ? wtcTeacher25BRound_(Math.max.apply(null, latestPercentages)) : 0,
+      lowestPercent: latestPercentages.length ? wtcTeacher25BRound_(Math.min.apply(null, latestPercentages)) : 0,
+      weakStudents: studentStats.filter(function(item) { return item.latestPercent < WTC_TEACHER_25B.ATTENTION_PERCENT; }).length,
+      criticalStudents: studentStats.filter(function(item) { return item.latestPercent < WTC_TEACHER_25B.CRITICAL_PERCENT; }).length,
+      multipleAttemptStudents: studentStats.filter(function(item) { return item.attemptCount > 1; }).length,
+      latestAttemptAt: rows.length ? wtcTeacher25BDateValue_(rows[0]) : '',
+      performanceStatus: status.label,
+      statusClass: status.key
+    };
+  });
+
+  tests.sort(function(a, b) {
+    var timeDiff = wtcTeacher25BTime_(b.latestAttemptAt) - wtcTeacher25BTime_(a.latestAttemptAt);
+    if (timeDiff) return timeDiff;
+    return String(a.testTitle || '').localeCompare(String(b.testTitle || ''));
+  });
+  return tests;
+}
+
+function wtcTeacher25CTestReportPayload_(scope, test) {
+  var rows = scope.results.filter(function(result) { return wtcTeacher25CTestKey_(result) === test.testKey; });
+  rows.sort(function(a, b) { return wtcTeacher25BTime_(wtcTeacher25BDateValue_(b)) - wtcTeacher25BTime_(wtcTeacher25BDateValue_(a)); });
+  var first = rows[0] || {};
+  var eligible = wtcTeacher25CEligibleStudentsForTest_(scope, first);
+  var groups = {};
+  rows.forEach(function(row) {
+    var studentId = wtcTeacher25BNorm_(row.studentId || row.userId);
+    if (!studentId) return;
+    if (!groups[studentId]) groups[studentId] = [];
+    groups[studentId].push(row);
+  });
+
+  var attempted = Object.keys(groups).map(function(studentId) {
+    return wtcTeacher25CTestStudentStat_(scope, studentId, groups[studentId]);
+  }).filter(Boolean);
+  attempted.sort(function(a, b) {
+    if (b.bestPercent !== a.bestPercent) return b.bestPercent - a.bestPercent;
+    if (b.latestPercent !== a.latestPercent) return b.latestPercent - a.latestPercent;
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+  attempted.forEach(function(item, index) { item.rank = index + 1; });
+
+  var attemptedIds = {};
+  attempted.forEach(function(item) { attemptedIds[wtcTeacher25BNorm_(item.studentId)] = true; });
+  var nonAttempted = eligible.filter(function(student) { return !attemptedIds[wtcTeacher25BNorm_(student.studentId)]; }).map(wtcTeacher25CBasicStudentPayload_);
+
+  return {
+    success: true,
+    phase: '2.5C',
+    mode: 'READ_ONLY',
+    generatedAt: new Date().toISOString(),
+    assignment: wtcTeacher25BAssignmentPayload_(scope),
+    test: test,
+    summary: {
+      eligibleStudents: test.eligibleStudents,
+      attemptedStudents: test.attemptedStudents,
+      nonAttemptedStudents: test.nonAttemptedStudents,
+      completionRate: test.completionRate,
+      attemptCount: test.attemptCount,
+      averagePercent: test.averagePercent,
+      highestPercent: test.highestPercent,
+      lowestPercent: test.lowestPercent,
+      weakStudents: test.weakStudents,
+      criticalStudents: test.criticalStudents,
+      multipleAttemptStudents: test.multipleAttemptStudents
+    },
+    ranking: attempted,
+    nonAttemptedStudents: nonAttempted,
+    attemptHistory: wtcTeacher25BResultPayload_(scope, rows.slice(0, WTC_TEACHER_25B.MAX_REPORT_ATTEMPTS))
+  };
+}
+
+function wtcTeacher25CTestStudentStat_(scope, studentId, rows) {
+  var student = scope.studentMap[wtcTeacher25BNorm_(studentId)] || {};
+  if (!student.studentId && !student.name && !student.studentName) return null;
+  var chronological = (rows || []).slice().sort(function(a, b) { return wtcTeacher25BTime_(wtcTeacher25BDateValue_(a)) - wtcTeacher25BTime_(wtcTeacher25BDateValue_(b)); });
+  var percentages = chronological.map(wtcTeacher25BPercent_).filter(wtcTeacher25BNotNull_);
+  var firstPercent = percentages.length ? wtcTeacher25BRound_(percentages[0]) : 0;
+  var latestPercent = percentages.length ? wtcTeacher25BRound_(percentages[percentages.length - 1]) : 0;
+  var descending = chronological.slice().reverse();
+  var status = wtcTeacher25BPerformanceStatus_(chronological.length, latestPercent);
+
+  return {
+    studentId: student.studentId || studentId || '',
+    name: student.name || student.studentName || 'Student',
+    mobileMasked: wtcTeacher25BMaskMobile_(student.mobile),
+    board: student.board || '',
+    className: student.className || '',
+    medium: student.medium || '',
+    attemptCount: chronological.length,
+    firstPercent: firstPercent,
+    latestPercent: latestPercent,
+    bestPercent: percentages.length ? wtcTeacher25BRound_(Math.max.apply(null, percentages)) : 0,
+    averagePercent: percentages.length ? wtcTeacher25BRound_(wtcTeacher25BSum_(percentages) / percentages.length) : 0,
+    improvement: latestPercent - firstPercent,
+    trend: wtcTeacher25BTrend_(descending),
+    lastAttemptAt: descending.length ? wtcTeacher25BDateValue_(descending[0]) : '',
+    performanceStatus: status.label,
+    statusClass: status.key
+  };
+}
+
+function wtcTeacher25CEligibleStudentsForTest_(scope, result) {
+  var chapter = scope.chapterMap[wtcTeacher25BNorm_(result.chapterId)] || {};
+  var board = wtcTeacher25BNorm_(chapter.board || result.board);
+  var medium = wtcTeacher25BNorm_(chapter.medium || result.medium);
+  var className = wtcTeacher25BNorm_(chapter.className || result.className);
+  return scope.students.filter(function(student) {
+    if (board && wtcTeacher25BNorm_(student.board) !== board) return false;
+    if (medium && wtcTeacher25BNorm_(student.medium) !== medium) return false;
+    if (className && wtcTeacher25BNorm_(student.className) !== className) return false;
+    return true;
+  });
+}
+
+function wtcTeacher25CRequireTest_(scope, request) {
+  var tests = wtcTeacher25CTestCatalog_(scope);
+  var key = String(request.testKey || '').trim();
+  var testId = wtcTeacher25BNorm_(request.testId);
+  var chapterId = wtcTeacher25BNorm_(request.chapterId);
+  var selected = tests.find(function(test) {
+    if (key) return test.testKey === key;
+    if (!testId) return false;
+    if (wtcTeacher25BNorm_(test.testId) !== testId) return false;
+    return !chapterId || wtcTeacher25BNorm_(test.chapterId) === chapterId;
+  });
+  if (!selected) throw new Error('This test is outside the verified Teacher assignment scope or has no recorded results.');
+  return selected;
+}
+
+function wtcTeacher25CTestKey_(result) {
+  var chapterId = wtcTeacher25BNorm_(result.chapterId);
+  var testId = wtcTeacher25BNorm_(result.testId || result.assessmentId);
+  var title = wtcTeacher25BNorm_(result.testTitle || result.title || result.testName);
+  var type = wtcTeacher25BNorm_(result.testType || result.assessmentType || result.type);
+  var topic = wtcTeacher25BNorm_(result.topic);
+  return ['TEST', chapterId, testId || title || type || 'assessment', type, topic].join('|');
+}
+
+function wtcTeacher25CFilterTestCatalog_(tests, request) {
+  var chapterId = wtcTeacher25BNorm_(request.chapterId);
+  var testType = wtcTeacher25BNorm_(request.testType);
+  var status = wtcTeacher25BNorm_(request.status || request.performanceStatus);
+  var search = wtcTeacher25BNorm_(request.search || request.query);
+  return (tests || []).filter(function(test) {
+    if (chapterId && wtcTeacher25BNorm_(test.chapterId) !== chapterId) return false;
+    if (testType && wtcTeacher25BNorm_(test.testType) !== testType) return false;
+    if (status && wtcTeacher25BNorm_(test.statusClass) !== status) return false;
+    if (search) {
+      var haystack = wtcTeacher25BNorm_([test.testId, test.testTitle, test.testType, test.topic, test.chapterName].join(' '));
+      if (haystack.indexOf(search) < 0) return false;
+    }
+    return true;
+  });
+}
+
+function wtcTeacher25CFilteredScope_(scope, request) {
+  var board = wtcTeacher25BNorm_(request.board);
+  var medium = wtcTeacher25BNorm_(request.medium);
+  var chapterId = wtcTeacher25BNorm_(request.chapterId);
+  var students = scope.students.filter(function(student) {
+    if (board && wtcTeacher25BNorm_(student.board) !== board) return false;
+    if (medium && wtcTeacher25BNorm_(student.medium) !== medium) return false;
+    return true;
+  });
+  var studentMap = {};
+  students.forEach(function(student) { studentMap[wtcTeacher25BNorm_(student.studentId)] = student; });
+  var chapters = scope.chapters.filter(function(chapter) { return !chapterId || wtcTeacher25BNorm_(chapter.chapterId) === chapterId; });
+  var chapterIds = chapters.map(function(chapter) { return wtcTeacher25BNorm_(chapter.chapterId); });
+  var results = wtcTeacher25CFilterResults_(scope.results, request).filter(function(result) {
+    var studentId = wtcTeacher25BNorm_(result.studentId || result.userId);
+    if (!studentMap[studentId]) return false;
+    if (chapterId && chapterIds.indexOf(wtcTeacher25BNorm_(result.chapterId)) < 0) return false;
+    return true;
+  });
+  var progress = scope.progress.filter(function(row) {
+    var studentId = wtcTeacher25BNorm_(row.studentId || row.userId);
+    if (!studentMap[studentId]) return false;
+    return !chapterId || wtcTeacher25BNorm_(row.chapterId) === chapterId;
+  });
+  var access = scope.access.filter(function(row) {
+    var studentId = wtcTeacher25BNorm_(row.studentId || row.userId || row.id);
+    if (studentId) return !!studentMap[studentId];
+    var mobile = wtcTeacher25BDigits_(row.mobile || row.userMobile);
+    return students.some(function(student) { return mobile && wtcTeacher25BDigits_(student.mobile) === mobile; });
+  });
+
+  var filtered = {};
+  Object.keys(scope).forEach(function(key) { filtered[key] = scope[key]; });
+  filtered.students = students;
+  filtered.studentMap = studentMap;
+  filtered.chapters = chapters;
+  filtered.chapterIds = chapterIds;
+  filtered.results = results;
+  filtered.progress = progress;
+  filtered.access = access;
+  return filtered;
+}
+
+function wtcTeacher25CFilterResults_(rows, request) {
+  var studentId = wtcTeacher25BNorm_(request.studentId);
+  var chapterId = wtcTeacher25BNorm_(request.chapterId);
+  var testType = wtcTeacher25BNorm_(request.testType);
+  var testKey = String(request.testKey || '').trim();
+  var fromTime = wtcTeacher25CStartTime_(request.dateFrom || request.fromDate);
+  var toTime = wtcTeacher25CEndTime_(request.dateTo || request.toDate);
+  return (rows || []).filter(function(row) {
+    if (studentId && wtcTeacher25BNorm_(row.studentId || row.userId) !== studentId) return false;
+    if (chapterId && wtcTeacher25BNorm_(row.chapterId) !== chapterId) return false;
+    if (testType && wtcTeacher25BNorm_(row.testType || row.assessmentType || row.type) !== testType) return false;
+    if (testKey && wtcTeacher25CTestKey_(row) !== testKey) return false;
+    var time = wtcTeacher25BTime_(wtcTeacher25BDateValue_(row));
+    if (fromTime && time < fromTime) return false;
+    if (toTime && time > toTime) return false;
+    return true;
+  });
+}
+
+function wtcTeacher25CClassSummary_(scope, students, tests) {
+  var resultPercentages = (scope.results || []).map(wtcTeacher25BPercent_).filter(wtcTeacher25BNotNull_);
+  var attemptedStudents = (students || []).filter(function(student) { return student.attemptCount > 0; }).length;
+  var completionRates = (tests || []).map(function(test) { return Number(test.completionRate || 0); });
+  return {
+    assignedStudents: scope.students.length,
+    activeStudents: scope.students.filter(wtcTeacher25BActive_).length,
+    studentsWithAttempts: attemptedStudents,
+    studentsWithoutAttempts: Math.max(0, scope.students.length - attemptedStudents),
+    totalAttempts: scope.results.length,
+    uniqueTests: (tests || []).length,
+    classAverage: resultPercentages.length ? wtcTeacher25BRound_(wtcTeacher25BSum_(resultPercentages) / resultPercentages.length) : 0,
+    averageTestCompletion: completionRates.length ? wtcTeacher25BRound_(wtcTeacher25BSum_(completionRates) / completionRates.length) : 0,
+    studentsBelow50: (students || []).filter(function(student) { return student.attemptCount > 0 && student.averagePercent < WTC_TEACHER_25B.CRITICAL_PERCENT; }).length,
+    needsAttention: (students || []).filter(function(student) { return student.needsAttention; }).length
+  };
+}
+
+function wtcTeacher25CClassStudentRows_(scope, students, tests) {
+  var testsByStudent = {};
+  (scope.results || []).forEach(function(row) {
+    var studentId = wtcTeacher25BNorm_(row.studentId || row.userId);
+    if (!testsByStudent[studentId]) testsByStudent[studentId] = {};
+    testsByStudent[studentId][wtcTeacher25CTestKey_(row)] = true;
+  });
+  return (students || []).map(function(student) {
+    var payload = {};
+    Object.keys(student).forEach(function(key) { payload[key] = student[key]; });
+    payload.testsAttempted = Object.keys(testsByStudent[wtcTeacher25BNorm_(student.studentId)] || {}).length;
+    payload.testCompletionRate = tests.length ? wtcTeacher25BRound_((payload.testsAttempted / tests.length) * 100) : 0;
+    return payload;
+  }).sort(function(a, b) {
+    if (b.averagePercent !== a.averagePercent) return b.averagePercent - a.averagePercent;
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+}
+
+function wtcTeacher25CBasicStudentPayload_(student) {
+  return {
+    studentId: student.studentId || '',
+    name: student.name || student.studentName || 'Student',
+    mobileMasked: wtcTeacher25BMaskMobile_(student.mobile),
+    board: student.board || '',
+    className: student.className || '',
+    medium: student.medium || '',
+    status: student.status || 'Active'
+  };
+}
+
+function wtcTeacher25CFilterPayload_(request) {
+  return {
+    board: request.board || '',
+    medium: request.medium || '',
+    chapterId: request.chapterId || '',
+    testType: request.testType || '',
+    dateFrom: request.dateFrom || request.fromDate || '',
+    dateTo: request.dateTo || request.toDate || ''
+  };
+}
+
+function wtcTeacher25CStartTime_(value) {
+  if (!value) return 0;
+  var parsed = new Date(String(value) + (/^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? 'T00:00:00' : ''));
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function wtcTeacher25CEndTime_(value) {
+  if (!value) return 0;
+  var parsed = new Date(String(value) + (/^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? 'T23:59:59.999' : ''));
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
 function wtcTeacher25BRequireTeacher_(request) {

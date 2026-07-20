@@ -1,15 +1,17 @@
-/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5B v1.0 */
+/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5C v1.0 */
 const TeacherApp = (() => {
   const PANEL_HASH = {
     dashboardPanel: 'overview',
     studentsPanel: 'students',
     chaptersPanel: 'chapters',
     resultsPanel: 'results',
+    testMonitoringPanel: 'tests',
+    classReportsPanel: 'reports',
     attentionPanel: 'attention',
     profilePanel: 'profile'
   };
   const HASH_PANEL = Object.fromEntries(Object.entries(PANEL_HASH).map(([panel, hash]) => [hash, panel]));
-  const PANEL_STORAGE_KEY = 'wtc:teacher:last-panel:2-5b';
+  const PANEL_STORAGE_KEY = 'wtc:teacher:last-panel:2-5c';
 
   let teacherUser = null;
   let dashboardData = null;
@@ -17,6 +19,13 @@ const TeacherApp = (() => {
   let results = [];
   let chapterAnalytics = [];
   let attentionStudents = [];
+  let testCatalog = [];
+  let classReport = null;
+  let selectedTestReport = null;
+  let selectedTestKey = '';
+  let pendingTestKey = '';
+  let testReportPromise = null;
+  let classReportPromise = null;
   let loadingPromise = null;
   let selectedStudentReport = null;
   let selectedStudentId = '';
@@ -34,6 +43,7 @@ const TeacherApp = (() => {
     restorePanel();
     await loadDashboard();
     if (pendingStudentId) await openStudentReport(pendingStudentId, null, false);
+    if (pendingTestKey) await openTestReport(pendingTestKey, null, false);
     logDashboardOpen();
   }
 
@@ -61,6 +71,8 @@ const TeacherApp = (() => {
       .forEach(id => document.getElementById(id)?.addEventListener('input', renderChapterAnalytics));
     ['teacherResultSearch', 'teacherResultStudentFilter', 'teacherResultChapterFilter', 'teacherResultScoreFilter']
       .forEach(id => document.getElementById(id)?.addEventListener('input', renderResults));
+    ['teacherTestSearch', 'teacherTestChapterFilter', 'teacherTestTypeFilter', 'teacherTestCompletionFilter', 'teacherTestSort']
+      .forEach(id => document.getElementById(id)?.addEventListener('input', renderTestCatalog));
   }
 
   function bindDelegatedActions() {
@@ -68,7 +80,10 @@ const TeacherApp = (() => {
       const reportButton = event.target.closest('[data-open-student-report]');
       if (reportButton) {
         openStudentReport(reportButton.dataset.openStudentReport || '', reportButton);
+        return;
       }
+      const testButton = event.target.closest('[data-open-test-report]');
+      if (testButton) openTestReport(testButton.dataset.openTestReport || '', testButton);
     });
     document.addEventListener('change', event => {
       if (event.target.id === 'teacherDetailHistoryChapterFilter') renderDetailHistory();
@@ -80,6 +95,11 @@ const TeacherApp = (() => {
     if (hash.startsWith('student-')) {
       pendingStudentId = hash.slice('student-'.length);
       openPanel('studentsPanel', null, false);
+      return;
+    }
+    if (hash.startsWith('test-')) {
+      pendingTestKey = hash.slice('test-'.length);
+      openPanel('testMonitoringPanel', null, false);
       return;
     }
     const stored = safeStorageGet(PANEL_STORAGE_KEY);
@@ -111,12 +131,13 @@ const TeacherApp = (() => {
     setText('teacherBreadcrumbCurrent', title);
     setText('teacherPageSubtitle', subtitle);
 
-    if (panelId !== 'studentDetailPanel') {
+    if (panelId !== 'studentDetailPanel' && panelId !== 'testDetailPanel') {
       safeStorageSet(PANEL_STORAGE_KEY, panelId);
       if (updateLocation && PANEL_HASH[panelId]) history.replaceState(null, '', `#${PANEL_HASH[panelId]}`);
     }
 
     toggleSidebar(false);
+    if (panelId === 'classReportsPanel' && !classReport && !classReportPromise) loadClassReport(false);
     window.scrollTo({ top:0, behavior:'smooth' });
     return true;
   }
@@ -130,6 +151,8 @@ const TeacherApp = (() => {
 
   async function refresh() {
     selectedStudentReport = null;
+    selectedTestReport = null;
+    classReport = null;
     return loadDashboard(true);
   }
 
@@ -138,7 +161,7 @@ const TeacherApp = (() => {
 
     const refreshButton = document.querySelector('.teacher-refresh-button');
     setBusy(refreshButton, true, 'Refreshing…');
-    setGlobalStatus('Loading teacher student analytics…', 'info');
+    setGlobalStatus('Loading teacher analytics and test monitoring…', 'info');
 
     loadingPromise = (async () => {
       try {
@@ -150,11 +173,12 @@ const TeacherApp = (() => {
         results = Array.isArray(data.recentResults) ? data.recentResults : [];
         chapterAnalytics = Array.isArray(data.chapterAnalytics) ? data.chapterAnalytics : [];
         attentionStudents = Array.isArray(data.attentionStudents) ? data.attentionStudents : students.filter(student => student.needsAttention);
+        testCatalog = Array.isArray(data.testCatalog) ? data.testCatalog : [];
         renderAll();
 
         const warningCount = Array.isArray(data.assignmentWarnings) ? data.assignmentWarnings.length : 0;
         setGlobalStatus(
-          warningCount ? 'Analytics loaded with an assignment notice. Review Teaching Scope.' : 'Teacher student analytics loaded successfully.',
+          warningCount ? 'Analytics loaded with an assignment notice. Review Teaching Scope.' : 'Teacher analytics and test monitoring loaded successfully.',
           warningCount ? 'warning' : 'success'
         );
         return data;
@@ -197,6 +221,10 @@ const TeacherApp = (() => {
     setText('teacherAttemptedChaptersText', `${numberText(overview.attemptedChapters)} attempted`);
     setText('teacherStudentNavCount', numberText(overview.assignedStudents));
     setText('teacherAttentionNavCount', numberText(overview.needsAttention));
+    setText('teacherUniqueTests', numberText(overview.uniqueTests));
+    setText('teacherAverageCompletion', `${numberText(overview.averageTestCompletion)}%`);
+    setText('teacherNoAttemptText', `${numberText(overview.studentsWithoutAttempts)} student${numberText(overview.studentsWithoutAttempts) === 1 ? '' : 's'} without attempts`);
+    setText('teacherTestNavCount', numberText(overview.uniqueTests));
 
     setText('teacherAssignmentId', profile.teacherId || '—');
     setText('teacherAssignmentClass', classLabel);
@@ -236,6 +264,12 @@ const TeacherApp = (() => {
     populateFilterOptions('teacherMediumFilter', assignment.media || unique(students.map(item => item.medium)), 'All media');
     populateFilterOptions('teacherResultStudentFilter', students.map(item => ({ value:item.studentId, label:item.name })), 'All students', true);
     populateFilterOptions('teacherResultChapterFilter', chapterAnalytics.map(item => ({ value:item.chapterId, label:chapterLabel(item) })), 'All chapters', true);
+    populateFilterOptions('teacherTestChapterFilter', chapterAnalytics.map(item => ({ value:item.chapterId, label:chapterLabel(item) })), 'All chapters', true);
+    populateFilterOptions('teacherTestTypeFilter', testCatalog.map(item => item.testType), 'All test types');
+    populateFilterOptions('teacherReportBoardFilter', assignment.boards || unique(students.map(item => item.board)), 'All boards');
+    populateFilterOptions('teacherReportMediumFilter', assignment.media || unique(students.map(item => item.medium)), 'All media');
+    populateFilterOptions('teacherReportChapterFilter', chapterAnalytics.map(item => ({ value:item.chapterId, label:chapterLabel(item) })), 'All chapters', true);
+    populateFilterOptions('teacherReportTestTypeFilter', testCatalog.map(item => item.testType), 'All test types');
 
     renderStudents();
     renderResults();
@@ -244,6 +278,9 @@ const TeacherApp = (() => {
     renderRecentPreview();
     renderAttentionPreview();
     renderChapterPreview();
+    renderTestCatalog();
+    renderTestPreview();
+    renderClassReportPreview();
   }
 
   function renderStudents() {
@@ -456,6 +493,254 @@ const TeacherApp = (() => {
     box.innerHTML = filtered.map(result => `<article class="teacher-result-card"><div><div class="teacher-student-copy-head"><h3>${escapeHTML(result.studentName || 'Student')} • ${escapeHTML(result.testTitle || result.testType || 'Test')}</h3><span class="teacher-performance-badge ${scoreClass(result.percent)}">${escapeHTML(scoreLabel(result.percent))}</span></div><div class="teacher-result-meta"><span>Student ID: ${escapeHTML(result.studentId || '—')}</span><span>${escapeHTML(result.chapterName || result.chapterId || 'Chapter')}</span><span>${escapeHTML(result.subjectName || 'Subject')}</span><span>${escapeHTML(result.testType || 'Assessment')}</span><span>Attempt ${numberText(result.attemptNumber || 1)}</span><span>${escapeHTML(formatDate(result.createdAt))}</span></div></div><div class="teacher-result-score"><strong>${numberText(result.percent)}%</strong><span>${escapeHTML(scoreLine(result))}</span></div></article>`).join('');
   }
 
+
+  function renderTestCatalog() {
+    const box = document.getElementById('teacherTestCatalogList');
+    if (!box) return;
+    const query = normalize(document.getElementById('teacherTestSearch')?.value);
+    const chapterId = normalize(document.getElementById('teacherTestChapterFilter')?.value);
+    const testType = normalize(document.getElementById('teacherTestTypeFilter')?.value);
+    const completion = normalize(document.getElementById('teacherTestCompletionFilter')?.value);
+    const sort = normalize(document.getElementById('teacherTestSort')?.value || 'recent');
+
+    let filtered = testCatalog.filter(test => {
+      const text = normalize([test.testId, test.testTitle, test.testType, test.topic, test.chapterName].join(' '));
+      if (query && !text.includes(query)) return false;
+      if (chapterId && normalize(test.chapterId) !== chapterId) return false;
+      if (testType && normalize(test.testType) !== testType) return false;
+      if (completion === 'complete' && Number(test.completionRate || 0) < 100) return false;
+      if (completion === 'partial' && !(Number(test.completionRate || 0) > 0 && Number(test.completionRate || 0) < 100)) return false;
+      if (completion === 'none' && Number(test.attemptedStudents || 0) > 0) return false;
+      return true;
+    });
+
+    filtered = [...filtered].sort((a, b) => {
+      if (sort === 'completion-low') return Number(a.completionRate || 0) - Number(b.completionRate || 0);
+      if (sort === 'average-low') return Number(a.averagePercent || 0) - Number(b.averagePercent || 0);
+      if (sort === 'non-attempted') return Number(b.nonAttemptedStudents || 0) - Number(a.nonAttemptedStudents || 0);
+      return dateTime(b.latestAttemptAt) - dateTime(a.latestAttemptAt);
+    });
+
+    setText('teacherTestCountLabel', `${filtered.length} test${filtered.length === 1 ? '' : 's'}`);
+    if (!filtered.length) {
+      box.innerHTML = `<div class="teacher-empty">${testCatalog.length ? 'No tests match the current filters.' : 'No test results are available for this assignment yet.'}</div>`;
+      return;
+    }
+
+    box.innerHTML = filtered.map(test => `<article class="teacher-test-card">
+      <div class="teacher-test-card-main">
+        <div class="teacher-test-card-head"><div><span class="teacher-card-kicker">${escapeHTML(test.testType || 'Assessment')}</span><h3>${escapeHTML(test.testTitle || 'Assessment')}</h3><p>${escapeHTML(chapterLabel(test))}${test.topic ? ` • ${escapeHTML(test.topic)}` : ''}</p></div>${performanceBadge(test)}</div>
+        <div class="teacher-progress-bar teacher-test-completion"><span style="width:${clampPercent(test.completionRate)}%"></span></div>
+        <div class="teacher-test-metrics">${testMetric('Completion', `${numberText(test.completionRate)}%`)}${testMetric('Attempted', `${numberText(test.attemptedStudents)}/${numberText(test.eligibleStudents)}`)}${testMetric('Average', `${numberText(test.averagePercent)}%`)}${testMetric('Not Attempted', test.nonAttemptedStudents)}${testMetric('Retries', test.multipleAttemptStudents)}</div>
+      </div>
+      <div class="teacher-test-card-action"><small>Latest ${escapeHTML(formatDate(test.latestAttemptAt, true))}</small><button class="teacher-view-report" type="button" data-open-test-report="${escapeAttribute(test.testKey || '')}">Open Test Report</button></div>
+    </article>`).join('');
+  }
+
+  async function openTestReport(testKey, sourceButton=null, updateLocation=true) {
+    const key = String(testKey || '').trim();
+    if (!key) return;
+    if (testReportPromise) return testReportPromise;
+    selectedTestKey = key;
+    openPanel('testDetailPanel', null, false);
+    if (updateLocation) history.replaceState(null, '', `#test-${encodeURIComponent(key)}`);
+
+    if (selectedTestReport?.test?.testKey === key) {
+      renderTestDetail();
+      return selectedTestReport;
+    }
+
+    setTestDetailStatus('Loading verified test report…', 'info');
+    document.getElementById('teacherTestDetailContent').innerHTML = '<div class="teacher-empty">Loading completion, ranking and retry evidence…</div>';
+    setBusy(sourceButton, true, 'Loading…');
+
+    testReportPromise = (async () => {
+      try {
+        const data = await WTC_API.call({ action:'teacherGetTestReport', testKey:key, ...teacherIdentity() });
+        if (!data || data.success === false) throw new Error(data?.message || 'Test report could not be loaded.');
+        selectedTestReport = data;
+        renderTestDetail();
+        setTestDetailStatus('', 'success');
+        return data;
+      } catch (error) {
+        selectedTestReport = null;
+        setTestDetailStatus(error.message || 'Test report failed to load.', 'error');
+        document.getElementById('teacherTestDetailContent').innerHTML = `<div class="teacher-empty">${escapeHTML(error.message || 'Test report failed to load.')}</div>`;
+        showToast(error.message || 'Test report failed to load.', 'error');
+        return null;
+      } finally {
+        setBusy(sourceButton, false);
+        testReportPromise = null;
+      }
+    })();
+    return testReportPromise;
+  }
+
+  function renderTestDetail() {
+    const box = document.getElementById('teacherTestDetailContent');
+    if (!box || !selectedTestReport) return;
+    const test = selectedTestReport.test || {};
+    const summary = selectedTestReport.summary || {};
+    const ranking = selectedTestReport.ranking || [];
+    const nonAttempted = selectedTestReport.nonAttemptedStudents || [];
+    const attempts = selectedTestReport.attemptHistory || [];
+
+    box.innerHTML = `<div class="teacher-print-report" data-report-kind="test">
+      <div class="teacher-report-heading"><div><span class="teacher-card-kicker">Test report • Phase 2.5C</span><h2>${escapeHTML(test.testTitle || 'Assessment')}</h2><p>${escapeHTML(chapterLabel(test))} • ${escapeHTML(test.testType || 'Assessment')}${test.topic ? ` • ${escapeHTML(test.topic)}` : ''}</p></div><div class="teacher-report-date">Generated ${escapeHTML(formatDate(selectedTestReport.generatedAt))}</div></div>
+      <div class="teacher-report-stats">${reportStat('Eligible', summary.eligibleStudents)}${reportStat('Attempted', summary.attemptedStudents)}${reportStat('Not Attempted', summary.nonAttemptedStudents)}${reportStat('Completion', `${numberText(summary.completionRate)}%`)}${reportStat('Average', `${numberText(summary.averagePercent)}%`)}${reportStat('Highest', `${numberText(summary.highestPercent)}%`)}${reportStat('Lowest', `${numberText(summary.lowestPercent)}%`)}${reportStat('Multiple Attempts', summary.multipleAttemptStudents)}</div>
+      <div class="teacher-report-grid">
+        <section class="teacher-report-section"><div class="teacher-detail-section-head"><div><h3>Student Ranking</h3><p>Ranked by best score, then latest score.</p></div></div>${ranking.length ? `<div class="teacher-table-wrap"><table class="teacher-report-table"><thead><tr><th>Rank</th><th>Student</th><th>Attempts</th><th>First</th><th>Latest</th><th>Best</th><th>Change</th><th>Trend</th></tr></thead><tbody>${ranking.map(row => `<tr><td>${numberText(row.rank)}</td><td><b>${escapeHTML(row.name)}</b><small>${escapeHTML(row.studentId)}</small></td><td>${numberText(row.attemptCount)}</td><td>${numberText(row.firstPercent)}%</td><td>${numberText(row.latestPercent)}%</td><td>${numberText(row.bestPercent)}%</td><td class="${Number(row.improvement || 0) >= 0 ? 'positive' : 'negative'}">${signedNumber(row.improvement)}%</td><td>${escapeHTML(row.trend || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="teacher-empty">No students have attempted this test.</div>'}</section>
+        <section class="teacher-report-section"><div class="teacher-detail-section-head"><div><h3>Not Attempted</h3><p>Eligible students without a recorded result.</p></div><span class="teacher-count-pill warning">${nonAttempted.length}</span></div><div class="teacher-non-attempt-list">${nonAttempted.length ? nonAttempted.map(student => `<div><b>${escapeHTML(student.name)}</b><span>${escapeHTML(student.studentId)} • ${escapeHTML(student.board || '')} • ${escapeHTML(student.medium || '')}</span></div>`).join('') : '<div class="teacher-empty">Every eligible student has attempted this test.</div>'}</div></section>
+      </div>
+      <section class="teacher-report-section teacher-attempt-history-section"><div class="teacher-detail-section-head"><div><h3>Attempt History</h3><p>All recorded attempts, including retries.</p></div><span class="teacher-count-pill">${attempts.length} attempts</span></div><div class="teacher-table-wrap"><table class="teacher-report-table"><thead><tr><th>Date</th><th>Student</th><th>Attempt</th><th>Score</th><th>Percentage</th></tr></thead><tbody>${attempts.map(row => `<tr><td>${escapeHTML(formatDate(row.createdAt))}</td><td><b>${escapeHTML(row.studentName)}</b><small>${escapeHTML(row.studentId)}</small></td><td>${numberText(row.attemptNumber)}</td><td>${escapeHTML(scoreLine(row))}</td><td>${numberText(row.percent)}%</td></tr>`).join('')}</tbody></table></div></section>
+    </div>`;
+  }
+
+  function backToTests() {
+    selectedTestKey = '';
+    openPanel('testMonitoringPanel');
+  }
+
+  async function loadClassReport(force=false) {
+    if (classReportPromise) return classReportPromise;
+    if (classReport && !force) { renderClassReport(); return classReport; }
+    const button = document.getElementById('teacherBuildClassReport');
+    setBusy(button, true, 'Building…');
+    setClassReportStatus('Building verified class report…', 'info');
+
+    const filters = {
+      board:document.getElementById('teacherReportBoardFilter')?.value || '',
+      medium:document.getElementById('teacherReportMediumFilter')?.value || '',
+      chapterId:document.getElementById('teacherReportChapterFilter')?.value || '',
+      testType:document.getElementById('teacherReportTestTypeFilter')?.value || '',
+      dateFrom:document.getElementById('teacherReportDateFrom')?.value || '',
+      dateTo:document.getElementById('teacherReportDateTo')?.value || ''
+    };
+
+    classReportPromise = (async () => {
+      try {
+        const data = await WTC_API.call({ action:'teacherGetClassReport', ...filters, ...teacherIdentity() });
+        if (!data || data.success === false) throw new Error(data?.message || 'Class report could not be loaded.');
+        classReport = data;
+        renderClassReport();
+        setClassReportStatus('', 'success');
+        return data;
+      } catch (error) {
+        classReport = null;
+        setClassReportStatus(error.message || 'Class report failed to load.', 'error');
+        document.getElementById('teacherClassReportContent').innerHTML = `<div class="teacher-empty">${escapeHTML(error.message || 'Class report failed to load.')}</div>`;
+        showToast(error.message || 'Class report failed to load.', 'error');
+        return null;
+      } finally {
+        setBusy(button, false);
+        classReportPromise = null;
+      }
+    })();
+    return classReportPromise;
+  }
+
+  function renderClassReport() {
+    const box = document.getElementById('teacherClassReportContent');
+    if (!box || !classReport) return;
+    const summary = classReport.summary || {};
+    const reportStudents = classReport.students || [];
+    const tests = classReport.tests || [];
+    const chapters = classReport.chapters || [];
+    const assignment = classReport.assignment || dashboardData?.assignment || {};
+    const filters = classReport.filters || {};
+    const filterLabel = [filters.board, filters.medium, filters.chapterId, filters.testType, filters.dateFrom && `From ${filters.dateFrom}`, filters.dateTo && `To ${filters.dateTo}`].filter(Boolean).join(' • ') || 'All verified assignment evidence';
+
+    box.innerHTML = `<div class="teacher-print-report" data-report-kind="class">
+      <div class="teacher-report-heading"><div><span class="teacher-card-kicker">Class report • Phase 2.5C</span><h2>${escapeHTML(assignment.classLabel || 'Assigned Class')} • ${escapeHTML(assignment.subjectLabel || 'Assigned Subject')}</h2><p>${escapeHTML(filterLabel)}</p></div><div class="teacher-report-date">Generated ${escapeHTML(formatDate(classReport.generatedAt))}</div></div>
+      <div class="teacher-report-stats">${reportStat('Students', summary.assignedStudents)}${reportStat('With Attempts', summary.studentsWithAttempts)}${reportStat('Without Attempts', summary.studentsWithoutAttempts)}${reportStat('Tests', summary.uniqueTests)}${reportStat('Attempts', summary.totalAttempts)}${reportStat('Class Average', `${numberText(summary.classAverage)}%`)}${reportStat('Avg. Completion', `${numberText(summary.averageTestCompletion)}%`)}${reportStat('Below 50%', summary.studentsBelow50)}</div>
+      <section class="teacher-report-section"><div class="teacher-detail-section-head"><div><h3>Student Summary</h3><p>Average, progress, completed tests and attention status.</p></div></div><div class="teacher-table-wrap"><table class="teacher-report-table"><thead><tr><th>Student</th><th>Attempts</th><th>Tests</th><th>Test Completion</th><th>Average</th><th>Progress</th><th>Trend</th><th>Status</th></tr></thead><tbody>${reportStudents.map(row => `<tr><td><b>${escapeHTML(row.name)}</b><small>${escapeHTML(row.studentId)} • ${escapeHTML(row.board || '')} • ${escapeHTML(row.medium || '')}</small></td><td>${numberText(row.attemptCount)}</td><td>${numberText(row.testsAttempted)}</td><td>${numberText(row.testCompletionRate)}%</td><td>${numberText(row.averagePercent)}%</td><td>${numberText(row.progressPercent)}%</td><td>${escapeHTML(row.trend || '—')}</td><td>${escapeHTML(row.performanceStatus || '—')}</td></tr>`).join('')}</tbody></table></div></section>
+      <section class="teacher-report-section"><div class="teacher-detail-section-head"><div><h3>Test Summary</h3><p>Completion and performance for each recorded test.</p></div></div><div class="teacher-table-wrap"><table class="teacher-report-table"><thead><tr><th>Test</th><th>Chapter</th><th>Type</th><th>Attempted</th><th>Not Attempted</th><th>Completion</th><th>Average</th></tr></thead><tbody>${tests.map(test => `<tr><td><b>${escapeHTML(test.testTitle)}</b><small>${escapeHTML(test.testId || '')}</small></td><td>${escapeHTML(test.chapterName || test.chapterId || '—')}</td><td>${escapeHTML(test.testType || '—')}</td><td>${numberText(test.attemptedStudents)}/${numberText(test.eligibleStudents)}</td><td>${numberText(test.nonAttemptedStudents)}</td><td>${numberText(test.completionRate)}%</td><td>${numberText(test.averagePercent)}%</td></tr>`).join('')}</tbody></table></div></section>
+      <section class="teacher-report-section"><div class="teacher-detail-section-head"><div><h3>Chapter Summary</h3><p>Class progress and weak-student signals by chapter.</p></div></div><div class="teacher-table-wrap"><table class="teacher-report-table"><thead><tr><th>Chapter</th><th>Attempts</th><th>Attempted Students</th><th>Average</th><th>Progress</th><th>Weak Students</th><th>Completed</th></tr></thead><tbody>${chapters.map(chapter => `<tr><td><b>${escapeHTML(chapterLabel(chapter))}</b><small>${escapeHTML(chapter.chapterId || '')}</small></td><td>${numberText(chapter.attemptCount)}</td><td>${numberText(chapter.attemptedStudents)}</td><td>${numberText(chapter.averagePercent)}%</td><td>${numberText(chapter.averageProgress)}%</td><td>${numberText(chapter.weakStudents)}</td><td>${numberText(chapter.completedStudents)}</td></tr>`).join('')}</tbody></table></div></section>
+    </div>`;
+  }
+
+  function renderTestPreview() {
+    const box = document.getElementById('teacherTestPreview');
+    if (!box) return;
+    const preview = [...testCatalog].sort((a, b) => Number(a.completionRate || 0) - Number(b.completionRate || 0)).slice(0, 4);
+    box.innerHTML = preview.length ? preview.map(test => `<div class="teacher-compact-result"><div><h4>${escapeHTML(test.testTitle || 'Assessment')}</h4><p>${numberText(test.attemptedStudents)}/${numberText(test.eligibleStudents)} attempted • ${numberText(test.nonAttemptedStudents)} pending</p></div><div class="teacher-score-badge">${numberText(test.completionRate)}%</div></div>`).join('') : '<div class="teacher-empty">No recorded tests yet.</div>';
+  }
+
+  function renderClassReportPreview() {
+    const box = document.getElementById('teacherClassReportPreview');
+    if (!box) return;
+    const summary = dashboardData?.classReportSummary || {};
+    box.innerHTML = `<div class="teacher-report-preview-grid">${reportPreviewMetric('Tests', summary.uniqueTests)}${reportPreviewMetric('Completion', `${numberText(summary.averageTestCompletion)}%`)}${reportPreviewMetric('Class Average', `${numberText(summary.classAverage)}%`)}${reportPreviewMetric('No Attempts', summary.studentsWithoutAttempts)}</div>`;
+  }
+
+  function downloadTestCsv() {
+    if (!selectedTestReport) return showToast('Open a test report first.', 'error');
+    const test = selectedTestReport.test || {};
+    const rows = [['Record Type','Rank','Student ID','Student Name','Attempts','First %','Latest %','Best %','Average %','Improvement','Trend','Status']];
+    (selectedTestReport.ranking || []).forEach(row => rows.push(['Attempted',row.rank,row.studentId,row.name,row.attemptCount,row.firstPercent,row.latestPercent,row.bestPercent,row.averagePercent,row.improvement,row.trend,row.performanceStatus]));
+    (selectedTestReport.nonAttemptedStudents || []).forEach(row => rows.push(['Not Attempted','',row.studentId,row.name,0,'','','','','','','No Attempt']));
+    downloadCsv(rows, `WTC_Test_Report_${safeFileName(test.testTitle || test.testId || 'Test')}.csv`);
+  }
+
+  function downloadClassCsv() {
+    if (!classReport) return showToast('Build the class report first.', 'error');
+    const rows = [['Record Type','Student/Test ID','Name/Title','Board/Chapter','Medium/Type','Attempts','Tests Attempted','Completion %','Average %','Progress %','Trend/Status']];
+    (classReport.students || []).forEach(row => rows.push(['Student',row.studentId,row.name,row.board,row.medium,row.attemptCount,row.testsAttempted,row.testCompletionRate,row.averagePercent,row.progressPercent,row.trend]));
+    (classReport.tests || []).forEach(row => rows.push(['Test',row.testId,row.testTitle,row.chapterName,row.testType,row.attemptCount,row.attemptedStudents,row.completionRate,row.averagePercent,'',row.performanceStatus]));
+    downloadCsv(rows, `WTC_Class_Report_${new Date().toISOString().slice(0,10)}.csv`);
+  }
+
+  function printTestReport() {
+    if (!selectedTestReport) return showToast('Open a test report first.', 'error');
+    printReport('printing-test-report');
+  }
+
+  function printClassReport() {
+    if (!classReport) return showToast('Build the class report first.', 'error');
+    printReport('printing-class-report');
+  }
+
+  function printReport(className) {
+    document.body.classList.add(className);
+    window.addEventListener('afterprint', () => document.body.classList.remove(className), { once:true });
+    window.print();
+  }
+
+  function downloadCsv(rows, filename) {
+    const csv = '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function csvCell(value) { const raw = String(value ?? ''); const safe = /^[=+@]/.test(raw) || /^-[^0-9.]/.test(raw) ? `'${raw}` : raw; return `"${safe.replace(/"/g, '""')}"`; }
+  function safeFileName(value) { return String(value || 'Report').replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'Report'; }
+  function signedNumber(value) { const number = numberText(value); return number > 0 ? `+${number}` : String(number); }
+  function dateTime(value) { const time = new Date(value || 0).getTime(); return Number.isFinite(time) ? time : 0; }
+  function testMetric(label, value) { return `<div><small>${escapeHTML(label)}</small><b>${escapeHTML(String(value ?? '—'))}</b></div>`; }
+  function reportStat(label, value) { return `<div class="teacher-report-stat"><small>${escapeHTML(label)}</small><strong>${escapeHTML(String(value ?? '—'))}</strong></div>`; }
+  function reportPreviewMetric(label, value) { return `<div><small>${escapeHTML(label)}</small><b>${escapeHTML(String(value ?? '—'))}</b></div>`; }
+
+  function setTestDetailStatus(message, type='info') {
+    const element = document.getElementById('teacherTestDetailStatus');
+    if (!element) return;
+    element.className = `teacher-detail-status ${type}${message ? '' : ' hidden'}`;
+    element.textContent = message || '';
+  }
+
+  function setClassReportStatus(message, type='info') {
+    const element = document.getElementById('teacherClassReportStatus');
+    if (!element) return;
+    element.className = `teacher-detail-status ${type}${message ? '' : ' hidden'}`;
+    element.textContent = message || '';
+  }
+
   function renderAttention() {
     const box = document.getElementById('teacherAttentionList');
     const summary = document.getElementById('teacherAttentionSummary');
@@ -498,7 +783,7 @@ const TeacherApp = (() => {
 
   function renderLoadError(message) {
     const safe = escapeHTML(message || 'Could not load teacher data.');
-    ['teacherStudentList', 'teacherResultList', 'teacherRecentResultPreview', 'teacherChapterAnalyticsList', 'teacherAttentionList', 'teacherAttentionPreview', 'teacherChapterPreview'].forEach(id => {
+    ['teacherStudentList', 'teacherResultList', 'teacherRecentResultPreview', 'teacherChapterAnalyticsList', 'teacherAttentionList', 'teacherAttentionPreview', 'teacherChapterPreview', 'teacherTestCatalogList', 'teacherTestPreview', 'teacherClassReportPreview'].forEach(id => {
       const element = document.getElementById(id);
       if (element) element.innerHTML = `<div class="teacher-empty">${safe}</div>`;
     });
@@ -584,7 +869,7 @@ const TeacherApp = (() => {
   function logDashboardOpen() {
     try {
       if (typeof WTC_API.logAccess !== 'function') return;
-      Promise.resolve(WTC_API.logAccess({ userId:teacherUser.teacherId || teacherUser.id || '', name:teacherUser.name || 'Teacher', role:'Teacher', mobile:teacherUser.mobile || '', actionName:'Teacher Dashboard 2.5B Open', url:location.pathname })).catch(() => {});
+      Promise.resolve(WTC_API.logAccess({ userId:teacherUser.teacherId || teacherUser.id || '', name:teacherUser.name || 'Teacher', role:'Teacher', mobile:teacherUser.mobile || '', actionName:'Teacher Dashboard 2.5C Open', url:location.pathname })).catch(() => {});
     } catch (error) {}
   }
 
@@ -636,7 +921,7 @@ const TeacherApp = (() => {
   function safeStorageGet(key) { try { return localStorage.getItem(key) || ''; } catch (error) { return ''; } }
   function safeStorageSet(key, value) { try { localStorage.setItem(key, value); } catch (error) {} }
 
-  return { init, openPanel, toggleSidebar, refresh, openStudentReport, backToStudents };
+  return { init, openPanel, toggleSidebar, refresh, openStudentReport, backToStudents, openTestReport, backToTests, loadClassReport, downloadTestCsv, downloadClassCsv, printTestReport, printClassReport };
 })();
 
 document.addEventListener('DOMContentLoaded', TeacherApp.init);

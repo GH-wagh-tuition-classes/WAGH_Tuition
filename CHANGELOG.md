@@ -1,40 +1,34 @@
-# WAGH Tuition Classes — Teacher Dashboard Phase 2.5B v1.0
+# Phase 2.5C Changelog
 
 ## Added
 
-- Verified per-student analytics report.
-- Server-side assignment-scope check before returning a student report.
-- Chapter-level attempts, average, best, latest, trend and progress.
-- Completed, in-progress and not-started chapter counts.
-- Full read-only student test history with attempt numbering.
-- Class-level chapter analytics.
-- Weak-area detection for no attempts, average below 60%, declining trend, repeated low chapter scores and inactivity.
-- Performance labels: Excellent, Good, Needs Attention, Critical and No Activity.
-- Student, chapter, result and trend filters.
-- Responsive Student Analytics detail panel.
-- New read-only Runtime actions:
-  - `teacherGetStudents`
-  - `teacherGetStudentReport`
-  - `teacherGetStudentTestHistory`
-  - `teacherGetChapterAnalytics`
-  - `teacherGetAttentionStudents`
+- `teacherGetTestCatalog`
+- `teacherGetTestReport`
+- `teacherGetClassReport`
+- `teacherGetNonAttemptedStudents`
+- `teacherGetRecentAttempts`
+- Test Monitoring navigation and filters
+- Test report ranking, retries and non-attempted students
+- Class report filters and summary tables
+- Printable A4 report styles
+- UTF-8 CSV export with spreadsheet-formula protection
+- Test report hash restoration
 
 ## Preserved
 
-- Phase 2.5A Teacher role guard and active-account validation.
-- Existing `teacherDashboard` action name.
-- Existing Teacher assignment model using `className` and `subject`.
-- Student mobile masking.
-- Admin-controlled content publishing.
-- Student/Admin portals and all existing APIs.
-- Locked folder and workbook architecture.
+- All Phase 2.5A Teacher Portal foundation features
+- All Phase 2.5B Student Analytics features
+- Teacher assignment scope checks
+- Student mobile masking
+- Read-only operation
+- Existing workbook schema
+- Existing Runtime API URL
 
 ## Not included
 
-- Marks editing.
-- Student profile editing.
-- Teacher content publishing.
-- New Sheets or columns.
-- Formal Teacher-to-student assignment mapping.
-- Phase 2.5C class reports/export.
-- Skipped AI Pipeline Reliability v1.5.5.
+- Marks editing
+- Attendance management
+- Teacher content publishing
+- Teacher-to-student messaging
+- New Sheets or columns
+- AI Pipeline Reliability Patch v1.5.5

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5C v1.0 */
+/* WAGH Tuition Classes — Teacher Dashboard Phase 2.5E v1.0 */
 const TeacherApp = (() => {
   const PANEL_HASH = {
     dashboardPanel: 'overview',
@@ -8,10 +8,12 @@ const TeacherApp = (() => {
     testMonitoringPanel: 'tests',
     classReportsPanel: 'reports',
     attentionPanel: 'attention',
+    followUpPanel: 'followup',
     profilePanel: 'profile'
   };
   const HASH_PANEL = Object.fromEntries(Object.entries(PANEL_HASH).map(([panel, hash]) => [hash, panel]));
-  const PANEL_STORAGE_KEY = 'wtc:teacher:last-panel:2-5c';
+  const PANEL_STORAGE_KEY = 'wtc:teacher:last-panel:2-5e';
+  const FOLLOWUP_STORAGE_PREFIX = 'wtc:teacher:followups:v1:';
 
   let teacherUser = null;
   let dashboardData = null;
@@ -31,13 +33,17 @@ const TeacherApp = (() => {
   let selectedStudentId = '';
   let pendingStudentId = '';
   let studentReportPromise = null;
+  let followUps = [];
+  let notifications = [];
 
   async function init() {
     teacherUser = WTC_AUTH.requireRole('Teacher');
     if (!teacherUser) return;
 
     fillSessionHeader();
+    loadFollowUps();
     bindLayout();
+    bindFollowUpForm();
     bindFilters();
     bindDelegatedActions();
     restorePanel();
@@ -73,6 +79,8 @@ const TeacherApp = (() => {
       .forEach(id => document.getElementById(id)?.addEventListener('input', renderResults));
     ['teacherTestSearch', 'teacherTestChapterFilter', 'teacherTestTypeFilter', 'teacherTestCompletionFilter', 'teacherTestSort']
       .forEach(id => document.getElementById(id)?.addEventListener('input', renderTestCatalog));
+    ['teacherFollowUpSearch', 'teacherFollowUpStatusFilter', 'teacherFollowUpTypeFilter', 'teacherFollowUpSort']
+      .forEach(id => document.getElementById(id)?.addEventListener('input', renderFollowUps));
   }
 
   function bindDelegatedActions() {
@@ -83,7 +91,14 @@ const TeacherApp = (() => {
         return;
       }
       const testButton = event.target.closest('[data-open-test-report]');
-      if (testButton) openTestReport(testButton.dataset.openTestReport || '', testButton);
+      if (testButton) {
+        openTestReport(testButton.dataset.openTestReport || '', testButton);
+        return;
+      }
+      const followUpButton = event.target.closest('[data-followup-action]');
+      if (followUpButton) handleFollowUpAction(followUpButton);
+      const notificationButton = event.target.closest('[data-notification-action]');
+      if (notificationButton) handleNotificationAction(notificationButton);
     });
     document.addEventListener('change', event => {
       if (event.target.id === 'teacherDetailHistoryChapterFilter') renderDetailHistory();
@@ -281,6 +296,8 @@ const TeacherApp = (() => {
     renderTestCatalog();
     renderTestPreview();
     renderClassReportPreview();
+    syncFollowUpsWithStudents();
+    renderFollowUpWorkspace();
   }
 
   function renderStudents() {
@@ -781,6 +798,348 @@ const TeacherApp = (() => {
     box.innerHTML = preview.length ? preview.map(chapter => `<div class="teacher-compact-result"><div><h4>${escapeHTML(chapterLabel(chapter))}</h4><p>${numberText(chapter.attemptedStudents)} attempted • ${numberText(chapter.weakStudents)} weak • ${numberText(chapter.averageProgress)}% progress</p></div><div class="teacher-score-badge">${numberText(chapter.averagePercent)}%</div></div>`).join('') : '<div class="teacher-empty">No assigned chapters found.</div>';
   }
 
+
+  function bindFollowUpForm() {
+    const form = document.getElementById('teacherFollowUpForm');
+    if (!form) return;
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      saveFollowUpFromForm();
+    });
+    const due = document.getElementById('teacherFollowUpDueDate');
+    if (due && !due.value) due.value = isoDate(addDays(new Date(), 1));
+  }
+
+  function followUpStorageKey() {
+    const identity = teacherUser?.teacherId || teacherUser?.id || teacherUser?.mobile || 'teacher';
+    return `${FOLLOWUP_STORAGE_PREFIX}${String(identity).replace(/[^A-Za-z0-9_-]/g, '_')}`;
+  }
+
+  function loadFollowUps() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(followUpStorageKey()) || '[]');
+      followUps = Array.isArray(parsed) ? parsed.filter(item => item && item.id && item.studentId) : [];
+    } catch (error) {
+      followUps = [];
+    }
+  }
+
+  function persistFollowUps() {
+    try {
+      localStorage.setItem(followUpStorageKey(), JSON.stringify(followUps.slice(0, 500)));
+      return true;
+    } catch (error) {
+      showToast('This browser could not save the follow-up list.', 'error');
+      return false;
+    }
+  }
+
+  function syncFollowUpsWithStudents() {
+    const studentMap = new Map(students.map(student => [String(student.studentId || ''), student]));
+    let changed = false;
+    followUps = followUps.map(item => {
+      const student = studentMap.get(String(item.studentId || ''));
+      if (!student) return item;
+      const nextName = student.name || item.studentName || 'Student';
+      if (nextName !== item.studentName) changed = true;
+      return { ...item, studentName: nextName };
+    });
+    if (changed) persistFollowUps();
+  }
+
+  function buildNotifications() {
+    const rows = [];
+    attentionStudents.forEach(student => {
+      const severity = notificationSeverity(student);
+      const reasons = Array.isArray(student.attentionReasons) && student.attentionReasons.length
+        ? student.attentionReasons
+        : deriveAttentionReasons(student);
+      rows.push({
+        id:`student-${student.studentId}`,
+        studentId:student.studentId,
+        studentName:student.name || 'Student',
+        severity,
+        title:notificationTitle(student),
+        message:reasons.slice(0, 3).join(' • ') || 'Review this student’s latest performance evidence.',
+        meta:`${numberText(student.averagePercent)}% average • ${numberText(student.attemptCount)} attempt${numberText(student.attemptCount) === 1 ? '' : 's'}`,
+        suggestedType:Number(student.attemptCount) === 0 ? 'Test reminder' : (Number(student.daysSinceActivity) >= 14 ? 'Inactivity check' : 'Academic support')
+      });
+    });
+
+    followUps.filter(item => normalize(item.status) !== 'completed').forEach(item => {
+      const dueState = followUpDueState(item);
+      if (dueState !== 'overdue' && dueState !== 'due-today') return;
+      rows.push({
+        id:`followup-${item.id}`,
+        followUpId:item.id,
+        studentId:item.studentId,
+        studentName:item.studentName || 'Student',
+        severity:dueState === 'overdue' ? 'critical' : 'warning',
+        title:dueState === 'overdue' ? 'Follow-up is overdue' : 'Follow-up is due today',
+        message:item.note || item.type || 'Teacher follow-up action',
+        meta:`${item.type || 'Follow-up'} • Due ${formatDateOnly(item.dueDate)}`,
+        suggestedType:item.type || 'Academic support'
+      });
+    });
+
+    const order = { critical:0, warning:1, info:2 };
+    return rows.sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9) || String(a.studentName).localeCompare(String(b.studentName)));
+  }
+
+  function renderFollowUpWorkspace() {
+    notifications = buildNotifications();
+    populateFollowUpStudents();
+    renderNotifications();
+    renderFollowUps();
+    renderFollowUpPreview();
+    renderFollowUpSummary();
+  }
+
+  function renderFollowUpSummary() {
+    const open = followUps.filter(item => normalize(item.status) !== 'completed');
+    const completed = followUps.filter(item => normalize(item.status) === 'completed');
+    const overdue = open.filter(item => followUpDueState(item) === 'overdue');
+    const today = open.filter(item => followUpDueState(item) === 'due-today');
+    const due = overdue.length + today.length;
+    setText('teacherNotificationTotal', notifications.length);
+    setText('teacherFollowUpOpenTotal', open.length);
+    setText('teacherFollowUpTodayTotal', today.length);
+    setText('teacherFollowUpOverdueTotal', overdue.length);
+    setText('teacherFollowUpCompletedTotal', completed.length);
+    setText('teacherFollowUpDue', due);
+    setText('teacherFollowUpDueText', `${overdue.length} overdue • ${open.length} open`);
+    setText('teacherFollowUpNavCount', due || notifications.filter(item => item.severity === 'critical').length);
+  }
+
+  function populateFollowUpStudents() {
+    const select = document.getElementById('teacherFollowUpStudent');
+    if (!select) return;
+    const current = select.value;
+    const options = [...students].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    select.innerHTML = '<option value="">Choose assigned student</option>' + options.map(student => `<option value="${escapeAttribute(student.studentId)}">${escapeHTML(student.name || 'Student')} · ${escapeHTML(student.studentId || '')}</option>`).join('');
+    if (options.some(item => String(item.studentId) === current)) select.value = current;
+  }
+
+  function renderNotifications() {
+    const box = document.getElementById('teacherNotificationList');
+    if (!box) return;
+    setText('teacherNotificationCountLabel', `${notifications.length} signal${notifications.length === 1 ? '' : 's'}`);
+    if (!notifications.length) {
+      box.innerHTML = '<div class="teacher-empty">No urgent analytics or due follow-up signals right now.</div>';
+      return;
+    }
+    box.innerHTML = notifications.slice(0, 40).map(item => `<article class="teacher-notification-card ${escapeAttribute(item.severity)}">
+      <div class="teacher-notification-icon" aria-hidden="true">${item.severity === 'critical' ? '!' : item.followUpId ? '⏰' : '⚑'}</div>
+      <div class="teacher-notification-copy"><div class="teacher-notification-head"><h3>${escapeHTML(item.studentName)}</h3><span>${escapeHTML(item.title)}</span></div><p>${escapeHTML(item.message)}</p><small>${escapeHTML(item.meta)}</small></div>
+      <div class="teacher-notification-actions">
+        <button class="btn outline small" type="button" data-notification-action="student" data-student-id="${escapeAttribute(item.studentId)}">View student</button>
+        ${item.followUpId ? `<button class="btn small" type="button" data-followup-action="complete" data-followup-id="${escapeAttribute(item.followUpId)}">Complete</button>` : `<button class="btn small" type="button" data-notification-action="create" data-student-id="${escapeAttribute(item.studentId)}" data-followup-type="${escapeAttribute(item.suggestedType)}">Add follow-up</button>`}
+      </div>
+    </article>`).join('');
+  }
+
+  function renderFollowUps() {
+    const box = document.getElementById('teacherFollowUpList');
+    if (!box) return;
+    const query = normalize(document.getElementById('teacherFollowUpSearch')?.value);
+    const status = normalize(document.getElementById('teacherFollowUpStatusFilter')?.value);
+    const type = normalize(document.getElementById('teacherFollowUpTypeFilter')?.value);
+    const sort = document.getElementById('teacherFollowUpSort')?.value || 'due';
+    let rows = followUps.filter(item => {
+      const haystack = normalize([item.studentName, item.studentId, item.type, item.note].join(' '));
+      const dueState = followUpDueState(item);
+      if (query && !haystack.includes(query)) return false;
+      if (type && normalize(item.type) !== type) return false;
+      if (status === 'open' && normalize(item.status) === 'completed') return false;
+      if (status === 'completed' && normalize(item.status) !== 'completed') return false;
+      if (status === 'due-today' && dueState !== 'due-today') return false;
+      if (status === 'overdue' && dueState !== 'overdue') return false;
+      return true;
+    });
+    rows.sort((a, b) => {
+      if (sort === 'newest') return dateTime(b.createdAt) - dateTime(a.createdAt);
+      if (sort === 'student') return String(a.studentName || '').localeCompare(String(b.studentName || ''));
+      const aDone = normalize(a.status) === 'completed' ? 1 : 0;
+      const bDone = normalize(b.status) === 'completed' ? 1 : 0;
+      return aDone - bDone || dateOnlyTime(a.dueDate) - dateOnlyTime(b.dueDate) || String(a.studentName || '').localeCompare(String(b.studentName || ''));
+    });
+    setText('teacherFollowUpCountLabel', `${rows.length} item${rows.length === 1 ? '' : 's'}`);
+    if (!rows.length) {
+      box.innerHTML = `<div class="teacher-empty">${followUps.length ? 'No saved follow-ups match these filters.' : 'No follow-ups saved on this device.'}</div>`;
+      return;
+    }
+    box.innerHTML = rows.map(item => {
+      const completed = normalize(item.status) === 'completed';
+      const dueState = followUpDueState(item);
+      return `<article class="teacher-followup-card ${escapeAttribute(completed ? 'completed' : dueState)}">
+        <div class="teacher-followup-card-main"><div class="teacher-followup-card-head"><div><h3>${escapeHTML(item.studentName || 'Student')}</h3><p>${escapeHTML(item.studentId || '')} • ${escapeHTML(item.type || 'Follow-up')}</p></div><span class="teacher-followup-state ${escapeAttribute(completed ? 'completed' : dueState)}">${escapeHTML(completed ? 'Completed' : dueStateLabel(dueState))}</span></div><p class="teacher-followup-note">${escapeHTML(item.note || '—')}</p><small>Due ${escapeHTML(formatDateOnly(item.dueDate))}${completed && item.completedAt ? ` • Completed ${escapeHTML(formatDate(item.completedAt, true))}` : ''}</small></div>
+        <div class="teacher-followup-card-actions">
+          <button class="btn outline small" type="button" data-notification-action="student" data-student-id="${escapeAttribute(item.studentId)}">Student report</button>
+          ${completed ? `<button class="btn outline small" type="button" data-followup-action="reopen" data-followup-id="${escapeAttribute(item.id)}">Reopen</button>` : `<button class="btn success small" type="button" data-followup-action="complete" data-followup-id="${escapeAttribute(item.id)}">Complete</button>`}
+          <button class="btn outline small" type="button" data-followup-action="edit" data-followup-id="${escapeAttribute(item.id)}">Edit</button>
+          <button class="btn danger small" type="button" data-followup-action="delete" data-followup-id="${escapeAttribute(item.id)}">Delete</button>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  function renderFollowUpPreview() {
+    const box = document.getElementById('teacherFollowUpPreview');
+    if (!box) return;
+    const urgent = notifications.slice(0, 4);
+    if (!urgent.length) {
+      box.innerHTML = '<div class="teacher-empty">No urgent follow-up signals. Keep monitoring student progress.</div>';
+      return;
+    }
+    box.innerHTML = urgent.map(item => `<button class="teacher-compact-row teacher-followup-preview-row" type="button" onclick="TeacherApp.openPanel('followUpPanel')"><span class="teacher-compact-icon ${escapeAttribute(item.severity)}">${item.severity === 'critical' ? '!' : '🔔'}</span><span><b>${escapeHTML(item.studentName)}</b><small>${escapeHTML(item.title)}</small></span><strong>${escapeHTML(item.severity === 'critical' ? 'Urgent' : 'Review')}</strong></button>`).join('');
+  }
+
+  function saveFollowUpFromForm() {
+    const studentId = document.getElementById('teacherFollowUpStudent')?.value || '';
+    const student = students.find(item => String(item.studentId) === String(studentId));
+    const type = document.getElementById('teacherFollowUpType')?.value || '';
+    const dueDate = document.getElementById('teacherFollowUpDueDate')?.value || '';
+    const note = String(document.getElementById('teacherFollowUpNote')?.value || '').trim();
+    const editId = document.getElementById('teacherFollowUpEditId')?.value || '';
+    if (!student) return showToast('Choose an assigned student.', 'error');
+    if (!type || !dueDate || !note) return showToast('Student, type, due date and note are required.', 'error');
+    if (note.length > 500) return showToast('The follow-up note must be 500 characters or fewer.', 'error');
+    const now = new Date().toISOString();
+    if (editId) {
+      const index = followUps.findIndex(item => item.id === editId);
+      if (index < 0) return showToast('This follow-up could not be found.', 'error');
+      followUps[index] = { ...followUps[index], studentId, studentName:student.name || 'Student', type, dueDate, note, updatedAt:now };
+    } else {
+      followUps.unshift({ id:`FU-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, studentId, studentName:student.name || 'Student', type, dueDate, note, status:'OPEN', createdAt:now, updatedAt:now, completedAt:'' });
+    }
+    if (!persistFollowUps()) return;
+    showToast(editId ? 'Follow-up updated on this device.' : 'Follow-up saved on this device.', 'success');
+    resetFollowUpForm();
+    renderFollowUpWorkspace();
+  }
+
+  function resetFollowUpForm() {
+    const form = document.getElementById('teacherFollowUpForm');
+    if (!form) return;
+    form.reset();
+    setText('teacherFollowUpFormTitle', 'Add Follow-up');
+    const edit = document.getElementById('teacherFollowUpEditId');
+    const due = document.getElementById('teacherFollowUpDueDate');
+    if (edit) edit.value = '';
+    if (due) due.value = isoDate(addDays(new Date(), 1));
+    setText('teacherFollowUpSaveButton', 'Save Follow-up');
+  }
+
+  function handleFollowUpAction(button) {
+    const id = button.dataset.followupId || '';
+    const action = button.dataset.followupAction || '';
+    const item = followUps.find(row => row.id === id);
+    if (!item) return;
+    if (action === 'complete') {
+      item.status = 'COMPLETED';
+      item.completedAt = new Date().toISOString();
+      item.updatedAt = item.completedAt;
+      persistFollowUps();
+      renderFollowUpWorkspace();
+      showToast('Follow-up marked complete.', 'success');
+    } else if (action === 'reopen') {
+      item.status = 'OPEN';
+      item.completedAt = '';
+      item.updatedAt = new Date().toISOString();
+      persistFollowUps();
+      renderFollowUpWorkspace();
+      showToast('Follow-up reopened.', 'success');
+    } else if (action === 'edit') {
+      editFollowUp(id);
+    } else if (action === 'delete') {
+      if (!window.confirm('Delete this local follow-up note from this browser?')) return;
+      followUps = followUps.filter(row => row.id !== id);
+      persistFollowUps();
+      renderFollowUpWorkspace();
+      showToast('Follow-up deleted from this device.', 'success');
+    }
+  }
+
+  function handleNotificationAction(button) {
+    const action = button.dataset.notificationAction || '';
+    const studentId = button.dataset.studentId || '';
+    if (action === 'student') {
+      openStudentReport(studentId, button);
+      return;
+    }
+    if (action === 'create') {
+      openPanel('followUpPanel');
+      resetFollowUpForm();
+      const studentSelect = document.getElementById('teacherFollowUpStudent');
+      const typeSelect = document.getElementById('teacherFollowUpType');
+      if (studentSelect) studentSelect.value = studentId;
+      if (typeSelect) typeSelect.value = button.dataset.followupType || 'Academic support';
+      document.getElementById('teacherFollowUpNote')?.focus();
+    }
+  }
+
+  function editFollowUp(id) {
+    const item = followUps.find(row => row.id === id);
+    if (!item) return;
+    openPanel('followUpPanel');
+    setText('teacherFollowUpFormTitle', 'Edit Follow-up');
+    setText('teacherFollowUpSaveButton', 'Update Follow-up');
+    const values = {
+      teacherFollowUpEditId:item.id,
+      teacherFollowUpStudent:item.studentId,
+      teacherFollowUpType:item.type,
+      teacherFollowUpDueDate:item.dueDate,
+      teacherFollowUpNote:item.note
+    };
+    Object.entries(values).forEach(([idKey, value]) => { const el = document.getElementById(idKey); if (el) el.value = value || ''; });
+    document.getElementById('teacherFollowUpForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function downloadFollowUpsCsv() {
+    if (!followUps.length) return showToast('No follow-ups are available to export.', 'error');
+    const rows = [['Student ID','Student Name','Type','Due Date','Status','Note','Created At','Updated At','Completed At']];
+    [...followUps].sort((a, b) => dateOnlyTime(a.dueDate) - dateOnlyTime(b.dueDate)).forEach(item => rows.push([item.studentId,item.studentName,item.type,item.dueDate,item.status,item.note,item.createdAt,item.updatedAt,item.completedAt]));
+    downloadCsv(rows, `WTC_Teacher_Followups_${isoDate(new Date())}.csv`);
+  }
+
+  function notificationSeverity(student) {
+    if (normalize(student.statusClass) === 'critical' || normalize(student.statusClass) === 'no-activity' || Number(student.daysSinceActivity) >= 30) return 'critical';
+    return 'warning';
+  }
+
+  function notificationTitle(student) {
+    if (Number(student.attemptCount) === 0) return 'No recorded test attempt';
+    if (Number(student.daysSinceActivity) >= 30) return 'Long inactivity detected';
+    if (normalize(student.trend) === 'declining') return 'Performance is declining';
+    if (Number(student.averagePercent) < 50) return 'Critical average score';
+    return 'Academic support recommended';
+  }
+
+  function deriveAttentionReasons(student) {
+    const reasons = [];
+    if (Number(student.attemptCount) === 0) reasons.push('No recorded attempts');
+    if (Number(student.averagePercent) < 50 && Number(student.attemptCount) > 0) reasons.push(`Average ${numberText(student.averagePercent)}%`);
+    if (normalize(student.trend) === 'declining') reasons.push('Declining trend');
+    if (Number(student.daysSinceActivity) >= 14) reasons.push(`${numberText(student.daysSinceActivity)} days inactive`);
+    return reasons;
+  }
+
+  function followUpDueState(item) {
+    if (normalize(item.status) === 'completed') return 'completed';
+    const due = dateOnlyTime(item.dueDate);
+    const today = dateOnlyTime(isoDate(new Date()));
+    if (!due) return 'upcoming';
+    if (due < today) return 'overdue';
+    if (due === today) return 'due-today';
+    return 'upcoming';
+  }
+
+  function dueStateLabel(value) { return ({ overdue:'Overdue', 'due-today':'Due today', upcoming:'Upcoming', completed:'Completed' })[value] || 'Open'; }
+  function isoDate(value) { const date = value instanceof Date ? value : new Date(value); const offset = date.getTimezoneOffset(); return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10); }
+  function addDays(value, days) { const date = new Date(value); date.setDate(date.getDate() + Number(days || 0)); return date; }
+  function dateOnlyTime(value) { if (!value) return 0; const parts = String(value).slice(0, 10).split('-').map(Number); if (parts.length !== 3 || parts.some(Number.isNaN)) return 0; return new Date(parts[0], parts[1] - 1, parts[2]).getTime(); }
+  function formatDateOnly(value) { const time = dateOnlyTime(value); return time ? new Intl.DateTimeFormat('en-IN', { day:'2-digit', month:'short', year:'numeric' }).format(new Date(time)) : 'No due date'; }
+
   function renderLoadError(message) {
     const safe = escapeHTML(message || 'Could not load teacher data.');
     ['teacherStudentList', 'teacherResultList', 'teacherRecentResultPreview', 'teacherChapterAnalyticsList', 'teacherAttentionList', 'teacherAttentionPreview', 'teacherChapterPreview', 'teacherTestCatalogList', 'teacherTestPreview', 'teacherClassReportPreview'].forEach(id => {
@@ -869,7 +1228,7 @@ const TeacherApp = (() => {
   function logDashboardOpen() {
     try {
       if (typeof WTC_API.logAccess !== 'function') return;
-      Promise.resolve(WTC_API.logAccess({ userId:teacherUser.teacherId || teacherUser.id || '', name:teacherUser.name || 'Teacher', role:'Teacher', mobile:teacherUser.mobile || '', actionName:'Teacher Dashboard 2.5C Open', url:location.pathname })).catch(() => {});
+      Promise.resolve(WTC_API.logAccess({ userId:teacherUser.teacherId || teacherUser.id || '', name:teacherUser.name || 'Teacher', role:'Teacher', mobile:teacherUser.mobile || '', actionName:'Teacher Dashboard 2.5E Open', url:location.pathname })).catch(() => {});
     } catch (error) {}
   }
 
@@ -921,7 +1280,7 @@ const TeacherApp = (() => {
   function safeStorageGet(key) { try { return localStorage.getItem(key) || ''; } catch (error) { return ''; } }
   function safeStorageSet(key, value) { try { localStorage.setItem(key, value); } catch (error) {} }
 
-  return { init, openPanel, toggleSidebar, refresh, openStudentReport, backToStudents, openTestReport, backToTests, loadClassReport, downloadTestCsv, downloadClassCsv, printTestReport, printClassReport };
+  return { init, openPanel, toggleSidebar, refresh, openStudentReport, backToStudents, openTestReport, backToTests, loadClassReport, downloadTestCsv, downloadClassCsv, printTestReport, printClassReport, resetFollowUpForm, downloadFollowUpsCsv };
 })();
 
 document.addEventListener('DOMContentLoaded', TeacherApp.init);

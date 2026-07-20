@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f172a">
-  <meta name="description" content="WAGH Tuition Classes teacher analytics, notifications and student follow-up dashboard">
+  <meta name="description" content="WAGH Tuition Classes teacher analytics, test assignment, sent-test reporting and student follow-up dashboard">
   <title>Teacher Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
-  <link rel="stylesheet" href="assets/css/teacher.css?v=phase-2-5e-1-0">
+  <link rel="stylesheet" href="assets/css/teacher.css?v=phase-2-5f-1-0">
+  <link rel="stylesheet" href="assets/css/teacher-test-assignments.css?v=phase-2-5f-1-0">
 </head>
 <body class="teacher-page">
 <header class="topbar teacher-topbar">
@@ -34,7 +35,7 @@
   <aside id="teacherSidebar" class="teacher-sidebar" aria-label="Teacher navigation">
     <div class="teacher-sidebar-head">
       <span class="teacher-sidebar-mark">WTC</span>
-      <div><strong>Teacher Centre</strong><small>Phase 2.5E Follow-up</small></div>
+      <div><strong>Teacher Centre</strong><small>Phase 2.5F Test Assignment</small></div>
       <button class="teacher-sidebar-close" type="button" aria-label="Close teacher navigation" onclick="TeacherApp.toggleSidebar(false)">×</button>
     </div>
 
@@ -44,13 +45,15 @@
       <button class="teacher-nav-item" type="button" data-teacher-nav="chaptersPanel" onclick="TeacherApp.openPanel('chaptersPanel', this)"><span class="teacher-nav-icon">📚</span><span>Chapter Progress</span></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="resultsPanel" onclick="TeacherApp.openPanel('resultsPanel', this)"><span class="teacher-nav-icon">📊</span><span>Test Results</span></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="testMonitoringPanel" onclick="TeacherApp.openPanel('testMonitoringPanel', this)"><span class="teacher-nav-icon">🧪</span><span>Test Monitoring</span><b id="teacherTestNavCount" class="teacher-nav-count">0</b></button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="assignTestsPanel" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('assignTestsPanel')"><span class="teacher-nav-icon">📨</span><span>Assign Tests</span><b id="teacherAssignmentNavCount" class="teacher-nav-count warning">0</b></button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="sentTestsPanel" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('sentTestsPanel')"><span class="teacher-nav-icon">📬</span><span>Sent Tests</span><b id="teacherSentNavCount" class="teacher-nav-count">0</b></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="classReportsPanel" onclick="TeacherApp.openPanel('classReportsPanel', this)"><span class="teacher-nav-icon">📄</span><span>Class Reports</span></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="attentionPanel" onclick="TeacherApp.openPanel('attentionPanel', this)"><span class="teacher-nav-icon">⚑</span><span>Weak Areas</span><b id="teacherAttentionNavCount" class="teacher-nav-count warning">0</b></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="followUpPanel" onclick="TeacherApp.openPanel('followUpPanel', this)"><span class="teacher-nav-icon">🔔</span><span>Follow-up Centre</span><b id="teacherFollowUpNavCount" class="teacher-nav-count warning">0</b></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)"><span class="teacher-nav-icon">🪪</span><span>My Profile</span></button>
     </nav>
 
-    <div class="teacher-sidebar-note"><b>Read-only analytics</b><span>Teachers can review assigned-student evidence. Editing and publishing remain disabled.</span></div>
+    <div class="teacher-sidebar-note"><b>Controlled Teacher actions</b><span>Teachers may assign published tests only. Editing questions, marks and published content remains disabled.</span></div>
   </aside>
 
   <button id="teacherSidebarBackdrop" class="teacher-sidebar-backdrop" type="button" aria-label="Close navigation" onclick="TeacherApp.toggleSidebar(false)"></button>
@@ -76,9 +79,10 @@
           <div class="teacher-hero-actions">
             <button class="btn" type="button" onclick="TeacherApp.openPanel('studentsPanel')">View Students</button>
             <button class="btn outline" type="button" onclick="TeacherApp.openPanel('testMonitoringPanel')">Monitor Tests</button>
+            <button class="btn outline" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('assignTestsPanel')">Assign a Test</button>
           </div>
         </div>
-        <div class="teacher-hero-badge" aria-hidden="true"><span>2.5E</span><small>Follow-up</small></div>
+        <div class="teacher-hero-badge" aria-hidden="true"><span>2.5F</span><small>Test Assign</small></div>
       </div>
 
       <div class="teacher-stats" aria-label="Teacher dashboard summary">
@@ -90,6 +94,8 @@
         <article class="teacher-stat-card"><span class="teacher-stat-icon tests">🧪</span><div><small>Recorded Tests</small><strong id="teacherUniqueTests">0</strong><p>Derived from scoped results</p></div></article>
         <article class="teacher-stat-card"><span class="teacher-stat-icon completion">✓</span><div><small>Avg. Completion</small><strong id="teacherAverageCompletion">0%</strong><p id="teacherNoAttemptText">0 students without attempts</p></div></article>
         <article class="teacher-stat-card"><span class="teacher-stat-icon followup">🔔</span><div><small>Follow-ups Due</small><strong id="teacherFollowUpDue">0</strong><p id="teacherFollowUpDueText">0 overdue • 0 open</p></div></article>
+        <article class="teacher-stat-card"><span class="teacher-stat-icon tests">📨</span><div><small>Sent Test Groups</small><strong id="teacherAssignedTestsOverview">0</strong><p>Official in-app assignments</p></div></article>
+        <article class="teacher-stat-card"><span class="teacher-stat-icon attention">⏳</span><div><small>Pending Assignments</small><strong id="teacherPendingAssignmentsOverview">0</strong><p>Students yet to attempt</p></div></article>
       </div>
 
       <div class="teacher-dashboard-grid">
@@ -140,6 +146,17 @@
         <article class="teacher-card">
           <div class="teacher-card-head"><div><span class="teacher-card-kicker">Privacy-safe workflow</span><h3>Follow-up Rules</h3></div><span class="teacher-chip neutral">Local workspace</span></div>
           <div class="teacher-followup-rules"><p>Use analytics signals to plan academic follow-up. Notes are stored only in this browser and are not a shared school record.</p><button class="btn outline small" type="button" onclick="TeacherApp.openPanel('followUpPanel')">Review actions</button></div>
+        </article>
+      </div>
+
+      <div class="teacher-dashboard-grid">
+        <article class="teacher-card">
+          <div class="teacher-card-head"><div><span class="teacher-card-kicker">Official student delivery</span><h3>Sent Test Snapshot</h3></div><button class="teacher-text-button" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('sentTestsPanel')">See all</button></div>
+          <div id="teacherAssignmentSnapshot" class="teacher-assignment-snapshot"><div class="teacher-empty">Loading sent tests…</div></div>
+        </article>
+        <article class="teacher-card">
+          <div class="teacher-card-head"><div><span class="teacher-card-kicker">Easy assignment</span><h3>Assign Published Tests</h3></div><span class="teacher-chip active">2.5F</span></div>
+          <div class="teacher-followup-rules"><p>Choose from published tests in the dynamic test bank, then assign to all, selected, attention, or no-attempt students.</p><button class="btn small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('assignTestsPanel')">Open Test Library</button></div>
         </article>
       </div>
     </section>
@@ -257,6 +274,50 @@
       </div>
     </section>
 
+    <section id="assignTestsPanel" class="teacher-panel" data-panel-title="Assign Tests" data-panel-subtitle="Send published tests to verified students in your assigned class and subject.">
+      <div id="teacherAssignmentGlobalStatus" class="teacher-status info" role="status" aria-live="polite">Loading published test library…</div>
+      <div class="teacher-assignment-banner">
+        <div><h3>📨 Simple Test Assignment</h3><p>Use <b>Quick Assign to All</b> for the fastest option, or choose students, due date, attempts and a short message. Only published tests in your verified teaching scope appear.</p></div>
+        <div class="teacher-assignment-banner-actions"><button class="btn outline small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.loadHub(true)">↻ Refresh</button><button class="btn small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('sentTestsPanel')">View Sent Tests</button></div>
+      </div>
+      <div class="teacher-section-card">
+        <div class="teacher-section-heading"><div><span class="teacher-card-kicker">Published dynamic test bank</span><h2>Available Tests</h2><p>Draft, archived and rejected tests are excluded automatically.</p></div><span id="teacherAssignableCountLabel" class="teacher-count-pill">0 tests</span></div>
+        <div class="teacher-filter-grid teacher-assignment-filters">
+          <label class="teacher-filter-field search-field"><span>Search</span><input id="teacherAssignableSearch" type="search" placeholder="Test, topic or chapter"></label>
+          <label class="teacher-filter-field"><span>Chapter</span><select id="teacherAssignableChapterFilter"><option value="">All chapters</option></select></label>
+          <label class="teacher-filter-field"><span>Test type</span><select id="teacherAssignableTypeFilter"><option value="">All test types</option></select></label>
+        </div>
+        <div id="teacherAssignableTestList" class="teacher-assignable-list"><div class="teacher-empty">Loading published tests…</div></div>
+      </div>
+    </section>
+
+    <section id="sentTestsPanel" class="teacher-panel" data-panel-title="Sent Tests" data-panel-subtitle="Track completion, pending students, scores and overdue assignments.">
+      <div class="teacher-assignment-summary">
+        <article><small>Sent Groups</small><strong id="teacherSentGroupTotal">0</strong></article>
+        <article><small>Student Assignments</small><strong id="teacherSentAssignedStudents">0</strong></article>
+        <article><small>Attempted</small><strong id="teacherSentAttemptedTotal">0</strong></article>
+        <article><small>Pending</small><strong id="teacherSentPendingTotal">0</strong></article>
+        <article><small>Overdue</small><strong id="teacherSentOverdueTotal">0</strong></article>
+      </div>
+      <div class="teacher-section-card">
+        <div class="teacher-section-heading"><div><span class="teacher-card-kicker">Assignment analytics</span><h2>Sent Tests</h2><p>Each card represents one Teacher send action. Open analytics for exact assignment-linked results.</p></div><div class="teacher-report-actions"><span id="teacherSentCountLabel" class="teacher-count-pill">0 assignments</span><button class="btn small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('assignTestsPanel')">Assign New Test</button></div></div>
+        <div class="teacher-filter-grid">
+          <label class="teacher-filter-field search-field"><span>Search</span><input id="teacherSentSearch" type="search" placeholder="Test title, ID or chapter"></label>
+          <label class="teacher-filter-field"><span>Status</span><select id="teacherSentStatusFilter"><option value="">All statuses</option><option value="ASSIGNED">Assigned</option><option value="IN_PROGRESS">In progress</option><option value="OVERDUE">Overdue</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option></select></label>
+        </div>
+        <div id="teacherSentTestList" class="teacher-sent-list"><div class="teacher-empty">Loading sent tests…</div></div>
+      </div>
+    </section>
+
+    <section id="assignmentDetailPanel" class="teacher-panel teacher-detail-panel" data-panel-title="Assignment Report" data-panel-subtitle="Exact analytics for one sent-test group.">
+      <div class="teacher-assignment-report-head no-print">
+        <div><button class="teacher-back-button" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.backToSent()">← Back to Sent Tests</button><h2 id="teacherAssignmentReportTitle">Assignment Report</h2><p id="teacherAssignmentReportMeta">Choose an assignment from Sent Tests.</p></div>
+        <div class="teacher-report-actions"><button class="btn outline small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.downloadAssignmentCsv()">Download CSV</button><button class="btn small" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.printAssignmentReport()">Print Report</button></div>
+      </div>
+      <div id="teacherAssignmentReportSummary" class="teacher-assignment-report-summary"></div>
+      <div id="teacherAssignmentReportStudents"><div class="teacher-empty">Choose an assignment from Sent Tests.</div></div>
+    </section>
+
     <section id="followUpPanel" class="teacher-panel" data-panel-title="Follow-up Centre" data-panel-subtitle="Turn verified analytics signals into a private teacher action list on this device.">
       <div class="teacher-followup-notice"><span aria-hidden="true">🔒</span><div><b>Device-local workspace</b><p>Follow-up notes are saved only in this browser for the signed-in teacher. They are not written to Google Sheets, shared across devices or sent to students automatically.</p></div></div>
 
@@ -321,7 +382,7 @@
             <div><dt>Account status</dt><dd id="teacherProfileAccountStatus">—</dd></div>
             <div><dt>Last updated</dt><dd id="teacherProfileUpdatedAt">—</dd></div>
           </dl>
-          <div class="teacher-inline-note">Phase 2.5E remains read-only for platform data. Follow-up notes are private browser-local records and do not change Student Master, results, progress or content.</div>
+          <div class="teacher-inline-note">Phase 2.5F adds only controlled published-test assignment writes. Teachers still cannot edit content, marks, student profiles or progress. Follow-up notes remain private browser-local records.</div>
         </article>
       </div>
     </section>
@@ -332,15 +393,34 @@
   <button class="active" type="button" data-teacher-mobile-nav="dashboardPanel" onclick="TeacherApp.openPanel('dashboardPanel', this)"><span>⌂</span>Home</button>
   <button type="button" data-teacher-mobile-nav="studentsPanel" onclick="TeacherApp.openPanel('studentsPanel', this)"><span>👥</span>Students</button>
   <button type="button" data-teacher-mobile-nav="testMonitoringPanel" onclick="TeacherApp.openPanel('testMonitoringPanel', this)"><span>🧪</span>Tests</button>
+  <button type="button" data-teacher-mobile-nav="assignTestsPanel" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('assignTestsPanel')"><span>📨</span>Assign</button>
+  <button type="button" data-teacher-mobile-nav="sentTestsPanel" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.openPanel('sentTestsPanel')"><span>📬</span>Sent</button>
   <button type="button" data-teacher-mobile-nav="classReportsPanel" onclick="TeacherApp.openPanel('classReportsPanel', this)"><span>📄</span>Reports</button>
   <button type="button" data-teacher-mobile-nav="followUpPanel" onclick="TeacherApp.openPanel('followUpPanel', this)"><span>🔔</span>Follow-up</button>
   <button type="button" data-teacher-mobile-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)"><span>🪪</span>Profile</button>
 </nav>
 
+<div id="teacherAssignmentModal" class="teacher-assignment-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="teacherAssignmentDialogTitle">
+  <div class="teacher-assignment-dialog">
+    <div class="teacher-assignment-dialog-head"><div><span class="teacher-card-kicker">Assign published test</span><h2 id="teacherAssignmentDialogTitle">Choose Test</h2><p id="teacherAssignmentDialogMeta"></p></div><button class="teacher-assignment-dialog-close" type="button" aria-label="Close" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.closeDialog()">×</button></div>
+    <form id="teacherAssignmentForm" class="teacher-assignment-form">
+      <label><span>Send to</span><select id="teacherAssignmentSelectionMode"><option value="ALL">All eligible assigned students</option><option value="SELECTED">Selected students</option><option value="ATTENTION">Students needing attention</option><option value="NO_ATTEMPT">Students with no previous attempt of this test</option></select></label>
+      <div id="teacherAssignmentStudentPickerWrap" class="teacher-student-picker-wrap hidden"><div class="teacher-student-picker-head"><b>Select students</b><div><button class="btn outline small" type="button" data-select-all-assignment-students>Select all</button><button class="btn outline small" type="button" data-clear-assignment-students>Clear</button></div></div><div id="teacherAssignmentStudentPicker" class="teacher-student-picker"></div></div>
+      <div class="teacher-assignment-form-grid">
+        <label><span>Due date (optional)</span><input id="teacherAssignmentDueAt" type="date"></label>
+        <label><span>Maximum attempts</span><select id="teacherAssignmentMaxAttempts"><option value="1">1 attempt</option><option value="2">2 attempts</option><option value="3">3 attempts</option><option value="0">Unlimited</option></select></label>
+      </div>
+      <label><span>Teacher message (optional)</span><textarea id="teacherAssignmentMessage" rows="3" maxlength="300" placeholder="Example: Complete this before our next class and revise your weak topics."></textarea></label>
+      <div class="teacher-assignment-form-actions"><button class="btn outline" type="button" onclick="WTC_TEACHER_TEST_ASSIGNMENTS.closeDialog()">Cancel</button><button id="teacherAssignmentSubmit" class="btn" type="submit">Assign Test</button></div>
+    </form>
+  </div>
+</div>
+
 <script src="assets/js/config.js"></script>
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/api.js"></script>
-<script src="assets/js/teacher.js?v=phase-2-5e-1-0"></script>
+<script src="assets/js/teacher.js?v=phase-2-5f-1-0"></script>
+<script src="assets/js/teacher-test-assignments.js?v=phase-2-5f-1-0"></script>
 </body>
 </html>

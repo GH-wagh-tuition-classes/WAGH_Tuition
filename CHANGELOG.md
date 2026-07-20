@@ -1,34 +1,25 @@
-# Phase 2.5C Changelog
+# Phase 2.5E v1.0 Changelog
 
 ## Added
-
-- `teacherGetTestCatalog`
-- `teacherGetTestReport`
-- `teacherGetClassReport`
-- `teacherGetNonAttemptedStudents`
-- `teacherGetRecentAttempts`
-- Test Monitoring navigation and filters
-- Test report ranking, retries and non-attempted students
-- Class report filters and summary tables
-- Printable A4 report styles
-- UTF-8 CSV export with spreadsheet-formula protection
-- Test report hash restoration
+- Follow-up Centre navigation and mobile tab
+- Analytics-derived priority notification feed
+- Private browser-local follow-up form and action list
+- Due today, overdue, open and completed counters
+- Complete, reopen, edit and delete actions
+- Student-report shortcuts
+- CSV export protected against spreadsheet formula injection
+- Dashboard follow-up summary and preview
 
 ## Preserved
-
-- All Phase 2.5A Teacher Portal foundation features
-- All Phase 2.5B Student Analytics features
-- Teacher assignment scope checks
+- All Phase 2.5A, 2.5B and 2.5C functionality
+- Teacher assignment verification and read-only Runtime APIs
+- Test reports, class reports and CSV/print actions
 - Student mobile masking
-- Read-only operation
-- Existing workbook schema
-- Existing Runtime API URL
+- Locked project structure and Sheet schema
 
-## Not included
-
-- Marks editing
-- Attendance management
-- Teacher content publishing
-- Teacher-to-student messaging
-- New Sheets or columns
-- AI Pipeline Reliability Patch v1.5.5
+## Explicitly excluded
+- Teacher content drafting or publishing
+- Automatic messages to students or parents
+- Google Sheets persistence for follow-up notes
+- Push notifications
+- Changes to Runtime Apps Script or API routes

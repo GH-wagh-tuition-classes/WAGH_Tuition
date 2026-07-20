@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f172a">
-  <meta name="description" content="WAGH Tuition Classes teacher test monitoring, student analytics and class reports dashboard">
+  <meta name="description" content="WAGH Tuition Classes teacher analytics, notifications and student follow-up dashboard">
   <title>Teacher Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
-  <link rel="stylesheet" href="assets/css/teacher.css?v=phase-2-5c-1-0">
+  <link rel="stylesheet" href="assets/css/teacher.css?v=phase-2-5e-1-0">
 </head>
 <body class="teacher-page">
 <header class="topbar teacher-topbar">
@@ -34,7 +34,7 @@
   <aside id="teacherSidebar" class="teacher-sidebar" aria-label="Teacher navigation">
     <div class="teacher-sidebar-head">
       <span class="teacher-sidebar-mark">WTC</span>
-      <div><strong>Teacher Centre</strong><small>Phase 2.5C Reports</small></div>
+      <div><strong>Teacher Centre</strong><small>Phase 2.5E Follow-up</small></div>
       <button class="teacher-sidebar-close" type="button" aria-label="Close teacher navigation" onclick="TeacherApp.toggleSidebar(false)">×</button>
     </div>
 
@@ -46,6 +46,7 @@
       <button class="teacher-nav-item" type="button" data-teacher-nav="testMonitoringPanel" onclick="TeacherApp.openPanel('testMonitoringPanel', this)"><span class="teacher-nav-icon">🧪</span><span>Test Monitoring</span><b id="teacherTestNavCount" class="teacher-nav-count">0</b></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="classReportsPanel" onclick="TeacherApp.openPanel('classReportsPanel', this)"><span class="teacher-nav-icon">📄</span><span>Class Reports</span></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="attentionPanel" onclick="TeacherApp.openPanel('attentionPanel', this)"><span class="teacher-nav-icon">⚑</span><span>Weak Areas</span><b id="teacherAttentionNavCount" class="teacher-nav-count warning">0</b></button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="followUpPanel" onclick="TeacherApp.openPanel('followUpPanel', this)"><span class="teacher-nav-icon">🔔</span><span>Follow-up Centre</span><b id="teacherFollowUpNavCount" class="teacher-nav-count warning">0</b></button>
       <button class="teacher-nav-item" type="button" data-teacher-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)"><span class="teacher-nav-icon">🪪</span><span>My Profile</span></button>
     </nav>
 
@@ -77,7 +78,7 @@
             <button class="btn outline" type="button" onclick="TeacherApp.openPanel('testMonitoringPanel')">Monitor Tests</button>
           </div>
         </div>
-        <div class="teacher-hero-badge" aria-hidden="true"><span>2.5C</span><small>Reports</small></div>
+        <div class="teacher-hero-badge" aria-hidden="true"><span>2.5E</span><small>Follow-up</small></div>
       </div>
 
       <div class="teacher-stats" aria-label="Teacher dashboard summary">
@@ -88,6 +89,7 @@
         <article class="teacher-stat-card"><span class="teacher-stat-icon chapters">📚</span><div><small>Assigned Chapters</small><strong id="teacherAssignedChapters">0</strong><p id="teacherAttemptedChaptersText">0 attempted</p></div></article>
         <article class="teacher-stat-card"><span class="teacher-stat-icon tests">🧪</span><div><small>Recorded Tests</small><strong id="teacherUniqueTests">0</strong><p>Derived from scoped results</p></div></article>
         <article class="teacher-stat-card"><span class="teacher-stat-icon completion">✓</span><div><small>Avg. Completion</small><strong id="teacherAverageCompletion">0%</strong><p id="teacherNoAttemptText">0 students without attempts</p></div></article>
+        <article class="teacher-stat-card"><span class="teacher-stat-icon followup">🔔</span><div><small>Follow-ups Due</small><strong id="teacherFollowUpDue">0</strong><p id="teacherFollowUpDueText">0 overdue • 0 open</p></div></article>
       </div>
 
       <div class="teacher-dashboard-grid">
@@ -127,6 +129,17 @@
         <article class="teacher-card">
           <div class="teacher-card-head"><div><span class="teacher-card-kicker">Printable evidence</span><h3>Class Report Snapshot</h3></div><button class="teacher-text-button" type="button" onclick="TeacherApp.openPanel('classReportsPanel')">Open report</button></div>
           <div id="teacherClassReportPreview" class="teacher-report-preview"><div class="teacher-empty">Loading class report summary…</div></div>
+        </article>
+      </div>
+
+      <div class="teacher-dashboard-grid teacher-dashboard-grid-fourth">
+        <article class="teacher-card teacher-followup-preview-card">
+          <div class="teacher-card-head"><div><span class="teacher-card-kicker">Teacher action list</span><h3>Notifications &amp; Follow-ups</h3></div><button class="teacher-text-button" type="button" onclick="TeacherApp.openPanel('followUpPanel')">Open centre</button></div>
+          <div id="teacherFollowUpPreview" class="teacher-compact-list"><div class="teacher-empty">Loading follow-up priorities…</div></div>
+        </article>
+        <article class="teacher-card">
+          <div class="teacher-card-head"><div><span class="teacher-card-kicker">Privacy-safe workflow</span><h3>Follow-up Rules</h3></div><span class="teacher-chip neutral">Local workspace</span></div>
+          <div class="teacher-followup-rules"><p>Use analytics signals to plan academic follow-up. Notes are stored only in this browser and are not a shared school record.</p><button class="btn outline small" type="button" onclick="TeacherApp.openPanel('followUpPanel')">Review actions</button></div>
         </article>
       </div>
     </section>
@@ -244,6 +257,54 @@
       </div>
     </section>
 
+    <section id="followUpPanel" class="teacher-panel" data-panel-title="Follow-up Centre" data-panel-subtitle="Turn verified analytics signals into a private teacher action list on this device.">
+      <div class="teacher-followup-notice"><span aria-hidden="true">🔒</span><div><b>Device-local workspace</b><p>Follow-up notes are saved only in this browser for the signed-in teacher. They are not written to Google Sheets, shared across devices or sent to students automatically.</p></div></div>
+
+      <div class="teacher-followup-summary" aria-label="Follow-up summary">
+        <article><small>Priority signals</small><strong id="teacherNotificationTotal">0</strong></article>
+        <article><small>Open follow-ups</small><strong id="teacherFollowUpOpenTotal">0</strong></article>
+        <article><small>Due today</small><strong id="teacherFollowUpTodayTotal">0</strong></article>
+        <article class="danger"><small>Overdue</small><strong id="teacherFollowUpOverdueTotal">0</strong></article>
+        <article class="success"><small>Completed</small><strong id="teacherFollowUpCompletedTotal">0</strong></article>
+      </div>
+
+      <div class="teacher-followup-grid">
+        <article class="teacher-section-card">
+          <div class="teacher-section-heading compact">
+            <div><span class="teacher-card-kicker">Analytics-derived</span><h2>Priority Notifications</h2><p>Signals update whenever the Teacher Dashboard refreshes.</p></div>
+            <span id="teacherNotificationCountLabel" class="teacher-count-pill warning">0 signals</span>
+          </div>
+          <div id="teacherNotificationList" class="teacher-notification-list"><div class="teacher-empty">Loading priority notifications…</div></div>
+        </article>
+
+        <article class="teacher-section-card teacher-followup-form-card">
+          <div class="teacher-section-heading compact"><div><span class="teacher-card-kicker">Private action note</span><h2 id="teacherFollowUpFormTitle">Add Follow-up</h2><p>Record the next academic action without changing student data.</p></div></div>
+          <form id="teacherFollowUpForm" class="teacher-followup-form">
+            <input id="teacherFollowUpEditId" type="hidden">
+            <label><span>Student</span><select id="teacherFollowUpStudent" required><option value="">Choose assigned student</option></select></label>
+            <label><span>Follow-up type</span><select id="teacherFollowUpType" required><option value="Academic support">Academic support</option><option value="Test reminder">Test reminder</option><option value="Inactivity check">Inactivity check</option><option value="Parent contact">Parent contact</option><option value="Progress review">Progress review</option><option value="Other">Other</option></select></label>
+            <label><span>Due date</span><input id="teacherFollowUpDueDate" type="date" required></label>
+            <label><span>Private note</span><textarea id="teacherFollowUpNote" rows="4" maxlength="500" required placeholder="Example: Review Chapter 3 mistakes in the next class."></textarea><small>Maximum 500 characters. Do not store passwords or sensitive personal information.</small></label>
+            <div class="teacher-followup-form-actions"><button id="teacherFollowUpSaveButton" class="btn" type="submit">Save Follow-up</button><button class="btn outline" type="button" onclick="TeacherApp.resetFollowUpForm()">Clear</button></div>
+          </form>
+        </article>
+      </div>
+
+      <article class="teacher-section-card teacher-followup-list-card">
+        <div class="teacher-section-heading">
+          <div><span class="teacher-card-kicker">Your local action list</span><h2>Saved Follow-ups</h2><p>Filter, complete, reopen, edit or export your private follow-up list.</p></div>
+          <div class="teacher-report-actions"><span id="teacherFollowUpCountLabel" class="teacher-count-pill">0 items</span><button class="btn outline small" type="button" onclick="TeacherApp.downloadFollowUpsCsv()">Download CSV</button></div>
+        </div>
+        <div class="teacher-filter-grid teacher-followup-filters">
+          <label class="teacher-filter-field search-field"><span>Search</span><input id="teacherFollowUpSearch" type="search" placeholder="Student, note or type" autocomplete="off"></label>
+          <label class="teacher-filter-field"><span>Status</span><select id="teacherFollowUpStatusFilter"><option value="">All statuses</option><option value="open">Open</option><option value="due-today">Due today</option><option value="overdue">Overdue</option><option value="completed">Completed</option></select></label>
+          <label class="teacher-filter-field"><span>Type</span><select id="teacherFollowUpTypeFilter"><option value="">All types</option><option>Academic support</option><option>Test reminder</option><option>Inactivity check</option><option>Parent contact</option><option>Progress review</option><option>Other</option></select></label>
+          <label class="teacher-filter-field"><span>Sort</span><select id="teacherFollowUpSort"><option value="due">Due date</option><option value="newest">Newest first</option><option value="student">Student name</option></select></label>
+        </div>
+        <div id="teacherFollowUpList" class="teacher-followup-list"><div class="teacher-empty">No follow-ups saved on this device.</div></div>
+      </article>
+    </section>
+
     <section id="profilePanel" class="teacher-panel" data-panel-title="My Profile" data-panel-subtitle="Your current Teacher Master record and assignment scope.">
       <div class="teacher-profile-grid">
         <article class="teacher-profile-card">
@@ -260,7 +321,7 @@
             <div><dt>Account status</dt><dd id="teacherProfileAccountStatus">—</dd></div>
             <div><dt>Last updated</dt><dd id="teacherProfileUpdatedAt">—</dd></div>
           </dl>
-          <div class="teacher-inline-note">Phase 2.5C remains read-only. Student marks, profiles and content cannot be changed from this portal.</div>
+          <div class="teacher-inline-note">Phase 2.5E remains read-only for platform data. Follow-up notes are private browser-local records and do not change Student Master, results, progress or content.</div>
         </article>
       </div>
     </section>
@@ -272,6 +333,7 @@
   <button type="button" data-teacher-mobile-nav="studentsPanel" onclick="TeacherApp.openPanel('studentsPanel', this)"><span>👥</span>Students</button>
   <button type="button" data-teacher-mobile-nav="testMonitoringPanel" onclick="TeacherApp.openPanel('testMonitoringPanel', this)"><span>🧪</span>Tests</button>
   <button type="button" data-teacher-mobile-nav="classReportsPanel" onclick="TeacherApp.openPanel('classReportsPanel', this)"><span>📄</span>Reports</button>
+  <button type="button" data-teacher-mobile-nav="followUpPanel" onclick="TeacherApp.openPanel('followUpPanel', this)"><span>🔔</span>Follow-up</button>
   <button type="button" data-teacher-mobile-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)"><span>🪪</span>Profile</button>
 </nav>
 
@@ -279,6 +341,6 @@
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/api.js"></script>
-<script src="assets/js/teacher.js?v=phase-2-5c-1-0"></script>
+<script src="assets/js/teacher.js?v=phase-2-5e-1-0"></script>
 </body>
 </html>

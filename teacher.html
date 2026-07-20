@@ -1,1 +1,240 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Teacher Dashboard | WTC</title><link rel="icon" href="assets/images/favicon.png"><link rel="stylesheet" href="assets/css/teacher.css"></head><body><header class="topbar"><div class="topbar-inner"><a class="brand" href="teacher.html"><img src="assets/images/logo.png" alt="WTC"><span>Teacher Dashboard</span></a><div class="top-actions"><span data-user-name>Teacher</span><span class="avatar" data-user-avatar>T</span><button class="btn danger small" onclick="WTC_AUTH.logout()">Logout</button></div></div></header><main class="main-area"><div class="hero-card"><h1>Teacher Dashboard</h1><p class="muted">Student analytics and content upload modules will continue in Phase 2.5.</p></div><br><div class="card"><h3>API-ready dashboard</h3><p class="muted">This page is protected by teacher login session.</p></div></main><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script><script src="assets/js/teacher.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="WAGH Tuition Classes teacher dashboard">
+  <title>Teacher Dashboard | WAGH Tuition Classes</title>
+  <link rel="icon" href="assets/images/favicon.png">
+  <link rel="stylesheet" href="assets/css/teacher.css?v=phase-2-5a-1-0">
+</head>
+<body class="teacher-page">
+<header class="topbar teacher-topbar">
+  <div class="topbar-inner teacher-topbar-inner">
+    <div class="teacher-topbar-start">
+      <button
+        class="teacher-menu-toggle"
+        type="button"
+        aria-label="Open teacher navigation"
+        aria-controls="teacherSidebar"
+        aria-expanded="false"
+        onclick="TeacherApp.toggleSidebar()"
+      >☰</button>
+      <a class="brand" href="teacher.html" aria-label="WAGH Tuition Classes Teacher Dashboard">
+        <img src="assets/images/logo.png" alt="WTC">
+        <span>Teacher Dashboard</span>
+      </a>
+    </div>
+
+    <div class="top-actions">
+      <div class="teacher-user-copy hide-mobile">
+        <strong data-teacher-name>Teacher</strong>
+        <small data-teacher-assignment>Loading assignment…</small>
+      </div>
+      <span class="avatar" data-teacher-avatar aria-hidden="true">T</span>
+      <button class="btn danger small" type="button" onclick="WTC_AUTH.logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="teacher-shell">
+  <aside id="teacherSidebar" class="teacher-sidebar" aria-label="Teacher navigation">
+    <div class="teacher-sidebar-head">
+      <span class="teacher-sidebar-mark">WTC</span>
+      <div>
+        <strong>Teacher Centre</strong>
+        <small>Phase 2.5A Foundation</small>
+      </div>
+      <button class="teacher-sidebar-close" type="button" aria-label="Close teacher navigation" onclick="TeacherApp.toggleSidebar(false)">×</button>
+    </div>
+
+    <nav class="teacher-nav">
+      <button class="teacher-nav-item active" type="button" data-teacher-nav="dashboardPanel" onclick="TeacherApp.openPanel('dashboardPanel', this)">
+        <span class="teacher-nav-icon">⌂</span><span>Overview</span>
+      </button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="studentsPanel" onclick="TeacherApp.openPanel('studentsPanel', this)">
+        <span class="teacher-nav-icon">👥</span><span>My Students</span><b id="teacherStudentNavCount" class="teacher-nav-count">0</b>
+      </button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="resultsPanel" onclick="TeacherApp.openPanel('resultsPanel', this)">
+        <span class="teacher-nav-icon">📊</span><span>Recent Results</span>
+      </button>
+      <button class="teacher-nav-item" type="button" data-teacher-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)">
+        <span class="teacher-nav-icon">🪪</span><span>My Profile</span>
+      </button>
+    </nav>
+
+    <div class="teacher-sidebar-note">
+      <b>Read-only foundation</b>
+      <span>Content publishing remains Admin-controlled.</span>
+    </div>
+  </aside>
+
+  <button id="teacherSidebarBackdrop" class="teacher-sidebar-backdrop" type="button" aria-label="Close navigation" onclick="TeacherApp.toggleSidebar(false)"></button>
+
+  <main class="teacher-main">
+    <div class="teacher-page-head">
+      <div>
+        <p class="teacher-breadcrumb">Teacher / <span id="teacherBreadcrumbCurrent">Overview</span></p>
+        <h1 id="teacherPageTitle">Overview</h1>
+        <p id="teacherPageSubtitle">Your assigned class, students and recent performance.</p>
+      </div>
+      <button class="btn outline small teacher-refresh-button" type="button" onclick="TeacherApp.refresh()">↻ Refresh</button>
+    </div>
+
+    <div id="teacherGlobalStatus" class="teacher-status info" role="status" aria-live="polite">Loading teacher dashboard…</div>
+
+    <section id="dashboardPanel" class="teacher-panel active" data-panel-title="Overview" data-panel-subtitle="Your assigned class, students and recent performance.">
+      <div class="teacher-hero">
+        <div>
+          <span class="teacher-eyebrow">WAGH Tuition Classes • Teacher Portal</span>
+          <h2>Welcome, <span data-teacher-first-name>Teacher</span></h2>
+          <p id="teacherHeroAssignment">Loading your current assignment…</p>
+          <div class="teacher-hero-actions">
+            <button class="btn" type="button" onclick="TeacherApp.openPanel('studentsPanel')">View My Students</button>
+            <button class="btn outline" type="button" onclick="TeacherApp.openPanel('resultsPanel')">View Recent Results</button>
+          </div>
+        </div>
+        <div class="teacher-hero-badge" aria-hidden="true">
+          <span>2.5A</span>
+          <small>Foundation</small>
+        </div>
+      </div>
+
+      <div class="teacher-stats" aria-label="Teacher dashboard summary">
+        <article class="teacher-stat-card">
+          <span class="teacher-stat-icon students">👥</span>
+          <div><small>Assigned Students</small><strong id="teacherAssignedStudents">0</strong><p id="teacherActiveStudentsText">0 active</p></div>
+        </article>
+        <article class="teacher-stat-card">
+          <span class="teacher-stat-icon attempts">📝</span>
+          <div><small>Recorded Attempts</small><strong id="teacherTotalAttempts">0</strong><p>Matching your assignment</p></div>
+        </article>
+        <article class="teacher-stat-card">
+          <span class="teacher-stat-icon average">📈</span>
+          <div><small>Average Score</small><strong id="teacherAveragePercent">0%</strong><p>Across recorded results</p></div>
+        </article>
+        <article class="teacher-stat-card">
+          <span class="teacher-stat-icon attention">⚑</span>
+          <div><small>Needs Attention</small><strong id="teacherAttentionCount">0</strong><p>No attempt or below 60%</p></div>
+        </article>
+      </div>
+
+      <div class="teacher-dashboard-grid">
+        <article class="teacher-card">
+          <div class="teacher-card-head">
+            <div><span class="teacher-card-kicker">Current assignment</span><h3>Teaching Scope</h3></div>
+            <span id="teacherAssignmentStatus" class="teacher-chip neutral">Loading</span>
+          </div>
+          <dl class="teacher-definition-list">
+            <div><dt>Teacher ID</dt><dd id="teacherAssignmentId">—</dd></div>
+            <div><dt>Class</dt><dd id="teacherAssignmentClass">—</dd></div>
+            <div><dt>Subject</dt><dd id="teacherAssignmentSubject">—</dd></div>
+            <div><dt>Available profiles</dt><dd id="teacherAssignmentProfiles">—</dd></div>
+          </dl>
+          <div id="teacherAssignmentWarning" class="teacher-inline-note hidden"></div>
+        </article>
+
+        <article class="teacher-card">
+          <div class="teacher-card-head">
+            <div><span class="teacher-card-kicker">Performance snapshot</span><h3>Recent Results</h3></div>
+            <button class="teacher-text-button" type="button" onclick="TeacherApp.openPanel('resultsPanel')">See all</button>
+          </div>
+          <div id="teacherRecentResultPreview" class="teacher-compact-list">
+            <div class="teacher-empty">Loading recent results…</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="studentsPanel" class="teacher-panel" data-panel-title="My Students" data-panel-subtitle="Read-only student overview for your assigned class.">
+      <div class="teacher-section-card">
+        <div class="teacher-section-heading">
+          <div><span class="teacher-card-kicker">Assigned class</span><h2>My Students</h2><p>Search and filter the students currently connected to your class assignment.</p></div>
+          <span id="teacherStudentCountLabel" class="teacher-count-pill">0 students</span>
+        </div>
+
+        <div class="teacher-filter-grid">
+          <label class="teacher-filter-field search-field">
+            <span>Search</span>
+            <input id="teacherStudentSearch" type="search" placeholder="Student name or ID" autocomplete="off">
+          </label>
+          <label class="teacher-filter-field">
+            <span>Board</span>
+            <select id="teacherBoardFilter"><option value="">All boards</option></select>
+          </label>
+          <label class="teacher-filter-field">
+            <span>Medium</span>
+            <select id="teacherMediumFilter"><option value="">All media</option></select>
+          </label>
+          <label class="teacher-filter-field">
+            <span>Performance</span>
+            <select id="teacherPerformanceFilter">
+              <option value="">All students</option>
+              <option value="attention">Needs attention</option>
+              <option value="strong">60% and above</option>
+              <option value="no-attempt">No recorded attempt</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="teacherStudentList" class="teacher-student-list">
+          <div class="teacher-empty">Loading students…</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultsPanel" class="teacher-panel" data-panel-title="Recent Results" data-panel-subtitle="Latest recorded test results matching your assignment.">
+      <div class="teacher-section-card">
+        <div class="teacher-section-heading">
+          <div><span class="teacher-card-kicker">Assessment evidence</span><h2>Recent Results</h2><p>Results are read from the existing runtime evidence sheets. No marks are edited here.</p></div>
+          <span id="teacherResultCountLabel" class="teacher-count-pill">0 results</span>
+        </div>
+        <div id="teacherResultList" class="teacher-result-list">
+          <div class="teacher-empty">Loading results…</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="profilePanel" class="teacher-panel" data-panel-title="My Profile" data-panel-subtitle="Your current Teacher Master record and assignment scope.">
+      <div class="teacher-profile-grid">
+        <article class="teacher-profile-card">
+          <div class="teacher-profile-avatar" data-teacher-avatar-large aria-hidden="true">T</div>
+          <h2 data-teacher-name>Teacher</h2>
+          <p id="teacherProfileRole">Teacher</p>
+          <span id="teacherProfileStatus" class="teacher-chip active">Active</span>
+        </article>
+
+        <article class="teacher-card teacher-profile-details">
+          <div class="teacher-card-head"><div><span class="teacher-card-kicker">TEACHER_MASTER</span><h3>Profile Details</h3></div></div>
+          <dl class="teacher-definition-list wide">
+            <div><dt>Teacher ID</dt><dd id="teacherProfileId">—</dd></div>
+            <div><dt>Registered mobile</dt><dd id="teacherProfileMobile">—</dd></div>
+            <div><dt>Class assignment</dt><dd id="teacherProfileClass">—</dd></div>
+            <div><dt>Subject assignment</dt><dd id="teacherProfileSubject">—</dd></div>
+            <div><dt>Account status</dt><dd id="teacherProfileAccountStatus">—</dd></div>
+            <div><dt>Last updated</dt><dd id="teacherProfileUpdatedAt">—</dd></div>
+          </dl>
+          <div class="teacher-inline-note">
+            Phase 2.5A keeps the portal read-only. Teacher profile editing, formal student assignment mapping and content submission are reserved for later approved phases.
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="teacher-bottom-nav" aria-label="Teacher mobile navigation">
+  <button class="active" type="button" data-teacher-mobile-nav="dashboardPanel" onclick="TeacherApp.openPanel('dashboardPanel', this)"><span>⌂</span>Overview</button>
+  <button type="button" data-teacher-mobile-nav="studentsPanel" onclick="TeacherApp.openPanel('studentsPanel', this)"><span>👥</span>Students</button>
+  <button type="button" data-teacher-mobile-nav="resultsPanel" onclick="TeacherApp.openPanel('resultsPanel', this)"><span>📊</span>Results</button>
+  <button type="button" data-teacher-mobile-nav="profilePanel" onclick="TeacherApp.openPanel('profilePanel', this)"><span>🪪</span>Profile</button>
+</nav>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/teacher.js?v=phase-2-5a-1-0"></script>
+</body>
+</html>

@@ -8,6 +8,8 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
+  <!-- stylesheet for teacher assignment by admin -->
+  <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
 </head>
 <body class="admin-page">
 <header class="topbar admin-topbar">
@@ -47,6 +49,9 @@
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="profileRequestPanel" onclick="AdminApp.openPanel('profileRequestPanel', this)">
         <span class="admin-nav-icon">🪪</span><span>Profile Requests</span><b id="profileRequestSidebarCount" class="admin-nav-count">0</b>
+      </button>
+      <button class="admin-nav-item" type="button" data-admin-nav="teacherAssignmentPanel" onclick="AdminApp.openPanel('teacherAssignmentPanel', this);WTC_TEACHER_ASSIGNMENT_ADMIN.open()">
+  <span class="admin-nav-icon">🔗</span><span>Teacher Assignments</span>
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="contentManagerPanel" onclick="AdminApp.openPanel('contentManagerPanel', this)">
         <span class="admin-nav-icon">📚</span><span>Content Manager</span>
@@ -128,6 +133,11 @@
             <span><strong>Open AI content engine</strong><small>Import, review and publish structured content.</small></span>
             <b>→</b>
           </button>
+          <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('teacherAssignmentPanel');WTC_TEACHER_ASSIGNMENT_ADMIN.open()">
+  <span class="admin-quick-icon">🔗</span>
+  <span><strong>Assign teachers</strong><small>Connect teachers to classes, selected students and subjects.</small></span>
+  <b>→</b>
+          </button>
         </div>
       </div>
 
@@ -180,6 +190,149 @@
         </div>
       </div>
     </section>
+
+    <section id="teacherAssignmentPanel" class="admin-panel" data-panel-title="Teacher Assignments" data-panel-subtitle="Securely connect teachers to classes, selected students and one or more subjects.">
+  <div class="admin-panel-card teacher-assignment-admin">
+    <div class="admin-section-heading">
+      <div>
+        <span class="admin-kicker">Phase 2.5G · Admin controlled</span>
+        <h2>Teacher Assignment Manager</h2>
+        <p class="muted">Teachers cannot expand their own access. Admin creates explicit subject-level assignments.</p>
+      </div>
+      <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.load()">↻ Refresh</button>
+    </div>
+
+    <div id="teacherAssignmentLoadStatus" class="teacher-assignment-status info">Open this panel to load assignment data.</div>
+
+    <div class="teacher-assignment-stats">
+      <article class="teacher-assignment-stat"><small>Total rows</small><strong id="teacherAssignmentTotal">0</strong></article>
+      <article class="teacher-assignment-stat"><small>Active rows</small><strong id="teacherAssignmentActiveTotal">0</strong></article>
+      <article class="teacher-assignment-stat"><small>Class scope</small><strong id="teacherAssignmentClassTotal">0</strong></article>
+      <article class="teacher-assignment-stat"><small>Student scope</small><strong id="teacherAssignmentStudentTotal">0</strong></article>
+      <article class="teacher-assignment-stat"><small>Legacy-only teachers</small><strong id="teacherAssignmentLegacyTotal">0</strong></article>
+    </div>
+
+    <div class="teacher-assignment-grid">
+      <article class="teacher-assignment-card">
+        <div class="teacher-assignment-card-head">
+          <div>
+            <span class="admin-kicker">Create / update scope</span>
+            <h3>Assign a teacher</h3>
+          </div>
+        </div>
+
+        <form id="teacherAssignmentForm" class="teacher-assignment-form-grid">
+          <div class="teacher-assignment-field teacher-assignment-field-wide">
+            <label for="teacherAssignmentTeacher">Teacher</label>
+            <select id="teacherAssignmentTeacher" required><option value="">Select Teacher</option></select>
+          </div>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentScopeType">Assignment scope</label>
+            <select id="teacherAssignmentScopeType">
+              <option value="CLASS">Whole class</option>
+              <option value="STUDENT">Selected students</option>
+            </select>
+          </div>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentBoard">Board</label>
+            <select id="teacherAssignmentBoard" required><option value="">Select Board</option></select>
+          </div>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentClass">Class</label>
+            <select id="teacherAssignmentClass" required><option value="">Select Class</option></select>
+          </div>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentMedium">Medium</label>
+            <select id="teacherAssignmentMedium" required><option value="">Select Medium</option></select>
+          </div>
+
+          <div class="teacher-assignment-field teacher-assignment-field-wide">
+            <label for="teacherAssignmentSection">Section (optional)</label>
+            <select id="teacherAssignmentSection"><option value="">All Sections / No Section</option></select>
+          </div>
+
+          <p id="teacherAssignmentScopeHelp" class="teacher-assignment-help teacher-assignment-field-wide">All current and future active students matching the selected profile are included automatically.</p>
+
+          <div class="teacher-assignment-field teacher-assignment-field-wide">
+            <div class="teacher-assignment-toolbar">
+              <label>Subjects (<span id="teacherAssignmentSubjectCount">0</span>)</label>
+              <div class="teacher-assignment-toolbar-actions">
+                <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.selectAllSubjects(true)">Select all</button>
+                <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.selectAllSubjects(false)">Clear</button>
+              </div>
+            </div>
+            <div id="teacherAssignmentSubjectList" class="teacher-assignment-checklist"><div class="teacher-assignment-empty">Select a profile to see subjects.</div></div>
+          </div>
+
+          <div id="teacherAssignmentStudentBlock" class="teacher-assignment-field teacher-assignment-field-wide is-hidden">
+            <div class="teacher-assignment-toolbar">
+              <label>Students (<span id="teacherAssignmentStudentCount">0</span>)</label>
+              <div class="teacher-assignment-toolbar-actions">
+                <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.selectAllStudents(true)">Select all</button>
+                <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.selectAllStudents(false)">Clear</button>
+              </div>
+            </div>
+            <div id="teacherAssignmentStudentList" class="teacher-assignment-checklist"><div class="teacher-assignment-empty">Select a profile to see students.</div></div>
+          </div>
+
+          <label class="teacher-assignment-primary teacher-assignment-field-wide">
+            <input id="teacherAssignmentPrimary" type="checkbox">
+            <span><strong>Primary teacher</strong><br><small>Leave unchecked for a supporting teacher.</small></span>
+          </label>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentStartDate">Start date (optional)</label>
+            <input id="teacherAssignmentStartDate" type="date">
+          </div>
+
+          <div class="teacher-assignment-field">
+            <label for="teacherAssignmentEndDate">End date (optional)</label>
+            <input id="teacherAssignmentEndDate" type="date">
+          </div>
+
+          <div class="teacher-assignment-field teacher-assignment-field-wide">
+            <label for="teacherAssignmentAdminPassword">Admin password confirmation</label>
+            <input id="teacherAssignmentAdminPassword" type="password" autocomplete="current-password" placeholder="Required for save, status change or migration">
+          </div>
+
+          <button class="btn teacher-assignment-field-wide" type="submit">Save Teacher Assignment</button>
+        </form>
+
+        <div class="teacher-assignment-migration">
+          <div class="teacher-assignment-card-head">
+            <div><h3>Legacy TEACHER_MASTER migration</h3><p class="muted">Preview first. Only teachers with zero explicit rows are migrated.</p></div>
+          </div>
+          <div class="teacher-assignment-migration-actions">
+            <button class="btn small outline" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.previewMigration()">Preview migration</button>
+            <button class="btn small warning" type="button" onclick="WTC_TEACHER_ASSIGNMENT_ADMIN.migrateLegacy()">Migrate legacy-only teachers</button>
+          </div>
+          <div id="teacherAssignmentMigrationPreview" class="teacher-assignment-status info" style="margin-top:10px">No preview generated.</div>
+        </div>
+      </article>
+
+      <article class="teacher-assignment-card">
+        <div class="teacher-assignment-card-head">
+          <div>
+            <span class="admin-kicker">Existing scope rows</span>
+            <h3>Current assignments</h3>
+          </div>
+          <select id="teacherAssignmentStatusFilter" aria-label="Filter assignment status">
+            <option value="ALL">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+        <div id="teacherAssignmentExistingList" class="teacher-assignment-list">
+          <div class="teacher-assignment-empty">Open this panel to load assignments.</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
 
     <section id="contentManagerPanel" class="admin-panel" data-panel-title="Content Manager" data-panel-subtitle="Manage subjects, chapters and static fallback feature URLs.">
       <div class="admin-panel-card">
@@ -390,5 +543,6 @@
 <script src="assets/js/ai-content.js"></script>
 <script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js?v=admin-ui-2-0"></script>
+<script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

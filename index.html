@@ -1,27 +1,454 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WAGH Tuition Classes | Class 5 to 10 CBSE & GSEB</title><meta name="description" content="Chapter summaries, notes, tests and personalized learning portal for WAGH Tuition Classes."><link rel="icon" href="assets/images/favicon.png"><link rel="stylesheet" href="assets/css/portal.css"><link rel="stylesheet" href="assets/css/main.css"></head><body>
-<header><div class="container nav"><a class="landing-brand" href="#home"><img src="assets/images/logo.png" alt="WAGH Tuition Classes logo"><span>WAGH Tuition Classes</span></a><button class="menu" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button><nav id="navLinks" class="nav-links"><a href="#home">Home</a><a href="#features">Features</a><a href="#login">Login</a><a href="#about">About</a><a href="#contact">Contact</a><a class="btn" href="#login">Student Login</a></nav></div></header>
-<main id="home"><section class="hero"><div class="container hero-grid"><div><span class="badge">CBSE · GSEB · Class 5 to 10</span><h1>Learn smarter with <b>WAGH Tuition Classes</b></h1><p class="lead">A dynamic student portal for subjects, chapters, tests, progress and personalized study support.</p><a class="btn" href="#login">Login / Signup →</a> <a class="btn outline" href="#features">Explore Features</a></div><div class="hero-visual"><img src="assets/images/logo.png" alt="WTC logo"><h3>Student Learning Portal</h3><p class="muted">Dynamic subject → chapter → feature system</p></div></div></section>
-<section id="features"><div class="container"><div class="center"><h2>Everything students need</h2><p class="sub">Modern learning flow connected to WTC_CONTENT_ENGINE.</p></div><div class="features"><div class="card"><div class="icon">📚</div><h3>Dynamic Chapters</h3><p>Students see subjects and chapters according to their board, class and medium.</p></div><div class="card"><div class="icon">📝</div><h3>Practice Tests</h3><p>MCQ, answer writing, worksheets and revision tools are loaded dynamically.</p></div><div class="card"><div class="icon">📈</div><h3>Progress Tracking</h3><p>Progress module is ready for marks, activity and personalized improvement.</p></div></div></div></section>
-<section id="login" class="soft"><div class="container"><div class="center"><h2>Login to your portal</h2><p class="sub">Student, teacher and admin roles redirect to their own dashboard.</p></div><div class="auth-panel"><div class="card auth-card"><h3>Login</h3><form id="loginForm" onsubmit="event.preventDefault();WTC_AUTH.handleLogin();"><select name="role"><option>Student</option><option>Teacher</option><option>Admin</option><option>Parent</option></select><input name="mobile" type="tel" placeholder="Mobile number" required><input name="password" type="password" placeholder="Password" required><button class="btn" type="submit">Login</button></form></div><div class="card auth-card"><h3>Student Signup</h3><form id="signupForm" onsubmit="event.preventDefault();WTC_AUTH.handleSignup();"><input name="name" placeholder="Student name" required><input name="mobile" type="tel" placeholder="Mobile number" required><input name="password" type="password" placeholder="Create password" required><select name="board"><option>CBSE</option><option>GSEB</option></select><select name="className"><option>Class 5</option><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option></select><select name="medium"><option>English Medium</option><option>Gujarati Medium</option></select><button class="btn success" type="submit">Create Student Account</button></form></div></div></div></section>
-<section id="about"><div class="container"><div class="card"><h2>About WAGH Tuition Classes</h2><p class="lead">WAGH Tuition Classes provides structured learning support for school students with chapter-wise study material, tests and progress tracking.</p></div></div></section><section id="contact" class="soft"><div class="container"><div class="card"><h2>Contact</h2><p class="lead">Mobile: 9537036383</p></div></div></section></main>
-<footer><div class="footer-wrap"><div><h3>WAGH Tuition Classes</h3><p>Main tuition website and student learning ecosystem.</p></div><div><h3>Portal</h3><a href="student.html">Student</a><a href="teacher.html">Teacher</a><a href="admin.html">Admin</a></div><div><h3>Note</h3><p>All dynamic content connects through WTC_CONTENT_ENGINE API.</p></div></div><div class="footer-bottom">© WAGH Tuition Classes</div></footer><script src="assets/js/config.js"></script><script src="assets/js/ui.js"></script><script src="assets/js/auth.js"></script><script src="assets/js/api.js"></script>
-<script>
-  function autoRedirectLoggedUser() {
-  if (!window.WTC_CONFIG || typeof WTC_AUTH === 'undefined') return;
-
-  const user = WTC_AUTH.getUser();
-
-    if (!user) return;
-
-    const role = String(user.role || 'Student').toLowerCase();
-
-    if (role === 'teacher') window.location.replace('teacher.html');
-    else if (role === 'admin') window.location.replace('admin.html');
-    else if (role === 'parent') window.location.replace('parent.html');
-    else window.location.replace('student.html');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAGH Tuition Classes | CBSE &amp; GSEB Classes 5 to 10</title>
+  <meta name="description" content="WAGH Tuition Classes offers chapter-wise learning, tests, solutions and progress support for CBSE and GSEB students from Classes 5 to 10.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#19758a">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WAGH Tuition Classes">
+  <meta property="og:description" content="Structured learning support for CBSE and GSEB students from Classes 5 to 10.">
+  <meta property="og:image" content="assets/images/hero-study.jpg">
+  <link rel="icon" href="assets/images/favicon.png">
+  <link rel="preload" href="assets/images/hero-study.jpg" as="image">
+  <link rel="stylesheet" href="assets/css/portal.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "WAGH Tuition Classes",
+    "telephone": "+91 95370 36383",
+    "description": "Structured tuition and digital learning support for CBSE and GSEB students from Classes 5 to 10."
   }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
 
-  document.addEventListener('DOMContentLoaded', autoRedirectLoggedUser);
-  window.addEventListener('pageshow', autoRedirectLoggedUser);
-</script>
-</body></html>
+  <header class="site-header" id="home">
+    <div class="container nav">
+      <a class="landing-brand" href="#home" aria-label="WAGH Tuition Classes home">
+        <img src="assets/images/logo.png" alt="" width="52" height="52">
+        <span>WAGH Tuition Classes</span>
+      </a>
+
+      <button class="menu" id="menuButton" type="button" aria-label="Open navigation menu" aria-controls="navLinks" aria-expanded="false">
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <nav id="navLinks" class="nav-links" aria-label="Main navigation">
+        <a href="#learning-paths">Classes</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#features">Learning support</a>
+        <a href="#parents">For parents</a>
+        <a href="#portal-access">Login</a>
+        <a class="btn nav-cta" href="#admission">Book Free Demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="mainContent">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="badge">CBSE · GSEB · Classes 5 to 10</span>
+          <h1 id="heroTitle">Build stronger concepts and <b>better study habits</b></h1>
+          <p class="lead">Chapter-wise lessons, solutions, practice tests and progress support—organized for your board, class and medium.</p>
+
+          <div class="hero-actions">
+            <a class="btn btn-large" href="#admission">Book a Free Demo</a>
+            <a class="btn outline btn-large" href="#portal-access" data-auth-target="login">Student Login</a>
+          </div>
+
+          <ul class="hero-points" aria-label="WTC learning highlights">
+            <li><span aria-hidden="true">✓</span> English and Gujarati medium support</li>
+            <li><span aria-hidden="true">✓</span> Chapter-wise tests, notes and solutions</li>
+            <li><span aria-hidden="true">✓</span> Personalized student portal</li>
+          </ul>
+        </div>
+
+        <div class="hero-visual">
+          <img src="assets/images/hero-study.jpg" alt="Student studying with books and digital learning support" width="1536" height="1024">
+          <div class="hero-visual-card">
+            <span class="mini-label">Start with confidence</span>
+            <strong>Free demo and learning discussion</strong>
+            <p>Tell us your class and subject. We will help you choose the right starting point.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Courses supported">
+      <div class="container trust-grid">
+        <div><strong>CBSE &amp; GSEB</strong><span>Board-focused learning</span></div>
+        <div><strong>Classes 5–10</strong><span>Foundation to board preparation</span></div>
+        <div><strong>English &amp; Gujarati</strong><span>Medium-friendly support</span></div>
+        <div><strong>Chapter-wise</strong><span>Learn, practise and review</span></div>
+      </div>
+    </section>
+
+    <section id="learning-paths" class="section-block" aria-labelledby="pathsTitle">
+      <div class="container">
+        <div class="section-heading center">
+          <span class="eyebrow">Choose your learning stage</span>
+          <h2 id="pathsTitle">Find the right starting point</h2>
+          <p class="sub">Select your class group to prefill the free-demo form.</p>
+        </div>
+
+        <div class="path-grid">
+          <article class="path-card">
+            <span class="path-number">5–6</span>
+            <div>
+              <h3>Strong Foundation</h3>
+              <p>Build clear basics, confidence and regular study habits.</p>
+              <button class="text-link" type="button" data-class-choice="Class 5">Enquire for Classes 5–6 <span aria-hidden="true">→</span></button>
+            </div>
+          </article>
+
+          <article class="path-card">
+            <span class="path-number">7–8</span>
+            <div>
+              <h3>Concept Development</h3>
+              <p>Understand key concepts and improve school-test preparation.</p>
+              <button class="text-link" type="button" data-class-choice="Class 7">Enquire for Classes 7–8 <span aria-hidden="true">→</span></button>
+            </div>
+          </article>
+
+          <article class="path-card">
+            <span class="path-number">9</span>
+            <div>
+              <h3>Academic Preparation</h3>
+              <p>Strengthen important chapters before the board year.</p>
+              <button class="text-link" type="button" data-class-choice="Class 9">Enquire for Class 9 <span aria-hidden="true">→</span></button>
+            </div>
+          </article>
+
+          <article class="path-card featured-path">
+            <span class="path-number">10</span>
+            <div>
+              <span class="popular-tag">Board Year</span>
+              <h3>Focused Board Support</h3>
+              <p>Chapter revision, question practice and structured test preparation.</p>
+              <button class="text-link" type="button" data-class-choice="Class 10">Enquire for Class 10 <span aria-hidden="true">→</span></button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section-block soft" aria-labelledby="howTitle">
+      <div class="container">
+        <div class="section-heading center">
+          <span class="eyebrow">A simple learning journey</span>
+          <h2 id="howTitle">How WTC works</h2>
+          <p class="sub">A clear path from understanding a chapter to measuring improvement.</p>
+        </div>
+
+        <div class="steps-grid">
+          <article class="step-card">
+            <span class="step-icon" aria-hidden="true">1</span>
+            <h3>Choose your class</h3>
+            <p>Your board, class and medium organize the subjects and chapters shown to you.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-icon" aria-hidden="true">2</span>
+            <h3>Learn and practise</h3>
+            <p>Use available lessons, notes, solutions, MCQs and answer-writing practice.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-icon" aria-hidden="true">3</span>
+            <h3>Review progress</h3>
+            <p>Use test activity and chapter progress to decide what to revise next.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section-block" aria-labelledby="featuresTitle">
+      <div class="container">
+        <div class="section-heading center">
+          <span class="eyebrow">Learning support in one place</span>
+          <h2 id="featuresTitle">Everything students need to keep moving</h2>
+          <p class="sub">Available content varies by board, class, subject and chapter.</p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card"><div class="icon" aria-hidden="true">📖</div><h3>Chapter Lessons</h3><p>Study topics in chapter order with clear explanations and structured content.</p></article>
+          <article class="feature-card"><div class="icon" aria-hidden="true">📘</div><h3>Detailed Solutions</h3><p>Read complete questions and step-by-step solutions for better understanding.</p></article>
+          <article class="feature-card"><div class="icon" aria-hidden="true">📝</div><h3>MCQ Practice</h3><p>Check understanding through chapter-wise tests and instant review.</p></article>
+          <article class="feature-card"><div class="icon" aria-hidden="true">✍️</div><h3>Answer Writing</h3><p>Practise written responses in a structured, exam-oriented format.</p></article>
+          <article class="feature-card"><div class="icon" aria-hidden="true">📊</div><h3>Progress Support</h3><p>Use learning activity and test performance to focus revision.</p></article>
+          <article class="feature-card"><div class="icon" aria-hidden="true">🌐</div><h3>Bilingual Support</h3><p>Learn with English and Gujarati support where available.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="parents" class="section-block parent-section" aria-labelledby="parentsTitle">
+      <div class="container parent-grid">
+        <div>
+          <span class="eyebrow light-eyebrow">For parents</span>
+          <h2 id="parentsTitle">Clear learning support, not technical confusion</h2>
+          <p class="lead parent-lead">The goal is simple: help the student understand chapters, practise regularly and identify where more attention is needed.</p>
+          <a class="btn light-btn" href="#admission">Discuss Your Child’s Learning</a>
+        </div>
+
+        <div class="parent-points">
+          <article><span aria-hidden="true">✓</span><div><h3>Structured chapter plan</h3><p>Students can follow a clear subject and chapter sequence.</p></div></article>
+          <article><span aria-hidden="true">✓</span><div><h3>Regular practice</h3><p>Tests and solutions support revision beyond the classroom.</p></div></article>
+          <article><span aria-hidden="true">✓</span><div><h3>Progress visibility</h3><p>Learning activity can help identify completed and pending work.</p></div></article>
+          <article><span aria-hidden="true">✓</span><div><h3>Direct communication</h3><p>Parents can contact WTC for course and learning guidance.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="admission" class="section-block admission-section" aria-labelledby="admissionTitle">
+      <div class="container admission-grid">
+        <div class="admission-copy">
+          <span class="eyebrow">Free demo enquiry</span>
+          <h2 id="admissionTitle">Tell us what the student needs</h2>
+          <p class="lead">Submit a short enquiry for a free demo and learning discussion. No student account is required.</p>
+
+          <div class="admission-benefits">
+            <div><span aria-hidden="true">1</span><p>Share the student’s class and subject.</p></div>
+            <div><span aria-hidden="true">2</span><p>Choose a preferred time for contact.</p></div>
+            <div><span aria-hidden="true">3</span><p>Receive guidance for the right starting point.</p></div>
+          </div>
+
+          <div class="direct-contact">
+            <p>Prefer direct contact?</p>
+            <div>
+              <a class="btn outline" href="tel:+919537036383">Call 95370 36383</a>
+              <a class="btn whatsapp-btn" data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener">WhatsApp</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card lead-card">
+          <h3>Book a Free Demo</h3>
+          <p class="form-intro">Fields marked * are required.</p>
+
+          <form id="admissionForm" novalidate>
+            <div class="form-grid two-columns">
+              <div class="field">
+                <label for="leadStudentName">Student name *</label>
+                <input id="leadStudentName" name="studentName" type="text" autocomplete="name" maxlength="80" required>
+              </div>
+              <div class="field">
+                <label for="leadParentMobile">Parent mobile number *</label>
+                <input id="leadParentMobile" name="parentMobile" type="tel" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
+              </div>
+              <div class="field">
+                <label for="leadClass">Class *</label>
+                <select id="leadClass" name="className" required>
+                  <option value="">Select class</option>
+                  <option>Class 5</option><option>Class 6</option><option>Class 7</option>
+                  <option>Class 8</option><option>Class 9</option><option>Class 10</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="leadBoard">Board *</label>
+                <select id="leadBoard" name="board" required>
+                  <option value="">Select board</option>
+                  <option>CBSE</option><option>GSEB</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="leadMedium">Medium *</label>
+                <select id="leadMedium" name="medium" required>
+                  <option value="">Select medium</option>
+                  <option>English Medium</option><option>Gujarati Medium</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="leadSubject">Subject *</label>
+                <select id="leadSubject" name="subject" required>
+                  <option value="">Select subject</option>
+                  <option>Mathematics</option><option>Science</option><option>English</option>
+                  <option>Social Science</option><option>Multiple Subjects</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field full-field">
+                <label for="leadPreferredTime">Preferred contact time</label>
+                <select id="leadPreferredTime" name="preferredTime">
+                  <option value="Any suitable time">Any suitable time</option>
+                  <option>Morning</option><option>Afternoon</option><option>Evening</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="honeypot" aria-hidden="true">
+              <label for="leadWebsite">Website</label>
+              <input id="leadWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <label class="consent-row">
+              <input type="checkbox" name="consent" value="yes" required>
+              <span>I agree to be contacted by WAGH Tuition Classes regarding this enquiry.</span>
+            </label>
+
+            <button class="btn btn-large full-button" type="submit">Submit Demo Enquiry</button>
+            <p id="admissionStatus" class="form-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <div id="admissionSuccess" class="admission-success" hidden>
+            <strong>Enquiry prepared successfully.</strong>
+            <p>For the fastest response, send the same details on WhatsApp.</p>
+            <a id="admissionWhatsapp" class="btn whatsapp-btn full-button" href="https://wa.me/919537036383" target="_blank" rel="noopener">Send on WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="portal-access" class="section-block soft" aria-labelledby="portalTitle">
+      <div class="container portal-grid">
+        <div class="portal-copy">
+          <span class="eyebrow">Existing students and staff</span>
+          <h2 id="portalTitle">Access your WTC portal</h2>
+          <p class="lead">Login to continue learning, or create a student account when instructed by WAGH Tuition Classes.</p>
+          <ul class="portal-list">
+            <li>Students access subjects, chapters, tests and progress.</li>
+            <li>Teachers and administrators use their assigned role login.</li>
+            <li>Parent access remains available only for activated accounts.</li>
+          </ul>
+        </div>
+
+        <div class="card auth-shell">
+          <div class="auth-tabs" role="tablist" aria-label="Portal access options">
+            <button id="loginTab" type="button" role="tab" aria-selected="true" aria-controls="loginPanel" data-auth-tab="login">Login</button>
+            <button id="signupTab" type="button" role="tab" aria-selected="false" aria-controls="signupPanel" data-auth-tab="signup">Student Signup</button>
+          </div>
+
+          <section id="loginPanel" class="auth-panel active" role="tabpanel" aria-labelledby="loginTab">
+            <h3>Login</h3>
+            <form id="loginForm" novalidate>
+              <div class="field">
+                <label for="loginRole">Portal role</label>
+                <select id="loginRole" name="role" autocomplete="organization-title">
+                  <option value="Student">Student</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Parent">Parent</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="loginMobile">Mobile number</label>
+                <input id="loginMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="username" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
+              </div>
+              <div class="field">
+                <label for="loginPassword">Password</label>
+                <div class="password-field">
+                  <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+                  <button class="password-toggle" type="button" data-password-toggle="loginPassword" aria-label="Show password">Show</button>
+                </div>
+              </div>
+              <button class="btn btn-large full-button" type="submit">Login to Portal</button>
+              <p id="loginStatus" class="form-status" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <section id="signupPanel" class="auth-panel" role="tabpanel" aria-labelledby="signupTab" hidden>
+            <h3>Create Student Account</h3>
+            <form id="signupForm" novalidate>
+              <div class="field">
+                <label for="signupName">Student name</label>
+                <input id="signupName" name="name" type="text" autocomplete="name" maxlength="80" required>
+              </div>
+              <div class="field">
+                <label for="signupMobile">Mobile number</label>
+                <input id="signupMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="username" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
+              </div>
+              <div class="field">
+                <label for="signupPassword">Create password</label>
+                <div class="password-field">
+                  <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="4" required>
+                  <button class="password-toggle" type="button" data-password-toggle="signupPassword" aria-label="Show password">Show</button>
+                </div>
+              </div>
+              <div class="form-grid two-columns compact-grid">
+                <div class="field">
+                  <label for="signupBoard">Board</label>
+                  <select id="signupBoard" name="board" required><option>CBSE</option><option>GSEB</option></select>
+                </div>
+                <div class="field">
+                  <label for="signupClass">Class</label>
+                  <select id="signupClass" name="className" required>
+                    <option>Class 5</option><option>Class 6</option><option>Class 7</option>
+                    <option>Class 8</option><option>Class 9</option><option>Class 10</option>
+                  </select>
+                </div>
+                <div class="field full-field">
+                  <label for="signupMedium">Medium</label>
+                  <select id="signupMedium" name="medium" required><option>English Medium</option><option>Gujarati Medium</option></select>
+                </div>
+              </div>
+              <button class="btn success btn-large full-button" type="submit">Create Student Account</button>
+              <p id="signupStatus" class="form-status" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section-block contact-section" aria-labelledby="contactTitle">
+      <div class="container contact-card">
+        <div>
+          <span class="eyebrow">Questions before joining?</span>
+          <h2 id="contactTitle">Speak directly with WAGH Tuition Classes</h2>
+          <p>Call or WhatsApp for class, subject, admission and portal guidance.</p>
+        </div>
+        <div class="contact-actions">
+          <a class="btn btn-large outline" href="tel:+919537036383">Call 95370 36383</a>
+          <a class="btn btn-large whatsapp-btn" data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener">Chat on WhatsApp</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      <div class="footer-brand">
+        <a class="landing-brand footer-logo" href="#home">
+          <img src="assets/images/logo.png" alt="" width="48" height="48">
+          <span>WAGH Tuition Classes</span>
+        </a>
+        <p>Structured learning support for CBSE and GSEB students from Classes 5 to 10.</p>
+      </div>
+      <div>
+        <h3>Explore</h3>
+        <a href="#learning-paths">Classes</a>
+        <a href="#features">Learning support</a>
+        <a href="#parents">For parents</a>
+      </div>
+      <div>
+        <h3>Get started</h3>
+        <a href="#admission">Book a free demo</a>
+        <a href="#portal-access" data-auth-target="login">Portal login</a>
+        <a data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <a href="tel:+919537036383">95370 36383</a>
+        <p>CBSE · GSEB<br>Classes 5 to 10</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="currentYear">2026</span> WAGH Tuition Classes. All rights reserved.</div>
+  </footer>
+
+  <a class="floating-whatsapp" data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener" aria-label="Contact WAGH Tuition Classes on WhatsApp">WhatsApp</a>
+
+  <nav class="mobile-conversion-bar" aria-label="Quick contact">
+    <a href="tel:+919537036383"><span aria-hidden="true">☎</span> Call</a>
+    <a data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener"><span aria-hidden="true">◉</span> WhatsApp</a>
+    <a href="#admission"><span aria-hidden="true">★</span> Free Demo</a>
+  </nav>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

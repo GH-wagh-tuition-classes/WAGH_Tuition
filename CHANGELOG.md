@@ -1,3 +1,29 @@
+# Changelog — Home Page & Admission Funnel H1.0
+
+## Home Page
+
+- Rebuilt the landing page as a mobile-first student-conversion experience.
+- Added class pathways, learning flow, parent information and contact sections.
+- Added Free Demo / Admission Enquiry separate from student signup.
+- Added accessible Login/Signup tabs, password toggles and busy states.
+- Added sticky mobile Call, WhatsApp and Free Demo controls.
+
+## Runtime
+
+- Added modular `admission_leads.gs`.
+- Added safe `installAdmissionLeadSystem()`.
+- Added `ADMISSION_LEADS` and the public `saveAdmissionLead` action.
+- Added validation, formula neutralization, locking and short-window duplicate protection.
+
+## Unchanged
+
+- Locked folder structure and existing portal responsibilities.
+- Student, Teacher, Admin and Parent portal functionality.
+- Authoring Apps Script and published-content engine.
+- Stable WAGH Tuition environment.
+
+---
+
 # Changelog — Phase 2.5F v1.0
 
 ## Teacher Portal

@@ -17,3 +17,18 @@ Status values:
 - `CANCELLED`
 
 The safe `installProfileChangeApprovalSystem()` function creates only this missing sheet/columns and never clears populated data.
+
+
+## ADMISSION_LEADS
+
+Additive runtime sheet for the Home Page & Admission Funnel H1.0.
+
+Columns:
+
+`leadId, createdAt, studentName, parentMobile, className, board, medium, subject, preferredTime, source, status, notes, deviceId, pageUrl, consent, updatedAt`
+
+Initial status:
+
+- `NEW`
+
+The safe `installAdmissionLeadSystem()` function creates only the missing sheet/header and never clears existing lead data.

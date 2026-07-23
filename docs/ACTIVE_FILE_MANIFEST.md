@@ -16,6 +16,7 @@
 | health_check.gs | Active unchanged module |
 | version.gs | PCR1 cumulative |
 | profile_change_requests.gs | PCR1 new module |
+| admission_leads.gs | H1.0 additive public lead-capture module |
 
 ## Authoring Apps Script
 

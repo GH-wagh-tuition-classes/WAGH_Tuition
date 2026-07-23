@@ -249,6 +249,9 @@ const WTC_API = (() => {
     clearStudentData,
     login: (mobile,password,role='Student') => raw({ action:'login', mobile, password, role, deviceId:deviceId() }),
     signupStudent: (student) => raw({ action:'signupStudent', ...student, deviceId:deviceId() }),
+    saveAdmissionLead: (lead) => raw({ action:'saveAdmissionLead', ...lead, deviceId:deviceId() }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
     updateStudentProfile: async profile => {
       const data = await raw({ action:'updateStudentProfile', ...profile, deviceId:deviceId() }, {
         dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)

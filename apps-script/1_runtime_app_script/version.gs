@@ -5,7 +5,7 @@
 
 var WTC_VERSION = Object.freeze({
   PLATFORM: '1.0',
-  API: '1.2',
+  API: '1.3',
   BACKEND_ARCHITECTURE: '2.4',
   RUNTIME_API: '1.0',
   FEATURE_ENGINE: '1.0',
@@ -16,7 +16,9 @@ var WTC_VERSION = Object.freeze({
   MIGRATION_MANAGER: '1.0',
   HEALTH_CHECK: '1.0',
   DEPENDENCY_MANAGER: '1.0',
-  PROFILE_CHANGE_APPROVAL: '1.0'
+  PROFILE_CHANGE_APPROVAL: '1.0',
+  ADMISSION_LEADS: '1.0',
+  HOME_PAGE: 'H1.0'
 });
 
 function getSystemVersion() {
@@ -43,6 +45,8 @@ function wtcVersionPayload_() {
     migrationManager: WTC_VERSION.MIGRATION_MANAGER,
     healthCheck: WTC_VERSION.HEALTH_CHECK,
     dependencyManager: WTC_VERSION.DEPENDENCY_MANAGER,
-    profileChangeApproval: WTC_VERSION.PROFILE_CHANGE_APPROVAL
+    profileChangeApproval: WTC_VERSION.PROFILE_CHANGE_APPROVAL,
+    admissionLeads: WTC_VERSION.ADMISSION_LEADS,
+    homePage: WTC_VERSION.HOME_PAGE
   };
 }

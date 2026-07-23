@@ -14,6 +14,7 @@ function wtcApiActionMap_() {
     cancelProfileChangeRequest: typeof cancelProfileChangeRequest === 'function' ? cancelProfileChangeRequest : wtcMissingAction_,
     getStudentProgress: getStudentProgress,
     logAccess: logAccess,
+    saveAdmissionLead: typeof saveAdmissionLead === 'function' ? saveAdmissionLead : wtcMissingAction_,
 
     getStudentBootstrap: runtimeApiGetStudentBootstrap,
     getSubjects: runtimeApiGetSubjects,

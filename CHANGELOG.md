@@ -1,3 +1,18 @@
+# Changelog — Home Diagnostic Funnel H1.2
+
+## Added
+- Added a public chapter diagnostic in the exact dependent sequence: Class → Board → Medium → Subject → Chapter.
+- Reused runtime `SUBJECT_MASTER` and `CHAPTER_MASTER` catalogue actions instead of hardcoding subject/chapter availability.
+- Added a dedicated published-content diagnostic endpoint that samples MCQs without returning answer keys.
+- Added a topic-balanced sample of up to 10 questions, short-lived server session, server-side scoring and weak-topic feedback.
+- Added diagnostic result lead capture and WhatsApp fallback.
+- Extended `ADMISSION_LEADS` safely with chapter and diagnostic result fields.
+- Extended the existing Admin Admission Leads panel to display chapter, score and focus topics.
+
+## Compatibility
+- Existing H1.0 demo enquiry and H1.1 Admin follow-up workflows remain unchanged.
+- No folder-structure, authentication-route or spreadsheet-reset operation was introduced.
+
 # Changelog — Admission Leads Admin Panel H1.1
 
 - Added a modular Admission Leads panel to the existing Admin Dashboard.

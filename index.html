@@ -15,6 +15,7 @@
   <link rel="preload" href="assets/images/hero-study.jpg" as="image">
   <link rel="stylesheet" href="assets/css/portal.css">
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/home-diagnostic.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -42,6 +43,7 @@
       <nav id="navLinks" class="nav-links" aria-label="Main navigation">
         <a href="#learning-paths">Classes</a>
         <a href="#how-it-works">How it works</a>
+        <a href="#diagnostic">Free Test</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
         <a href="#portal-access">Login</a>
@@ -59,7 +61,8 @@
           <p class="lead">Chapter-wise lessons, solutions, practice tests and progress support—organized for your board, class and medium.</p>
 
           <div class="hero-actions">
-            <a class="btn btn-large" href="#admission">Book a Free Demo</a>
+            <a class="btn btn-large" href="#diagnostic">Take Free Diagnostic</a>
+            <a class="btn outline btn-large" href="#admission">Book a Free Demo</a>
             <a class="btn outline btn-large" href="#portal-access" data-auth-target="login">Student Login</a>
           </div>
 
@@ -104,7 +107,10 @@
             <div>
               <h3>Strong Foundation</h3>
               <p>Build clear basics, confidence and regular study habits.</p>
-              <button class="text-link" type="button" data-class-choice="Class 5">Enquire for Classes 5–6 <span aria-hidden="true">→</span></button>
+              <div class="path-actions">
+                <button class="text-link" type="button" data-class-choice="Class 5">Enquire for Classes 5–6 <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 5">Try free diagnostic <span aria-hidden="true">→</span></button>
+              </div>
             </div>
           </article>
 
@@ -113,7 +119,10 @@
             <div>
               <h3>Concept Development</h3>
               <p>Understand key concepts and improve school-test preparation.</p>
-              <button class="text-link" type="button" data-class-choice="Class 7">Enquire for Classes 7–8 <span aria-hidden="true">→</span></button>
+              <div class="path-actions">
+                <button class="text-link" type="button" data-class-choice="Class 7">Enquire for Classes 7–8 <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 7">Try free diagnostic <span aria-hidden="true">→</span></button>
+              </div>
             </div>
           </article>
 
@@ -122,7 +131,10 @@
             <div>
               <h3>Academic Preparation</h3>
               <p>Strengthen important chapters before the board year.</p>
-              <button class="text-link" type="button" data-class-choice="Class 9">Enquire for Class 9 <span aria-hidden="true">→</span></button>
+              <div class="path-actions">
+                <button class="text-link" type="button" data-class-choice="Class 9">Enquire for Class 9 <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 9">Try free diagnostic <span aria-hidden="true">→</span></button>
+              </div>
             </div>
           </article>
 
@@ -132,7 +144,10 @@
               <span class="popular-tag">Board Year</span>
               <h3>Focused Board Support</h3>
               <p>Chapter revision, question practice and structured test preparation.</p>
-              <button class="text-link" type="button" data-class-choice="Class 10">Enquire for Class 10 <span aria-hidden="true">→</span></button>
+              <div class="path-actions">
+                <button class="text-link" type="button" data-class-choice="Class 10">Enquire for Class 10 <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 10">Try free diagnostic <span aria-hidden="true">→</span></button>
+              </div>
             </div>
           </article>
         </div>
@@ -200,6 +215,154 @@
           <article><span aria-hidden="true">✓</span><div><h3>Regular practice</h3><p>Tests and solutions support revision beyond the classroom.</p></div></article>
           <article><span aria-hidden="true">✓</span><div><h3>Progress visibility</h3><p>Learning activity can help identify completed and pending work.</p></div></article>
           <article><span aria-hidden="true">✓</span><div><h3>Direct communication</h3><p>Parents can contact WTC for course and learning guidance.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="diagnostic" class="section-block diagnostic-section" aria-labelledby="diagnosticTitle">
+      <div class="container">
+        <div class="diagnostic-heading">
+          <span class="eyebrow">Free chapter diagnostic</span>
+          <h2 id="diagnosticTitle">Find the student’s current starting point</h2>
+          <p class="sub">Choose the learning path in order: class, board, medium, subject and chapter. The test uses available published chapter questions.</p>
+        </div>
+
+        <div class="diagnostic-shell">
+          <aside class="diagnostic-intro">
+            <span class="eyebrow">No login required</span>
+            <h3>A focused test, not a random quiz</h3>
+            <p>The diagnostic samples up to 10 published questions from the selected chapter and highlights topics that may need revision.</p>
+            <div class="diagnostic-flow" aria-label="Diagnostic test steps">
+              <div><b>1</b><span>Select class → board → medium → subject → chapter.</span></div>
+              <div><b>2</b><span>Answer the short chapter-based test.</span></div>
+              <div><b>3</b><span>View the score and focus topics.</span></div>
+              <div><b>4</b><span>Request guidance and a free demo.</span></div>
+            </div>
+            <p class="diagnostic-note">Diagnostic availability depends on published MCQ content for the selected chapter. No score is added to a student account.</p>
+          </aside>
+
+          <div class="diagnostic-workspace">
+            <section id="diagnosticSelectorPanel" class="diagnostic-panel" aria-labelledby="diagnosticSelectorTitle">
+              <div class="diagnostic-panel-head">
+                <div>
+                  <h3 id="diagnosticSelectorTitle">Choose the chapter</h3>
+                  <p>Each option unlocks the next available selection.</p>
+                </div>
+                <span class="diagnostic-badge">Up to 10 questions</span>
+              </div>
+
+              <form id="diagnosticSelectorForm" novalidate>
+                <div class="diagnostic-selector-grid">
+                  <div class="field">
+                    <label for="diagnosticClass">1. Class</label>
+                    <select id="diagnosticClass" name="className" required disabled><option value="">Loading classes…</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="diagnosticBoard">2. Board</label>
+                    <select id="diagnosticBoard" name="board" required disabled><option value="">Select class first</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="diagnosticMedium">3. Medium</label>
+                    <select id="diagnosticMedium" name="medium" required disabled><option value="">Select board first</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="diagnosticSubject">4. Subject</label>
+                    <select id="diagnosticSubject" name="subjectId" required disabled><option value="">Select medium first</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="diagnosticChapter">5. Chapter</label>
+                    <select id="diagnosticChapter" name="chapterId" required disabled><option value="">Select subject first</option></select>
+                  </div>
+                </div>
+                <div class="diagnostic-submit-row">
+                  <button id="diagnosticStartButton" class="btn btn-large" type="submit" disabled>Start Free Diagnostic</button>
+                </div>
+                <p id="diagnosticSelectorStatus" class="diagnostic-status info" role="status" aria-live="polite">Loading available learning paths…</p>
+              </form>
+            </section>
+
+            <section id="diagnosticTestPanel" class="diagnostic-panel" aria-labelledby="diagnosticQuestionText" hidden>
+              <div class="diagnostic-test-head">
+                <div>
+                  <small id="diagnosticQuestionNumber">Question 1</small>
+                  <strong id="diagnosticAnsweredCount">0 answered</strong>
+                </div>
+                <em id="diagnosticQuestionTopic">General</em>
+              </div>
+              <div class="diagnostic-progress" aria-hidden="true"><i id="diagnosticProgressBar"></i></div>
+              <article id="diagnosticQuestionCard" class="diagnostic-question-card">
+                <div class="diagnostic-question-meta">
+                  <span>Chapter Diagnostic</span>
+                  <small>Select one answer</small>
+                </div>
+                <h3 id="diagnosticQuestionText"></h3>
+                <div id="diagnosticOptions" class="diagnostic-options"></div>
+                <div class="diagnostic-question-actions">
+                  <button id="diagnosticPrevious" class="btn outline" type="button" onclick="WTC_DIAGNOSTIC.previousQuestion()">← Previous</button>
+                  <button id="diagnosticNext" class="btn" type="button" onclick="WTC_DIAGNOSTIC.nextQuestion()">Next →</button>
+                  <button id="diagnosticSubmit" class="btn success" type="button" onclick="WTC_DIAGNOSTIC.submitTest()" hidden>Submit Diagnostic</button>
+                </div>
+              </article>
+              <p id="diagnosticTestStatus" class="diagnostic-status" role="status" aria-live="polite"></p>
+            </section>
+
+            <section id="diagnosticResultPanel" class="diagnostic-panel" aria-labelledby="diagnosticResultTitle" hidden>
+              <div class="diagnostic-result-hero">
+                <div class="diagnostic-score-ring"><div><b id="diagnosticResultPercent">0%</b><span id="diagnosticResultScore">0/0 correct</span></div></div>
+                <div class="diagnostic-result-copy">
+                  <span class="eyebrow">Diagnostic completed</span>
+                  <h3 id="diagnosticResultTitle">Your chapter snapshot</h3>
+                  <p id="diagnosticResultMessage"></p>
+                  <p id="diagnosticResultContext" class="diagnostic-result-context"></p>
+                </div>
+              </div>
+
+              <div class="diagnostic-result-stats" aria-label="Diagnostic result summary">
+                <div class="diagnostic-result-stat"><b id="diagnosticCorrectCount">0</b><span>Correct</span></div>
+                <div class="diagnostic-result-stat"><b id="diagnosticWrongCount">0</b><span>Incorrect</span></div>
+                <div class="diagnostic-result-stat"><b id="diagnosticUnansweredCount">0</b><span>Unanswered</span></div>
+              </div>
+
+              <div class="diagnostic-focus-box">
+                <h4>Suggested focus topics</h4>
+                <div id="diagnosticWeakTopics" class="diagnostic-topic-chips"></div>
+              </div>
+
+              <div class="diagnostic-report-card">
+                <h3>Get guidance and book a free demo</h3>
+                <p>Share a parent contact number so WTC can discuss the result and the next learning step.</p>
+                <form id="diagnosticLeadForm" class="diagnostic-report-form" novalidate>
+                  <div class="field">
+                    <label for="diagnosticStudentName">Student name *</label>
+                    <input id="diagnosticStudentName" name="studentName" type="text" autocomplete="name" maxlength="80" required>
+                  </div>
+                  <div class="field">
+                    <label for="diagnosticParentMobile">Parent mobile number *</label>
+                    <input id="diagnosticParentMobile" name="parentMobile" type="tel" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
+                  </div>
+                  <div class="field full-field">
+                    <label for="diagnosticPreferredTime">Preferred contact time</label>
+                    <select id="diagnosticPreferredTime" name="preferredTime">
+                      <option value="Any suitable time">Any suitable time</option><option>Morning</option><option>Afternoon</option><option>Evening</option>
+                    </select>
+                  </div>
+                  <div class="honeypot" aria-hidden="true"><label for="diagnosticWebsite">Website</label><input id="diagnosticWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+                  <label class="consent-row"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted by WAGH Tuition Classes regarding this diagnostic result.</span></label>
+                  <div class="diagnostic-report-actions">
+                    <button class="btn btn-large" type="submit">Send My Report &amp; Book Demo</button>
+                    <button id="diagnosticRestart" class="btn outline" type="button">Try Another Chapter</button>
+                  </div>
+                  <p id="diagnosticLeadStatus" class="form-status" role="status" aria-live="polite"></p>
+                  <div id="diagnosticLeadSuccess" class="diagnostic-lead-success" hidden>
+                    <strong>Diagnostic enquiry prepared.</strong>
+                    <p>For the fastest response, send the result to WTC on WhatsApp.</p>
+                    <a id="diagnosticWhatsapp" class="btn whatsapp-btn" href="https://wa.me/919537036383" target="_blank" rel="noopener">Send Result on WhatsApp</a>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </section>
@@ -419,6 +582,7 @@
       <div>
         <h3>Explore</h3>
         <a href="#learning-paths">Classes</a>
+        <a href="#diagnostic">Free diagnostic</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
       </div>
@@ -442,13 +606,16 @@
   <nav class="mobile-conversion-bar" aria-label="Quick contact">
     <a href="tel:+919537036383"><span aria-hidden="true">☎</span> Call</a>
     <a data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener"><span aria-hidden="true">◉</span> WhatsApp</a>
-    <a href="#admission"><span aria-hidden="true">★</span> Free Demo</a>
+    <a href="#diagnostic"><span aria-hidden="true">★</span> Free Test</a>
   </nav>
 
   <script src="assets/js/config.js"></script>
   <script src="assets/js/ui.js"></script>
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/assessment-config.js"></script>
+  <script src="assets/js/assessment-api.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/home-diagnostic.js"></script>
 </body>
 </html>

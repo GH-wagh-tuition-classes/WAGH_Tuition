@@ -10,13 +10,13 @@
 | feature_engine.gs | Active unchanged module |
 | workbook_repository.gs | Stage 1 cumulative |
 | runtime_api.gs | RP1 cumulative |
-| api_router.gs | PCR1 cumulative |
+| api_router.gs | H1.1 cumulative |
 | mcq.gs | RP1 cumulative |
 | migration_manager.gs | Active unchanged module |
 | health_check.gs | Active unchanged module |
-| version.gs | PCR1 cumulative |
+| version.gs | H1.1 cumulative |
 | profile_change_requests.gs | PCR1 new module |
-| admission_leads.gs | H1.0 additive public lead-capture module |
+| admission_leads.gs | H1.1 public capture + secure Admin follow-up module |
 
 ## Authoring Apps Script
 
@@ -30,3 +30,8 @@
 - Superseded copies with `(1).txt` naming
 - Previous patch-only versions
 - Frontend feature/UI files not required as API adapters
+
+## Frontend H1.1 additions
+
+- `assets/js/admin-admission-leads.js`
+- `assets/css/admin-admission-leads.css`

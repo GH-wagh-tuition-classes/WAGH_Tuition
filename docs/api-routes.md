@@ -28,3 +28,9 @@ Public conversion action:
 - `saveAdmissionLead`
 
 The route validates a demo/admission enquiry and saves it to the additive `ADMISSION_LEADS` runtime sheet. It does not create a student account.
+
+
+## Admission Leads Admin H1.1
+
+- `adminGetAdmissionLeads` — Admin-password protected lead list and conversion summary.
+- `adminUpdateAdmissionLead` — Admin-password protected status, notes, demo date and follow-up date update.

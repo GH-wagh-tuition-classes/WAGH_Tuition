@@ -32,3 +32,8 @@ Initial status:
 - `NEW`
 
 The safe `installAdmissionLeadSystem()` function creates only the missing sheet/header and never clears existing lead data.
+
+
+## ADMISSION_LEADS H1.1 additions
+
+The existing lead sheet is extended non-destructively with `demoDate` and `followUpDate`. Existing rows and columns remain unchanged.

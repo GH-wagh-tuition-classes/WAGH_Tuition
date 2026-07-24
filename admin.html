@@ -7,6 +7,7 @@
   <title>Admin Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
+  <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-1">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -46,6 +47,9 @@
     <nav class="admin-nav">
       <button class="admin-nav-item active" type="button" data-admin-nav="dashboardPanel" onclick="AdminApp.openPanel('dashboardPanel', this)">
         <span class="admin-nav-icon">⌂</span><span>Dashboard</span>
+      </button>
+      <button class="admin-nav-item" type="button" data-admin-nav="admissionLeadPanel" onclick="AdminApp.openPanel('admissionLeadPanel', this)">
+        <span class="admin-nav-icon">📥</span><span>Admission Leads</span><b id="admissionLeadSidebarCount" class="admin-nav-count">0</b>
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="profileRequestPanel" onclick="AdminApp.openPanel('profileRequestPanel', this)">
         <span class="admin-nav-icon">🪪</span><span>Profile Requests</span><b id="profileRequestSidebarCount" class="admin-nav-count">0</b>
@@ -99,6 +103,10 @@
           <span class="admin-stat-icon">👨‍🎓</span>
           <div><small>Students</small><strong id="studentTotal">—</strong><p>Registered learner accounts</p></div>
         </article>
+        <article class="admin-stat-card admin-stat-leads">
+          <span class="admin-stat-icon">📥</span>
+          <div><small>New enquiries</small><strong id="admissionLeadNewTotal">0</strong><p>Admission leads awaiting contact</p></div>
+        </article>
         <article class="admin-stat-card">
           <span class="admin-stat-icon">👩‍🏫</span>
           <div><small>Teachers</small><strong id="teacherTotal">—</strong><p>Teacher accounts</p></div>
@@ -118,6 +126,11 @@
           <div><span class="admin-kicker">Quick actions</span><h2>Continue managing the platform</h2></div>
         </div>
         <div class="admin-quick-grid">
+          <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('admissionLeadPanel')">
+            <span class="admin-quick-icon">📥</span>
+            <span><strong>Follow up admission leads</strong><small>Contact parents, book demos and track conversions.</small></span>
+            <b>→</b>
+          </button>
           <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('profileRequestPanel')">
             <span class="admin-quick-icon">🪪</span>
             <span><strong>Review profile requests</strong><small>Approve or reject student changes securely.</small></span>
@@ -152,6 +165,75 @@
           <strong>Draft → Review → Publish</strong>
           <p>Static and AI-generated content remains hidden from students until an administrator publishes it.</p>
         </article>
+      </div>
+    </section>
+
+    <section id="admissionLeadPanel" class="admin-panel" data-panel-title="Admission Leads" data-panel-subtitle="Contact parents, schedule demo classes and track enquiry conversion.">
+      <div class="admin-panel-card admission-admin-panel">
+        <div class="admin-section-heading admission-admin-heading">
+          <div>
+            <span class="admin-kicker">Admission Funnel H1.1</span>
+            <h2>Admission Leads Manager</h2>
+            <p class="muted">Leads come from the public demo form. Admin verification is required before parent contact details are displayed.</p>
+          </div>
+          <button class="btn small outline" type="button" onclick="WTC_ADMISSION_ADMIN.load(this)">↻ Refresh leads</button>
+        </div>
+
+        <div class="admin-password-confirmation admission-admin-auth">
+          <div>
+            <label for="admissionLeadAdminPassword">Admin password confirmation</label>
+            <small>The password is used only for this request and is never saved in browser storage.</small>
+          </div>
+          <div class="password-field-row admission-password-row">
+            <input id="admissionLeadAdminPassword" type="password" autocomplete="current-password" placeholder="Enter admin password">
+            <button class="btn small outline" type="button" aria-label="Show or hide password" onclick="WTC_ADMISSION_ADMIN.togglePassword(this)">Show</button>
+            <button class="btn small" type="button" onclick="WTC_ADMISSION_ADMIN.load(this)">Load leads</button>
+          </div>
+        </div>
+
+        <div id="admissionLeadStatus" class="admission-manager-status info" role="status" aria-live="polite">Enter the admin password and load admission leads.</div>
+
+        <div class="admission-summary-grid" aria-label="Admission lead summary">
+          <article><small>Total</small><strong id="admissionSummaryTotal">0</strong></article>
+          <article class="new"><small>New</small><strong id="admissionSummaryNew">0</strong></article>
+          <article class="contacted"><small>Contacted</small><strong id="admissionSummaryContacted">0</strong></article>
+          <article class="demo"><small>Demo booked</small><strong id="admissionSummaryDemo">0</strong></article>
+          <article class="joined"><small>Joined</small><strong id="admissionSummaryJoined">0</strong></article>
+          <article class="lost"><small>Not interested</small><strong id="admissionSummaryNotInterested">0</strong></article>
+        </div>
+
+        <div class="admission-toolbar">
+          <label class="admin-search admission-search" for="admissionLeadSearch">
+            <span aria-hidden="true">⌕</span>
+            <input id="admissionLeadSearch" type="search" placeholder="Search name, mobile, class, subject or source" oninput="WTC_ADMISSION_ADMIN.applyFilters()">
+          </label>
+          <label class="admission-filter-field" for="admissionLeadStatusFilter">
+            <span>Status</span>
+            <select id="admissionLeadStatusFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()">
+              <option value="ALL">All statuses</option>
+              <option value="NEW">New</option>
+              <option value="CONTACTED">Contacted</option>
+              <option value="DEMO_BOOKED">Demo booked</option>
+              <option value="JOINED">Joined</option>
+              <option value="NOT_INTERESTED">Not interested</option>
+            </select>
+          </label>
+          <label class="admission-filter-field" for="admissionLeadSourceFilter">
+            <span>Source</span>
+            <select id="admissionLeadSourceFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()">
+              <option value="ALL">All sources</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="admission-list-head">
+          <span><b id="admissionVisibleCount">0</b> lead(s) shown</span>
+          <small>Newest enquiries appear first.</small>
+        </div>
+
+        <div id="admissionLeadList" class="admission-lead-list">
+          <div class="admission-empty">No lead data loaded yet.</div>
+        </div>
       </div>
     </section>
 
@@ -537,12 +619,13 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/ui.js?v=admin-ui-2-0"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/js/api.js?v=pcr1"></script>
+<script src="assets/js/api.js?v=h1-1"></script>
 <script src="assets/js/assessment-config.js"></script>
 <script src="assets/js/assessment-api.js"></script>
 <script src="assets/js/ai-content.js"></script>
 <script src="assets/js/static-content-importer.js"></script>
-<script src="assets/js/admin.js?v=admin-ui-2-0"></script>
+<script src="assets/js/admin.js?v=h1-1"></script>
+<script src="assets/js/admin-admission-leads.js?v=h1-1"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

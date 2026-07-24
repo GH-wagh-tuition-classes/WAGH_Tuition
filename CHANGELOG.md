@@ -1,3 +1,15 @@
+# Changelog — Admission Leads Admin Panel H1.1
+
+- Added a modular Admission Leads panel to the existing Admin Dashboard.
+- Added secure parent-contact viewing with current admin-password verification.
+- Added search, source/status filtering, Call, WhatsApp, notes, demo date and follow-up date.
+- Added conversion summary counts and dashboard/sidebar new-lead badges.
+- Added `adminGetAdmissionLeads` and `adminUpdateAdmissionLead` runtime actions.
+- Upgraded `ADMISSION_LEADS` non-destructively with `demoDate` and `followUpDate`.
+- Preserved all existing Admin, Student, Teacher and homepage functionality.
+
+---
+
 # Changelog — Home Page & Admission Funnel H1.0
 
 ## Home Page

@@ -1,0 +1,54 @@
+/* WTC Admission Leads Admin Panel H1.1 — modular, mobile-first */
+.admin-stat-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.admission-admin-heading{margin-bottom:16px}
+.admission-admin-auth{border-color:#bae6fd;background:#f0f9ff}
+.admission-admin-auth label{color:#075985}
+.admission-admin-auth small{color:#0369a1}
+.admission-password-row{grid-template-columns:minmax(0,1fr) auto auto}
+.admission-manager-status{min-height:22px;margin:0 0 14px;padding:11px 13px;border:1px solid #dbe4ec;border-radius:12px;background:#f8fafc;color:#526173;font-size:12px;font-weight:800}
+.admission-manager-status.info{border-color:#bae6fd;background:#f0f9ff;color:#075985}
+.admission-manager-status.success{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.admission-manager-status.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.admission-summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.admission-summary-grid article{padding:14px;border:1px solid #dce5ed;border-radius:15px;background:#f8fafc;display:grid;gap:4px}
+.admission-summary-grid small{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-weight:950}
+.admission-summary-grid strong{font-size:24px;color:#172033}
+.admission-summary-grid .new{background:#fff7ed;border-color:#fed7aa}.admission-summary-grid .new strong{color:#c2410c}
+.admission-summary-grid .contacted{background:#eff6ff;border-color:#bfdbfe}.admission-summary-grid .contacted strong{color:#1d4ed8}
+.admission-summary-grid .demo{background:#faf5ff;border-color:#e9d5ff}.admission-summary-grid .demo strong{color:#7e22ce}
+.admission-summary-grid .joined{background:#f0fdf4;border-color:#bbf7d0}.admission-summary-grid .joined strong{color:#15803d}
+.admission-summary-grid .lost{background:#f8fafc;border-color:#cbd5e1}.admission-summary-grid .lost strong{color:#475569}
+.admission-toolbar{display:grid;grid-template-columns:minmax(260px,1fr) minmax(170px,.35fr) minmax(170px,.35fr);gap:10px;margin:0 0 10px}
+.admission-search{margin:0}
+.admission-filter-field{display:grid;gap:5px}
+.admission-filter-field span{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-weight:900}
+.admission-filter-field select{width:100%;padding:11px 12px;border:1px solid #d7e0e9;border-radius:12px;background:#fff;color:#172033;outline:none}
+.admission-filter-field select:focus{border-color:#4d9caf;box-shadow:0 0 0 3px rgba(25,117,138,.12)}
+.admission-list-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:11px 0;color:#64748b;font-size:12px}
+.admission-lead-list{display:grid;gap:13px}
+.admission-lead-card{border:1px solid #dce5ed;border-left:5px solid #94a3b8;border-radius:17px;background:#fff;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.04)}
+.admission-lead-card.status-new{border-left-color:#f59e0b}.admission-lead-card.status-contacted{border-left-color:#3b82f6}.admission-lead-card.status-demo-booked{border-left-color:#a855f7}.admission-lead-card.status-joined{border-left-color:#22c55e}.admission-lead-card.status-not-interested{border-left-color:#94a3b8}
+.admission-lead-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.admission-lead-title h3{margin:0;color:#172033;font-size:18px}.admission-lead-title p{margin:4px 0 0;color:#64748b;font-size:12px}
+.admission-status-chip{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;background:#e2e8f0;color:#475569;font-size:10px;font-weight:950;white-space:nowrap}
+.admission-status-chip.status-new{background:#ffedd5;color:#c2410c}.admission-status-chip.status-contacted{background:#dbeafe;color:#1d4ed8}.admission-status-chip.status-demo-booked{background:#f3e8ff;color:#7e22ce}.admission-status-chip.status-joined{background:#dcfce7;color:#166534}.admission-status-chip.status-not-interested{background:#e2e8f0;color:#475569}
+.admission-lead-body{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;margin-top:14px}
+.admission-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.admission-detail{padding:10px 11px;border-radius:11px;background:#f8fafc;min-width:0}
+.admission-detail small{display:block;margin-bottom:4px;color:#7b8797;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:950}
+.admission-detail strong,.admission-detail span{display:block;color:#273548;font-size:12px;overflow-wrap:anywhere}
+.admission-contact-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.admission-contact-actions a{text-decoration:none}
+.admission-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:13px;border:1px solid #e2e8f0;border-radius:14px;background:#fbfcfe}
+.admission-editor .admin-field-wide{grid-column:1/-1}
+.admission-editor .admin-field>span{font-size:12px;color:#455466;font-weight:900}
+.admission-editor textarea{min-height:86px;resize:vertical}
+.admission-editor-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.admission-updated-copy{margin-right:auto;color:#7b8797;font-size:10px}
+.admission-empty{padding:24px;border:1px dashed #cbd5e1;border-radius:15px;background:#f8fafc;text-align:center;color:#64748b;font-weight:800}
+.admin-stat-leads .admin-stat-icon{background:#fff7ed}
+@media(max-width:1280px){.admin-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1180px){.admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.admission-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.admission-toolbar{grid-template-columns:1fr 1fr}.admission-search{grid-column:1/-1}.admission-lead-body{grid-template-columns:1fr}}
+@media(max-width:760px){.admin-stat-grid{grid-template-columns:1fr 1fr}.admission-password-row{grid-template-columns:1fr 1fr}.admission-password-row input{grid-column:1/-1}.admission-summary-grid{grid-template-columns:1fr 1fr}.admission-toolbar{grid-template-columns:1fr}.admission-search{grid-column:auto}.admission-detail-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.admin-stat-grid{grid-template-columns:1fr}.admission-summary-grid{grid-template-columns:1fr}.admission-list-head{align-items:flex-start;flex-direction:column}.admission-lead-head{flex-direction:column}.admission-detail-grid,.admission-editor{grid-template-columns:1fr}.admission-editor .admin-field-wide,.admission-editor-actions{grid-column:auto}.admission-editor-actions{align-items:stretch;flex-direction:column}.admission-updated-copy{margin:0}.admission-contact-actions .btn{flex:1}.admission-password-row{grid-template-columns:1fr}.admission-password-row input{grid-column:auto}}

@@ -15,6 +15,8 @@ function wtcApiActionMap_() {
     getStudentProgress: getStudentProgress,
     logAccess: logAccess,
     saveAdmissionLead: typeof saveAdmissionLead === 'function' ? saveAdmissionLead : wtcMissingAction_,
+    adminGetAdmissionLeads: typeof adminGetAdmissionLeads === 'function' ? adminGetAdmissionLeads : wtcMissingAction_,
+    adminUpdateAdmissionLead: typeof adminUpdateAdmissionLead === 'function' ? adminUpdateAdmissionLead : wtcMissingAction_,
 
     getStudentBootstrap: runtimeApiGetStudentBootstrap,
     getSubjects: runtimeApiGetSubjects,
@@ -22,7 +24,7 @@ function wtcApiActionMap_() {
     getChapterFeatures: runtimeApiGetChapterFeatures,
     getFeatureRegistry: runtimeApiGetFeatureRegistry,
 
-    adminDashboard: typeof adminDashboardWithProfileRequests === 'function' ? adminDashboardWithProfileRequests : adminDashboard,
+    adminDashboard: typeof adminDashboardWithAdmissionLeads === 'function' ? adminDashboardWithAdmissionLeads : (typeof adminDashboardWithProfileRequests === 'function' ? adminDashboardWithProfileRequests : adminDashboard),
     getProfileChangeRequests: typeof getProfileChangeRequests === 'function' ? getProfileChangeRequests : wtcMissingAction_,
     approveProfileChangeRequest: typeof approveProfileChangeRequest === 'function' ? approveProfileChangeRequest : wtcMissingAction_,
     rejectProfileChangeRequest: typeof rejectProfileChangeRequest === 'function' ? rejectProfileChangeRequest : wtcMissingAction_,

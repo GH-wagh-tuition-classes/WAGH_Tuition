@@ -5,7 +5,7 @@
 
 var WTC_VERSION = Object.freeze({
   PLATFORM: '1.0',
-  API: '1.3',
+  API: '1.4',
   BACKEND_ARCHITECTURE: '2.4',
   RUNTIME_API: '1.0',
   FEATURE_ENGINE: '1.0',
@@ -17,7 +17,8 @@ var WTC_VERSION = Object.freeze({
   HEALTH_CHECK: '1.0',
   DEPENDENCY_MANAGER: '1.0',
   PROFILE_CHANGE_APPROVAL: '1.0',
-  ADMISSION_LEADS: '1.0',
+  ADMISSION_LEADS: '1.1',
+  ADMIN_ADMISSION_PANEL: 'H1.1',
   HOME_PAGE: 'H1.0'
 });
 
@@ -47,6 +48,7 @@ function wtcVersionPayload_() {
     dependencyManager: WTC_VERSION.DEPENDENCY_MANAGER,
     profileChangeApproval: WTC_VERSION.PROFILE_CHANGE_APPROVAL,
     admissionLeads: WTC_VERSION.ADMISSION_LEADS,
+    adminAdmissionPanel: WTC_VERSION.ADMIN_ADMISSION_PANEL,
     homePage: WTC_VERSION.HOME_PAGE
   };
 }

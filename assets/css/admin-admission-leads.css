@@ -1,4 +1,4 @@
-/* WTC Admission Leads Admin Panel H1.1 — modular, mobile-first */
+/* WTC Admission Leads Admin Panel H1.2 — H1.1 workflow plus diagnostic context */
 .admin-stat-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 .admission-admin-heading{margin-bottom:16px}
 .admission-admin-auth{border-color:#bae6fd;background:#f0f9ff}
@@ -52,3 +52,7 @@
 @media(max-width:1100px){.admission-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.admission-toolbar{grid-template-columns:1fr 1fr}.admission-search{grid-column:1/-1}.admission-lead-body{grid-template-columns:1fr}}
 @media(max-width:760px){.admin-stat-grid{grid-template-columns:1fr 1fr}.admission-password-row{grid-template-columns:1fr 1fr}.admission-password-row input{grid-column:1/-1}.admission-summary-grid{grid-template-columns:1fr 1fr}.admission-toolbar{grid-template-columns:1fr}.admission-search{grid-column:auto}.admission-detail-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.admin-stat-grid{grid-template-columns:1fr}.admission-summary-grid{grid-template-columns:1fr}.admission-list-head{align-items:flex-start;flex-direction:column}.admission-lead-head{flex-direction:column}.admission-detail-grid,.admission-editor{grid-template-columns:1fr}.admission-editor .admin-field-wide,.admission-editor-actions{grid-column:auto}.admission-editor-actions{align-items:stretch;flex-direction:column}.admission-updated-copy{margin:0}.admission-contact-actions .btn{flex:1}.admission-password-row{grid-template-columns:1fr}.admission-password-row input{grid-column:auto}}
+
+/* H1.2 diagnostic lead emphasis */
+.admission-lead-card.is-diagnostic{box-shadow:inset 4px 0 0 #168197,0 10px 26px rgba(15,59,73,.08)}
+.admission-lead-card.is-diagnostic .admission-lead-title:after{content:'DIAGNOSTIC';display:inline-flex;margin-top:6px;border-radius:999px;background:#e6f7f5;color:#116f78;font-size:.67rem;font-weight:900;letter-spacing:.06em;padding:5px 8px}

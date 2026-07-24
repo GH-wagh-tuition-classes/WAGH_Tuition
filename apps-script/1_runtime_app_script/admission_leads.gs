@@ -1,7 +1,7 @@
 /* ============================================================================
    FILE: admission_leads.gs
    PURPOSE: Public admission capture plus secure Admin follow-up manager.
-   VERSION: 1.1
+   VERSION: 1.2
    SAFETY:
    - Adds only missing columns; never clears existing lead data.
    - Public write is validated, rate-limited, locked and formula-neutralized.
@@ -11,7 +11,8 @@
 var WTC_ADMISSION_LEAD_HEADERS = [
   'leadId','createdAt','studentName','parentMobile','className','board','medium',
   'subject','preferredTime','source','status','notes','deviceId','pageUrl','consent',
-  'updatedAt','demoDate','followUpDate'
+  'updatedAt','demoDate','followUpDate','chapterId','chapterName',
+  'diagnosticScore','diagnosticTotal','diagnosticPercent','weakTopics','diagnosticTakenAt'
 ];
 
 var WTC_ADMISSION_STATUSES = ['NEW','CONTACTED','DEMO_BOOKED','JOINED','NOT_INTERESTED'];
@@ -20,13 +21,17 @@ function installAdmissionLeadSystem() {
   var sheet = ensureAdmissionLeadsSheet_();
   return {
     success:true,
-    message:'ADMISSION_LEADS v1.1 is ready.',
+    message:'ADMISSION_LEADS v1.2 diagnostic fields are ready.',
     sheetName:sheet.getName(),
     columns:sheet.getLastColumn()
   };
 }
 
 function installAdmissionLeadAdminSystem() {
+  return installAdmissionLeadSystem();
+}
+
+function installAdmissionLeadDiagnosticSystem() {
   return installAdmissionLeadSystem();
 }
 
@@ -45,6 +50,15 @@ function saveAdmissionLead(d) {
   var deviceId = wtcLeadText_(d.deviceId, 100);
   var pageUrl = wtcLeadText_(d.pageUrl, 300);
   var consent = d.consent === true || ['true','yes'].indexOf(String(d.consent || '').toLowerCase()) !== -1;
+  var chapterId = wtcLeadText_(d.chapterId, 80);
+  var chapterName = wtcLeadText_(d.chapterName, 160);
+  var diagnosticTotal = wtcLeadInt_(d.diagnosticTotal, 0, 100);
+  var diagnosticScore = wtcLeadInt_(d.diagnosticScore, 0, diagnosticTotal === '' ? 100 : diagnosticTotal);
+  var diagnosticPercent = (diagnosticTotal !== '' && diagnosticTotal > 0 && diagnosticScore !== '')
+    ? Math.round((diagnosticScore / diagnosticTotal) * 100)
+    : '';
+  var weakTopics = wtcLeadText_(d.weakTopics, 500);
+  var diagnosticTakenAt = wtcLeadText_(d.diagnosticTakenAt, 50);
 
   if (studentName.length < 2) return { success:false, message:'Student name is required.' };
   if (!/^\d{10}$/.test(parentMobile)) return { success:false, message:'Enter a valid 10-digit parent mobile number.' };
@@ -55,7 +69,13 @@ function saveAdmissionLead(d) {
   if (!consent) return { success:false, message:'Contact consent is required.' };
 
   var cache = CacheService.getScriptCache();
-  var rateKey = 'wtc-admission-' + parentMobile + '-' + (deviceId || 'public');
+  var rateIdentity = [
+    parentMobile,
+    (deviceId || 'public').slice(0, 40),
+    (source || 'direct').slice(0, 40),
+    (chapterId || 'general').slice(0, 40)
+  ].join('-').replace(/[^A-Za-z0-9_-]/g, '_');
+  var rateKey = 'wtc-admission-' + rateIdentity;
   if (cache.get(rateKey)) return { success:true, duplicate:true, message:'Your enquiry was already received recently.' };
 
   var lock = LockService.getScriptLock();
@@ -71,7 +91,10 @@ function saveAdmissionLead(d) {
       subject:wtcLeadCell_(subject), preferredTime:wtcLeadCell_(preferredTime),
       source:wtcLeadCell_(source), status:'NEW', notes:'', deviceId:wtcLeadCell_(deviceId),
       pageUrl:wtcLeadCell_(pageUrl), consent:'YES', updatedAt:timestamp,
-      demoDate:'', followUpDate:''
+      demoDate:'', followUpDate:'', chapterId:wtcLeadCell_(chapterId),
+      chapterName:wtcLeadCell_(chapterName), diagnosticScore:diagnosticScore,
+      diagnosticTotal:diagnosticTotal, diagnosticPercent:diagnosticPercent,
+      weakTopics:wtcLeadCell_(weakTopics), diagnosticTakenAt:wtcLeadCell_(diagnosticTakenAt)
     });
     cache.put(rateKey, leadId, 120);
     return { success:true, leadId:leadId, message:'Demo enquiry saved successfully.' };
@@ -231,7 +254,12 @@ function wtcAdmissionAdminView_(item) {
     medium:item.medium || '', subject:item.subject || '', preferredTime:item.preferredTime || '',
     source:item.source || 'Direct', status:String(item.status || 'NEW').toUpperCase(), notes:item.notes || '',
     pageUrl:item.pageUrl || '', consent:item.consent || '', updatedAt:item.updatedAt || '',
-    demoDate:item.demoDate || '', followUpDate:item.followUpDate || ''
+    demoDate:item.demoDate || '', followUpDate:item.followUpDate || '',
+    chapterId:item.chapterId || '', chapterName:item.chapterName || '',
+    diagnosticScore:item.diagnosticScore === '' ? '' : Number(item.diagnosticScore || 0),
+    diagnosticTotal:item.diagnosticTotal === '' ? '' : Number(item.diagnosticTotal || 0),
+    diagnosticPercent:item.diagnosticPercent === '' ? '' : Number(item.diagnosticPercent || 0),
+    weakTopics:item.weakTopics || '', diagnosticTakenAt:item.diagnosticTakenAt || ''
   };
 }
 
@@ -244,6 +272,15 @@ function wtcLeadDate_(value) {
 
 function wtcLeadText_(value, maxLength) {
   return String(value || '').replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength || 200);
+}
+
+function wtcLeadInt_(value, minValue, maxValue) {
+  if (value === '' || value === null || value === undefined) return '';
+  var number = Math.round(Number(value));
+  if (!isFinite(number)) return '';
+  var minimum = (minValue === undefined || minValue === null || minValue === '') ? 0 : Number(minValue);
+  var maximum = (maxValue === undefined || maxValue === null || maxValue === '') ? 100 : Number(maxValue);
+  return Math.max(minimum, Math.min(maximum, number));
 }
 
 function wtcLeadCell_(value) {

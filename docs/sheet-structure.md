@@ -37,3 +37,12 @@ The safe `installAdmissionLeadSystem()` function creates only the missing sheet/
 ## ADMISSION_LEADS H1.1 additions
 
 The existing lead sheet is extended non-destructively with `demoDate` and `followUpDate`. Existing rows and columns remain unchanged.
+
+
+## ADMISSION_LEADS — H1.2 extension
+
+Existing H1.1 columns remain unchanged. The safe `installAdmissionLeadDiagnosticSystem()` migration appends only these missing columns:
+
+`chapterId`, `chapterName`, `diagnosticScore`, `diagnosticTotal`, `diagnosticPercent`, `weakTopics`, `diagnosticTakenAt`
+
+These fields are optional for ordinary demo enquiries and populated only for the public diagnostic funnel.

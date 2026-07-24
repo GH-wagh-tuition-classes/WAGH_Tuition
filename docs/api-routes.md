@@ -34,3 +34,20 @@ The route validates a demo/admission enquiry and saves it to the additive `ADMIS
 
 - `adminGetAdmissionLeads` — Admin-password protected lead list and conversion summary.
 - `adminUpdateAdmissionLead` — Admin-password protected status, notes, demo date and follow-up date update.
+
+
+## Home Diagnostic Funnel H1.2
+
+Runtime catalogue and lead actions:
+
+- `getSubjects` — returns active subject combinations used by the dependent selector.
+- `getChapters` — returns active chapters for the chosen class, board, medium and subject.
+- `saveAdmissionLead` — stores the diagnostic context and server-produced result in `ADMISSION_LEADS`.
+
+Authoring/published-content actions:
+
+- `getPublicDiagnostic` — accepts `chapterId`, chooses up to 10 published MCQs and returns question text/options without answer keys. A short-lived diagnostic session is stored server-side.
+- `scorePublicDiagnostic` — accepts the diagnostic session ID and selected answers, then returns score, unanswered count and weak-topic feedback from the server-side answer key.
+
+Public diagnostic sessions expire after approximately 30 minutes and do not write to `TEST_RESULTS`, `PROGRESS_TRACKER` or MCQ progress.
+

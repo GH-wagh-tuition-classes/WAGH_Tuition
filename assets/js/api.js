@@ -252,6 +252,18 @@ const WTC_API = (() => {
     saveAdmissionLead: (lead) => raw({ action:'saveAdmissionLead', ...lead, deviceId:deviceId() }, {
       dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
     }),
+    getAdmissionLeads: data => raw({
+      action:'adminGetAdmissionLeads',
+      ...data,
+      deviceId:deviceId()
+    }, { dedupe:false, retries:1 }),
+    updateAdmissionLead: data => raw({
+      action:'adminUpdateAdmissionLead',
+      ...data,
+      deviceId:deviceId()
+    }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
     updateStudentProfile: async profile => {
       const data = await raw({ action:'updateStudentProfile', ...profile, deviceId:deviceId() }, {
         dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)

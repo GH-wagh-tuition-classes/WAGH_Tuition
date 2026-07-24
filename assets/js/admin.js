@@ -6,6 +6,7 @@ function showPanel(panelId, button) {
 const AdminApp = (() => {
   const PANEL_HASH = {
     dashboardPanel:'dashboard',
+    admissionLeadPanel:'admission-leads',
     profileRequestPanel:'profile-requests',
     contentManagerPanel:'content',
     aiContentEnginePanel:'ai-content'
@@ -91,6 +92,7 @@ const AdminApp = (() => {
     toggleSidebar(false);
     window.scrollTo({ top:0, behavior:'smooth' });
 
+    if (panelId === 'admissionLeadPanel') window.WTC_ADMISSION_ADMIN?.open();
     if (panelId === 'profileRequestPanel') loadProfileChangeRequests(currentProfileFilter);
     return true;
   }
@@ -130,6 +132,8 @@ const AdminApp = (() => {
       setText('studentTotal', data.totalStudents || 0);
       setText('teacherTotal', data.totalTeachers || 0);
       setText('logTotal', data.totalLogs || 0);
+      setText('admissionLeadNewTotal', data.newAdmissionLeads || 0);
+      setText('admissionLeadSidebarCount', data.newAdmissionLeads || 0);
       updatePendingCounts(Number(data.pendingProfileRequests || 0));
     } catch (error) {
       WTC_UI.toast(error.message || 'Admin dashboard failed.', 'error');

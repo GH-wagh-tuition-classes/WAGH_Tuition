@@ -1,0 +1,21 @@
+WAGH Tuition Classes — Home Diagnostic H1.2
+AUTHORING ROUTE PATCH (NON-DESTRUCTIVE)
+
+In the current Authoring Apps Script doPost() routes object, find:
+
+      getFeatureMap,
+      getLesson,
+
+Replace only those two lines with:
+
+      getFeatureMap,
+      getPublicDiagnostic,
+      scorePublicDiagnostic,
+      getLesson,
+
+Also add the new file:
+
+      public_diagnostic.gs
+
+Do not replace a newer cumulative Authoring Engine with an older copy solely to add these routes.
+Deploy a new version of the existing Web App deployment and preserve the same /exec URL.

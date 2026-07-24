@@ -1,4 +1,4 @@
-/* WTC Admission Leads Admin Panel H1.1 */
+/* WTC Admission Leads Admin Panel H1.2 — Diagnostic result support */
 window.WTC_ADMISSION_ADMIN = (() => {
   const STATUS_LABELS = Object.freeze({
     NEW:'New', CONTACTED:'Contacted', DEMO_BOOKED:'Demo booked', JOINED:'Joined', NOT_INTERESTED:'Not interested'
@@ -70,7 +70,7 @@ window.WTC_ADMISSION_ADMIN = (() => {
       if (status !== 'ALL' && String(item.status || '').toUpperCase() !== status) return false;
       if (source !== 'ALL' && String(item.source || '') !== source) return false;
       if (!search) return true;
-      const haystack = [item.leadId,item.studentName,item.parentMobile,item.className,item.board,item.medium,item.subject,item.preferredTime,item.source,item.status,item.notes,item.demoDate,item.followUpDate]
+      const haystack = [item.leadId,item.studentName,item.parentMobile,item.className,item.board,item.medium,item.subject,item.chapterName,item.preferredTime,item.source,item.status,item.notes,item.demoDate,item.followUpDate,item.diagnosticScore,item.diagnosticTotal,item.diagnosticPercent,item.weakTopics]
         .map(normalize).join(' ');
       return haystack.includes(search);
     });
@@ -93,10 +93,11 @@ window.WTC_ADMISSION_ADMIN = (() => {
     const status = allowedStatus(item.status);
     const statusClass = `status-${status.toLowerCase().replace(/_/g, '-')}`;
     const mobile = String(item.parentMobile || '').replace(/\D/g, '').slice(-10);
-    const whatsappText = encodeURIComponent(`Hello, this is WAGH Tuition Classes regarding the demo enquiry for ${item.studentName || 'your child'} (${item.className || ''}, ${item.subject || ''}).`);
+    const diagnosticCopy = hasDiagnostic(item) ? ` Diagnostic score: ${item.diagnosticScore}/${item.diagnosticTotal} (${item.diagnosticPercent}%). Focus topics: ${item.weakTopics || 'none listed'}.` : '';
+    const whatsappText = encodeURIComponent(`Hello, this is WAGH Tuition Classes regarding the enquiry for ${item.studentName || 'your child'} (${item.className || ''}, ${item.subject || ''}${item.chapterName ? `, ${item.chapterName}` : ''}).${diagnosticCopy}`);
     const sourceUrl = safeUrl(item.pageUrl);
     const sourceCopy = sourceUrl ? `<a href="${escapeHTML(sourceUrl)}" target="_blank" rel="noopener">Open source page</a>` : escapeHTML(item.pageUrl || '—');
-    return `<article class="admission-lead-card ${statusClass}" data-lead-id="${escapeHTML(id)}">
+    return `<article class="admission-lead-card ${statusClass}${hasDiagnostic(item) ? ' is-diagnostic' : ''}" data-lead-id="${escapeHTML(id)}">
       <div class="admission-lead-head">
         <div class="admission-lead-title">
           <h3>${escapeHTML(item.studentName || 'Student enquiry')}</h3>
@@ -110,6 +111,9 @@ window.WTC_ADMISSION_ADMIN = (() => {
             ${detail('Parent mobile', mobile || '—')}
             ${detail('Learning profile', [item.className,item.board,item.medium].filter(Boolean).join(' · ') || '—')}
             ${detail('Subject', item.subject || '—')}
+            ${item.chapterName ? detail('Chapter', item.chapterName) : ''}
+            ${hasDiagnostic(item) ? detail('Diagnostic result', `${item.diagnosticScore}/${item.diagnosticTotal} (${item.diagnosticPercent}%)`) : ''}
+            ${item.weakTopics ? detail('Focus topics', item.weakTopics) : ''}
             ${detail('Preferred time', item.preferredTime || '—')}
             ${detail('Source', item.source || 'Direct')}
             <div class="admission-detail"><small>Page</small><span>${sourceCopy}</span></div>
@@ -237,6 +241,7 @@ window.WTC_ADMISSION_ADMIN = (() => {
   function statusLabel(value) { return STATUS_LABELS[allowedStatus(value)] || 'New'; }
   function allowedStatus(value) { const status = String(value || 'NEW').toUpperCase(); return STATUS_LABELS[status] ? status : 'NEW'; }
   function dateValue(value) { const match = String(value || '').match(/^\d{4}-\d{2}-\d{2}/); return match ? match[0] : ''; }
+  function hasDiagnostic(item) { return item && item.diagnosticTotal !== '' && Number(item.diagnosticTotal || 0) > 0; }
   function normalize(value) { return String(value || '').trim().toLowerCase(); }
   function detail(label, value) { return `<div class="admission-detail"><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong></div>`; }
   function safeUrl(value) { try { const url = new URL(String(value || '')); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch (error) { return ''; } }

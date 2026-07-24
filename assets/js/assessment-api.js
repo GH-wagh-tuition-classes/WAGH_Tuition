@@ -150,6 +150,8 @@ window.WTC_ASSESSMENT_API = (() => {
       return result;
     },
     getFeatureMap: (chapterId, forceRefresh=false) => read({ action:'getFeatureMap', chapterId }, ttl('FEATURE_MAP', 300000), forceRefresh),
+    getPublicDiagnostic: chapterId => call({ action:'getPublicDiagnostic', chapterId }, { retries:1, dedupe:false }),
+    scorePublicDiagnostic: data => write({ action:'scorePublicDiagnostic', ...data }),
     getLesson: (lessonId, forceRefresh=false) => read({ action:'getLesson', lessonId }, ttl('PUBLISHED_CONTENT', 600000), forceRefresh),
     getSolutions: (solutionSetId, chapterIdOrForceRefresh='', forceRefresh=false) => {
       const chapterId = typeof chapterIdOrForceRefresh === 'string' ? chapterIdOrForceRefresh : '';

@@ -5,7 +5,7 @@
 
 var WTC_VERSION = Object.freeze({
   PLATFORM: '1.0',
-  API: '1.4',
+  API: '1.5',
   BACKEND_ARCHITECTURE: '2.4',
   RUNTIME_API: '1.0',
   FEATURE_ENGINE: '1.0',
@@ -17,10 +17,11 @@ var WTC_VERSION = Object.freeze({
   HEALTH_CHECK: '1.0',
   DEPENDENCY_MANAGER: '1.0',
   PROFILE_CHANGE_APPROVAL: '1.0',
-  ADMISSION_LEADS: '1.2',
-  ADMIN_ADMISSION_PANEL: 'H1.2',
-  HOME_PAGE: 'H1.2',
-  HOME_DIAGNOSTIC: 'H1.2'
+  ADMISSION_LEADS: '1.3A',
+  ADMIN_ADMISSION_PANEL: 'H1.3A',
+  HOME_PAGE: 'H1.3A',
+  HOME_DIAGNOSTIC: 'H1.3A',
+  HOME_CONVERSION: 'H1.3A'
 });
 
 function getSystemVersion() {
@@ -51,6 +52,7 @@ function wtcVersionPayload_() {
     admissionLeads: WTC_VERSION.ADMISSION_LEADS,
     adminAdmissionPanel: WTC_VERSION.ADMIN_ADMISSION_PANEL,
     homePage: WTC_VERSION.HOME_PAGE,
-    homeDiagnostic: WTC_VERSION.HOME_DIAGNOSTIC
+    homeDiagnostic: WTC_VERSION.HOME_DIAGNOSTIC,
+    homeConversion: WTC_VERSION.HOME_CONVERSION
   };
 }

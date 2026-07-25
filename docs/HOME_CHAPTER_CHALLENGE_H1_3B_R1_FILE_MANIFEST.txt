@@ -1,0 +1,30 @@
+H1.3B-R1 CHANGED FILES
+
+Runtime Apps Script — replace
+apps-script/1_runtime_app_script/daily_challenge.gs
+apps-script/1_runtime_app_script/api_router.gs
+apps-script/1_runtime_app_script/test_assignments.gs
+apps-script/1_runtime_app_script/version.gs
+
+Frontend — replace
+index.html
+student.html
+admin.html
+assets/js/admin.js
+assets/js/daily-challenge-engine.js
+assets/js/daily-challenge-launcher.js
+assets/js/home-daily-challenge.js
+assets/js/student-daily-challenge.js
+tests/online-test/daily-challenge.html
+
+Frontend — add
+assets/js/admin-daily-challenge.js
+assets/css/admin-daily-challenge.css
+assets/css/home-daily-challenge.css
+assets/css/student-daily-challenge.css
+assets/css/daily-challenge.css
+
+Documentation — add
+docs/HOME_CHAPTER_CHALLENGE_H1_3B_R1_RELEASE.md
+docs/HOME_CHAPTER_CHALLENGE_H1_3B_R1_TEST.md
+docs/HOME_CHAPTER_CHALLENGE_H1_3B_R1_FILE_MANIFEST.txt

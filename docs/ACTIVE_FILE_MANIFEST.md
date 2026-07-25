@@ -50,3 +50,23 @@ H1.1 files remain cumulative and backward-compatible.
 - `assets/js/admin-admission-leads.js` — conversion follow-up dashboard
 - `apps-script/1_runtime_app_script/admission_leads.gs` — 37-column lead/report schema
 - `apps-script/2_authoring_apps_script/public_diagnostic.gs` — server-side topic performance report
+
+## Home Daily Challenge H1.3B
+
+### Runtime
+- `apps-script/1_runtime_app_script/daily_challenge.gs` — daily subject rotation, frozen 20-question test, official attempt and server scoring
+- `apps-script/1_runtime_app_script/api_router.gs` — three Daily Challenge actions
+- `apps-script/1_runtime_app_script/test_assignments.gs` — excludes generated Daily Challenges from Teacher assignment catalogue
+- `apps-script/1_runtime_app_script/version.gs` — H1.3B registry
+
+### Frontend
+- `index.html` — homepage Daily Challenge conversion section
+- `student.html` — Student Daily Challenge widget assets
+- `assets/js/daily-challenge-launcher.js` — shared popup launcher and protected status request
+- `assets/js/home-daily-challenge.js` — homepage state card
+- `assets/js/student-daily-challenge.js` — Student Portal widget
+- `assets/js/daily-challenge-engine.js` — official runner, refresh restore and server submission
+- `assets/css/home-daily-challenge.css` — homepage section
+- `assets/css/student-daily-challenge.css` — Student widget
+- `assets/css/daily-challenge.css` — runner overrides
+- `tests/online-test/daily-challenge.html` — popup/new-tab runner shell

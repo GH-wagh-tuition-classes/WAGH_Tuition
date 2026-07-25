@@ -1,0 +1,27 @@
+H1.3B CHANGED/ADDED FILES
+
+Runtime Apps Script
+- apps-script/1_runtime_app_script/daily_challenge.gs (new)
+- apps-script/1_runtime_app_script/api_router.gs (patched)
+- apps-script/1_runtime_app_script/constants.gs (patched comment/requirement)
+- apps-script/1_runtime_app_script/test_assignments.gs (patched to exclude Daily Challenge from Teacher catalogue)
+- apps-script/1_runtime_app_script/version.gs (patched)
+
+Frontend
+- index.html (patched)
+- student.html (patched)
+- assets/js/daily-challenge-launcher.js (new)
+- assets/js/home-daily-challenge.js (new)
+- assets/js/student-daily-challenge.js (new)
+- assets/js/daily-challenge-engine.js (new)
+- assets/css/home-daily-challenge.css (new)
+- assets/css/student-daily-challenge.css (new)
+- assets/css/daily-challenge.css (new)
+- tests/online-test/daily-challenge.html (new)
+
+Documentation
+- docs/HOME_DAILY_CHALLENGE_H1_3B_RELEASE.md
+- docs/HOME_DAILY_CHALLENGE_H1_3B_TEST.md
+- docs/HOME_DAILY_CHALLENGE_H1_3B_FILE_MANIFEST.txt
+- docs/ACTIVE_FILE_MANIFEST.md (patched)
+- CHANGELOG.md (patched)

@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="assets/css/portal.css">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/home-diagnostic.css">
+  <link rel="stylesheet" href="assets/css/home-daily-challenge.css?v=h1-3b-1-0">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -43,6 +44,7 @@
       <nav id="navLinks" class="nav-links" aria-label="Main navigation">
         <a href="#learning-paths">Classes</a>
         <a href="#how-it-works">How it works</a>
+        <a href="#daily-challenge">Daily Challenge</a>
         <a href="#diagnostic">Free Test</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
@@ -219,6 +221,33 @@
       </div>
     </section>
 
+
+
+    <section id="daily-challenge" class="section-block daily-home-section" aria-labelledby="dailyChallengeHeading">
+      <div class="container">
+        <div id="dailyChallengeCard" class="daily-home-card">
+          <div class="daily-home-copy">
+            <span class="eyebrow">Return every day and improve</span>
+            <h2 id="dailyChallengeHeading">Today’s official 20-MCQ board challenge</h2>
+            <p>One subject is selected daily for each Class, Board and Medium group. The same frozen question set is used for every eligible student in that group.</p>
+            <div class="daily-home-tags" aria-label="Daily Challenge rules">
+              <span>20 whole-subject MCQs</span>
+              <span>20-minute timer</span>
+              <span>One official attempt</span>
+              <span>Server-side scoring</span>
+            </div>
+          </div>
+          <aside class="daily-home-status" aria-live="polite">
+            <small>Today’s subject</small>
+            <h3 id="dailyChallengeSubject">Checking availability…</h3>
+            <p id="dailyChallengeMessage">Login as a Student to join the official Daily Challenge.</p>
+            <span id="dailyChallengeProfile" class="daily-home-profile"></span>
+            <strong id="dailyChallengeState" class="daily-home-state">Loading</strong>
+            <button id="dailyChallengeAction" class="btn btn-large" type="button">Login to Join</button>
+          </aside>
+        </div>
+      </div>
+    </section>
 
     <section id="diagnostic" class="section-block diagnostic-section" aria-labelledby="diagnosticTitle">
       <div class="container">
@@ -609,6 +638,7 @@
       <div>
         <h3>Explore</h3>
         <a href="#learning-paths">Classes</a>
+        <a href="#daily-challenge">Daily Challenge</a>
         <a href="#diagnostic">Free diagnostic</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
@@ -642,6 +672,8 @@
   <script src="assets/js/assessment-config.js"></script>
   <script src="assets/js/assessment-api.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/daily-challenge-launcher.js?v=h1-3b-1-0"></script>
+  <script src="assets/js/home-daily-challenge.js?v=h1-3b-1-0"></script>
   <script src="assets/js/home-campaign.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/home-diagnostic.js"></script>

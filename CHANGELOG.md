@@ -1,3 +1,13 @@
+# H1.3B — Daily 20-MCQ Whole-Subject Challenge
+
+- Added one deterministic daily subject for each Class + Board + Medium group.
+- Added a frozen, chapter-balanced 20-question challenge stored in existing Authoring test/map sheets.
+- Added an Assigned-Test-style popup runner with a 20-minute server-authoritative timer.
+- Added browser-refresh answer restoration without resetting the official attempt.
+- Added one-attempt-per-day enforcement, server scoring and existing result/evidence sheet writes.
+- Added answer-key and source-question-ID masking in the public challenge payload.
+- Preserved H1.0 through H1.3A, Assigned Tests and all existing chapter features.
+
 # H1.3A — Diagnostic Report & Conversion Engine
 
 - Added personalized diagnostic reports, campaign attribution and conversion-focused Admin analytics.

@@ -43,3 +43,10 @@
 - `assets/css/admin-admission-leads.css` — diagnostic result card styling
 
 H1.1 files remain cumulative and backward-compatible.
+
+## Home Conversion H1.3A
+- `assets/js/home-campaign.js` — first-touch campaign attribution
+- `assets/js/home-diagnostic.js` — personalized report and conversion actions
+- `assets/js/admin-admission-leads.js` — conversion follow-up dashboard
+- `apps-script/1_runtime_app_script/admission_leads.gs` — 37-column lead/report schema
+- `apps-script/2_authoring_apps_script/public_diagnostic.gs` — server-side topic performance report

@@ -1,0 +1,13 @@
+/* WAGH Tuition Classes — Student Daily Challenge Widget H1.3B */
+.wtc-daily-widget{display:flex;align-items:center;justify-content:space-between;gap:22px;margin:18px 0;padding:22px 24px;border:1px solid #fed7aa;border-radius:22px;background:linear-gradient(135deg,#fff7ed,#ffedd5);box-shadow:0 16px 38px rgba(154,52,18,.1)}
+.wtc-daily-widget.loading{opacity:.76}
+.wtc-daily-copy{display:flex;align-items:center;gap:16px;min-width:0}
+.wtc-daily-icon{display:grid;place-items:center;flex:0 0 58px;width:58px;height:58px;border-radius:18px;background:#ea580c;color:#fff;font-size:29px;box-shadow:0 12px 28px rgba(234,88,12,.25)}
+.wtc-daily-copy small{color:#9a3412;font-weight:850;text-transform:uppercase;letter-spacing:.06em}
+.wtc-daily-copy h2{margin:3px 0 4px;color:#431407;font-size:22px}
+.wtc-daily-copy p{margin:0;color:#7c2d12}
+.wtc-daily-profile{display:block;margin-top:6px;color:#9a3412;font-size:12px;font-weight:750}
+.wtc-daily-actions{display:grid;justify-items:end;gap:9px;flex:0 0 auto}
+.wtc-daily-state{padding:6px 10px;border-radius:999px;background:#fff;color:#9a3412;font-size:12px;font-weight:850}
+.wtc-daily-actions .btn{background:#ea580c}
+@media(max-width:700px){.wtc-daily-widget{align-items:flex-start;flex-direction:column;padding:18px}.wtc-daily-actions{width:100%;grid-template-columns:1fr auto;align-items:center;justify-items:start}.wtc-daily-actions .btn{justify-self:end}.wtc-daily-icon{width:50px;height:50px;flex-basis:50px}}

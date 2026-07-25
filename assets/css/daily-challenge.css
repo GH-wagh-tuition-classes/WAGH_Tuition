@@ -1,0 +1,19 @@
+/* WAGH Tuition Classes — Daily 20-MCQ Challenge H1.3B */
+.daily-challenge-page{background:linear-gradient(180deg,#fff7ed 0,#f8fafc 34%,#eef2ff 100%)}
+.daily-topbar{background:#431407}
+.daily-hero{background:linear-gradient(135deg,#7c2d12,#9a3412 58%,#c2410c);box-shadow:0 20px 55px rgba(124,45,18,.22)}
+.daily-countdown{min-width:132px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.32)}
+.daily-countdown.warning{animation:dailyPulse 1s ease-in-out infinite;background:#991b1b}
+.daily-instructions{max-width:780px;margin:14px 0 0;padding:12px 16px;border-left:4px solid #fdba74;border-radius:0 12px 12px 0;background:rgba(255,255,255,.12);color:#fff7ed}
+.daily-rule-strip{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0 18px}
+.daily-rule-strip span{padding:7px 11px;border:1px solid #fed7aa;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:12px;font-weight:800}
+.daily-challenge-page .assigned-option.selected{border-color:#ea580c;background:#fff7ed;box-shadow:0 0 0 2px rgba(234,88,12,.12)}
+.daily-challenge-page .assigned-palette button.answered{background:#ea580c;border-color:#ea580c;color:#fff}
+.daily-challenge-page .assigned-progress-track span{background:linear-gradient(90deg,#f97316,#c2410c)}
+.daily-result-lock{margin-top:15px;padding:12px 14px;border:1px solid #fed7aa;border-radius:14px;background:#fff7ed;color:#9a3412;font-weight:700}
+.daily-result-topics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.daily-result-topics>div{padding:14px;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
+.daily-result-topics small{display:block;margin-bottom:5px;color:#64748b;font-weight:700}
+@keyframes dailyPulse{50%{transform:scale(1.025)}}
+@media(max-width:700px){.daily-rule-strip{display:grid;grid-template-columns:1fr}.daily-result-topics{grid-template-columns:1fr}.daily-instructions{font-size:13px}.daily-topbar>div>span{display:none}}
+@media(prefers-reduced-motion:reduce){.daily-countdown.warning{animation:none}}

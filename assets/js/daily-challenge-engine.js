@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Daily 20-MCQ Challenge Engine H1.3B */
+/* WAGH Tuition Classes — Chapter Daily Challenge Engine H1.3B-R1 */
 const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   let user = null;
   let challenge = null;
@@ -50,15 +50,15 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
       topic:row.topic || 'General',
       difficulty:row.difficulty || 'Medium',
       marks:Number(row.marks || 1) || 1,
-      text:row.questionText || row.question || '',
-      options:{ A:row.optionA || '', B:row.optionB || '', C:row.optionC || '', D:row.optionD || '' }
+      text:row.text || row.questionText || row.question || '',
+      options:row.options || { A:row.optionA || '', B:row.optionB || '', C:row.optionC || '', D:row.optionD || '' }
     };
   }
 
   function start() {
-    text('dailyTestTitle', challenge.testTitle || 'Daily 20-MCQ Challenge');
-    text('dailyTestMeta', [challenge.subjectName, challenge.className, challenge.board, challenge.medium, `${questions.length} questions`, `${challenge.durationMin || 20} minutes`].filter(Boolean).join(' • '));
-    text('dailyInstructions', challenge.instructions || 'One official attempt. Exact answers remain hidden until the challenge closes.');
+    text('dailyTestTitle', challenge.testTitle || 'Daily Chapter Challenge');
+    text('dailyTestMeta', [challenge.chapterNames?.join(' + ') || challenge.subjectName, challenge.className, challenge.board, challenge.medium, `${questions.length} questions`, `${challenge.durationMin || 20} minutes`].filter(Boolean).join(' • '));
+    text('dailyInstructions', challenge.instructions || 'This challenge is separate from academic progress. Exact answers remain hidden until closing.');
     text('dailyTotal', questions.length);
     renderPalette();
     renderQuestions();
@@ -90,7 +90,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
 
   function renderQuestions() {
     const box = document.getElementById('dailyQuestionList');
-    box.innerHTML = questions.map((q,index) => `<article id="dailyQ-${attr(q.id)}" class="assigned-question" data-question-id="${attr(q.id)}"><div class="assigned-question-top"><span>Question ${index+1}</span><span>${esc(q.chapterName || 'Whole Subject')}</span><span>${esc(q.topic)}</span><span>${esc(q.difficulty)}</span></div><h3>${esc(q.text)}</h3><div class="assigned-options">${Object.keys(q.options).map(letter => `<button class="assigned-option" type="button" data-question-id="${attr(q.id)}" data-option="${letter}"><b>${letter}</b><span>${esc(q.options[letter])}</span></button>`).join('')}</div></article>`).join('');
+    box.innerHTML = questions.map((q,index) => `<article id="dailyQ-${attr(q.id)}" class="assigned-question" data-question-id="${attr(q.id)}"><div class="assigned-question-top"><span>Question ${index+1}</span><span>${esc(q.chapterName || 'Selected Chapter')}</span><span>${esc(q.topic)}</span><span>${esc(q.difficulty)}</span></div><h3>${esc(q.text)}</h3><div class="assigned-options">${Object.keys(q.options).map(letter => `<button class="assigned-option" type="button" data-question-id="${attr(q.id)}" data-option="${letter}"><b>${letter}</b><span>${esc(q.options[letter])}</span></button>`).join('')}</div></article>`).join('');
     box.querySelectorAll('.assigned-option').forEach(button => button.addEventListener('click', () => choose(button.dataset.questionId, button.dataset.option)));
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -149,12 +149,12 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
         action:'saveDailyChallengeResult',
         ...identity(),
         challengeId:challenge.challengeId,
-        attemptId:attempt.attemptId,
+        attemptToken:attempt.attemptToken,
         totalTimeSec:Math.max(0, Math.round((Date.now() - startedAtMs) / 1000)),
         attemptDetails:JSON.stringify(details),
         page:location.pathname
       });
-      if (data?.success === false) throw new Error(data.message || 'Daily Challenge result could not be saved.');
+      if (data?.success === false) throw new Error(data.message || 'Chapter Challenge result could not be saved.');
       clearDraft();
       showResult(data.result || {}, data.answersAvailableAt || challenge.closesAt, !!data.reviewLocked, !!data.reused);
     } catch (error) {
@@ -187,7 +187,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
     const strong = result.strongTopics || 'Keep practising';
     const weak = result.weakTopics || 'No major weak topic detected';
     box.classList.remove('hidden');
-    box.innerHTML = `<div class="assigned-result-head"><div><span class="eyebrow">Official Daily Result</span><h2>${result.percent>=80?'Excellent board-pattern performance!':result.percent>=60?'Good attempt — revise the focus topics.':'Use the focus topics for your next revision.'}</h2></div><div class="assigned-result-score">${esc(result.percent || 0)}%</div></div><div class="assigned-result-grid"><div><small>Score</small><b>${esc(result.score || 0)}/${esc(result.total || 20)}</b></div><div><small>Correct</small><b>${esc(result.correctCount ?? result.score ?? 0)}</b></div><div><small>Wrong</small><b>${esc(result.wrongCount || 0)}</b></div><div><small>Unanswered</small><b>${esc(result.unansweredCount || 0)}</b></div></div><div class="daily-result-topics"><div><small>Strong topics</small><b>${esc(strong)}</b></div><div><small>Focus topics</small><b>${esc(weak)}</b></div></div><div class="daily-result-lock">🔒 Exact correct answers and explanations remain hidden until today’s challenge closes${answersAvailableAt ? ` at ${esc(formatDateTime(answersAvailableAt))}` : ''}.</div><p class="assigned-save-status">${reused?'✅ Your saved official result was loaded safely.':'✅ Your official Daily Challenge result is saved.'}</p>`;
+    box.innerHTML = `<div class="assigned-result-head"><div><span class="eyebrow">Chapter Challenge Result</span><h2>${result.percent>=80?'Excellent board-pattern performance!':result.percent>=60?'Good attempt — revise the focus topics.':'Use the focus topics for your next revision.'}</h2></div><div class="assigned-result-score">${esc(result.percent || 0)}%</div></div><div class="assigned-result-grid"><div><small>Score</small><b>${esc(result.score || 0)}/${esc(result.total || 20)}</b></div><div><small>Correct</small><b>${esc(result.correctCount ?? result.score ?? 0)}</b></div><div><small>Wrong</small><b>${esc(result.wrongCount || 0)}</b></div><div><small>Unanswered</small><b>${esc(result.unansweredCount || 0)}</b></div></div><div class="daily-result-topics"><div><small>Strong topics</small><b>${esc(strong)}</b></div><div><small>Focus topics</small><b>${esc(weak)}</b></div></div><div class="daily-result-lock">🔒 Exact correct answers and explanations remain hidden until today’s challenge closes${answersAvailableAt ? ` at ${esc(formatDateTime(answersAvailableAt))}` : ''}.</div><p class="assigned-save-status">${reused?'✅ Your saved official result was loaded safely.':'✅ Your temporary Chapter Challenge result is ready and is not added to academic progress.'}</p>`;
     document.getElementById('dailySubmitButton')?.classList.add('hidden');
     document.getElementById('dailyReviewButton')?.classList.add('hidden');
     document.getElementById('dailyCloseResult')?.classList.remove('hidden');
@@ -206,12 +206,12 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   function draftKey() { return `wtc:daily-challenge:draft:${user?.studentId || user?.id || ''}:${challenge?.challengeId || ''}`; }
   function saveDraft() {
     if (!challenge?.challengeId || submitting) return;
-    try { localStorage.setItem(draftKey(), JSON.stringify({ answers, questionTimes, savedAt:Date.now(), attemptId:attempt?.attemptId || '' })); } catch (error) {}
+    try { localStorage.setItem(draftKey(), JSON.stringify({ answers, questionTimes, savedAt:Date.now(), attemptToken:attempt?.attemptToken || '' })); } catch (error) {}
   }
   function restoreDraft() {
     try {
       const draft = JSON.parse(localStorage.getItem(draftKey()) || 'null');
-      if (!draft || (draft.attemptId && draft.attemptId !== attempt.attemptId)) return;
+      if (!draft) return;
       answers = draft.answers && typeof draft.answers === 'object' ? draft.answers : {};
       questionTimes = draft.questionTimes && typeof draft.questionTimes === 'object' ? draft.questionTimes : {};
     } catch (error) {}

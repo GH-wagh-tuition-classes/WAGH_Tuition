@@ -7,6 +7,7 @@ const AdminApp = (() => {
   const PANEL_HASH = {
     dashboardPanel:'dashboard',
     admissionLeadPanel:'admission-leads',
+    dailyChallengePanel:'chapter-challenge',
     profileRequestPanel:'profile-requests',
     contentManagerPanel:'content',
     aiContentEnginePanel:'ai-content'
@@ -93,6 +94,7 @@ const AdminApp = (() => {
     window.scrollTo({ top:0, behavior:'smooth' });
 
     if (panelId === 'admissionLeadPanel') window.WTC_ADMISSION_ADMIN?.open();
+    if (panelId === 'dailyChallengePanel') window.WTC_DAILY_CHALLENGE_ADMIN?.open();
     if (panelId === 'profileRequestPanel') loadProfileChangeRequests(currentProfileFilter);
     return true;
   }

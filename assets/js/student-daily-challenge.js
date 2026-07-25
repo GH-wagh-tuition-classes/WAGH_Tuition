@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Student Portal Daily Challenge Widget H1.3B */
+/* WAGH Tuition Classes — Student Portal Chapter Challenge Widget H1.3B-R1 */
 const WTC_STUDENT_DAILY_CHALLENGE = (() => {
   let user = null;
 
@@ -17,7 +17,7 @@ const WTC_STUDENT_DAILY_CHALLENGE = (() => {
     const section = document.createElement('section');
     section.id = 'wtcDailyChallengeWidget';
     section.className = 'wtc-daily-widget loading';
-    section.innerHTML = `<div class="wtc-daily-copy"><span class="wtc-daily-icon" aria-hidden="true">⚡</span><div><small>Official daily practice</small><h2 id="wtcDailyTitle">Today’s 20-MCQ Challenge</h2><p id="wtcDailyMessage">Checking today’s subject…</p><span id="wtcDailyProfile" class="wtc-daily-profile"></span></div></div><div class="wtc-daily-actions"><span id="wtcDailyState" class="wtc-daily-state">Loading</span><button id="wtcDailyOpen" class="btn" type="button" disabled>Open Challenge</button></div>`;
+    section.innerHTML = `<div class="wtc-daily-copy"><span class="wtc-daily-icon" aria-hidden="true">⚡</span><div><small>Daily chapter practice</small><h2 id="wtcDailyTitle">Today’s Chapter Challenge</h2><p id="wtcDailyMessage">Checking today’s chapter…</p><span id="wtcDailyProfile" class="wtc-daily-profile"></span></div></div><div class="wtc-daily-actions"><span id="wtcDailyState" class="wtc-daily-state">Loading</span><button id="wtcDailyOpen" class="btn" type="button" disabled>Open Challenge</button></div>`;
     const assigned = document.getElementById('wtcAssignedTestsWidget');
     const hero = home.querySelector('.hero-card');
     if (assigned) assigned.insertAdjacentElement('afterend',section);
@@ -42,8 +42,8 @@ const WTC_STUDENT_DAILY_CHALLENGE = (() => {
       text('wtcDailyTitle','Daily Challenge coming soon'); text('wtcDailyMessage',data.message || 'More published questions are required.'); text('wtcDailyState','Unavailable'); if(button)button.disabled=true; return;
     }
     const challenge=data.challenge || {};
-    text('wtcDailyTitle',challenge.testTitle || `Daily ${challenge.subjectName || ''} Challenge`);
-    text('wtcDailyMessage',`${challenge.questionCount || 20} questions • ${challenge.durationMin || 20} minutes • Whole ${challenge.subjectName || 'subject'}`);
+    text('wtcDailyTitle',challenge.testTitle || `Daily ${challenge.chapterNames?.join(' + ') || challenge.subjectName || ''} Challenge`);
+    text('wtcDailyMessage',`${challenge.questionCount || 20} questions • ${challenge.durationMin || 20} minutes • ${challenge.chapterNames?.join(' + ') || challenge.subjectName || 'selected chapter'}`);
     text('wtcDailyProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
     if (data.state === 'COMPLETED') { text('wtcDailyState',`${data.result?.percent || 0}% completed`); if(button){button.textContent='View Result';button.disabled=false;} }
     else if (data.state === 'IN_PROGRESS') { text('wtcDailyState','In progress'); if(button){button.textContent='Resume Challenge';button.disabled=false;} }

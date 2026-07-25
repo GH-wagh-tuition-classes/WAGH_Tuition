@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Homepage Daily Challenge Card H1.3B */
+/* WAGH Tuition Classes — Homepage Chapter Challenge Card H1.3B-R1 */
 const WTC_HOME_DAILY_CHALLENGE = (() => {
   let user = null;
   let statusData = null;
@@ -28,28 +28,28 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
   }
 
   function renderLoading() {
-    setText('dailyChallengeSubject','Checking today’s subject…');
-    setText('dailyChallengeMessage','Preparing the board-pattern challenge for your Student profile.');
+    setText('dailyChallengeSubject','Checking today’s chapter…');
+    setText('dailyChallengeMessage','Preparing today’s chapter challenge for your learning profile.');
     setButton('Please wait…',true);
   }
 
   function renderLogin() {
-    setText('dailyChallengeSubject','One subject. 20 questions. Every day.');
-    setText('dailyChallengeMessage','Login as a Student to enter the official ranked attempt. Guests can still use the free chapter diagnostic below.');
+    setText('dailyChallengeSubject','One chapter challenge. 20 questions. Every day.');
+    setText('dailyChallengeMessage','Login as a Student to enter the official challenge attempt. Guests can still use the free chapter diagnostic below.');
     setText('dailyChallengeState','Student login required');
     setButton('Login to Join',false);
   }
 
   function render(data) {
     if (!data.available) {
-      setText('dailyChallengeSubject','Challenge coming soon for this learning path');
-      setText('dailyChallengeMessage',data.message || 'At least 20 published MCQs are required in one subject.');
+      setText('dailyChallengeSubject','Chapter Challenge coming soon for this learning path');
+      setText('dailyChallengeMessage',data.message || 'The Admin must activate a chapter pool containing at least 20 published MCQs.');
       setText('dailyChallengeState','Not available today');
       return setButton('Unavailable',true);
     }
     const challenge = data.challenge || {};
-    setText('dailyChallengeSubject',challenge.subjectName || 'Today’s Subject');
-    setText('dailyChallengeMessage',`${challenge.questionCount || 20} board-pattern MCQs • ${challenge.durationMin || 20} minutes • One official attempt`);
+    setText('dailyChallengeSubject',challenge.chapterNames?.join(' + ') || challenge.subjectName || 'Today’s Chapter');
+    setText('dailyChallengeMessage',`${challenge.questionCount || 20} chapter MCQs • ${challenge.durationMin || 20} minutes • One official attempt`);
     setText('dailyChallengeProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
     if (data.state === 'COMPLETED') {
       setText('dailyChallengeState',`Completed • ${data.result?.score || 0}/${data.result?.total || 20} • ${data.result?.percent || 0}%`);

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Daily Challenge shared launcher H1.3B */
+/* WAGH Tuition Classes — Chapter Daily Challenge shared launcher H1.3B-R1 */
 window.WTC_DAILY_CHALLENGE = (() => {
   function identity(user) {
     return {
@@ -10,7 +10,7 @@ window.WTC_DAILY_CHALLENGE = (() => {
 
   async function status(user) {
     if (!user || String(user.role || '').toLowerCase() !== 'student') {
-      return { success:true, available:false, state:'LOGIN_REQUIRED', message:'Student login is required for the official Daily Challenge.' };
+      return { success:true, available:false, state:'LOGIN_REQUIRED', message:'Student login is required for the official Chapter Challenge.' };
     }
     return WTC_API.call({ action:'studentGetDailyChallengeStatus', ...identity(user) });
   }

@@ -17,6 +17,12 @@ function wtcApiActionMap_() {
     saveAdmissionLead: typeof saveAdmissionLead === 'function' ? saveAdmissionLead : wtcMissingAction_,
     adminGetAdmissionLeads: typeof adminGetAdmissionLeads === 'function' ? adminGetAdmissionLeads : wtcMissingAction_,
     adminUpdateAdmissionLead: typeof adminUpdateAdmissionLead === 'function' ? adminUpdateAdmissionLead : wtcMissingAction_,
+    studentGetDailyChallengeStatus: typeof studentGetDailyChallengeStatus === 'function' ? studentGetDailyChallengeStatus : wtcMissingAction_,
+    studentOpenDailyChallenge: typeof studentOpenDailyChallenge === 'function' ? studentOpenDailyChallenge : wtcMissingAction_,
+    saveDailyChallengeResult: typeof saveDailyChallengeResult === 'function' ? saveDailyChallengeResult : wtcMissingAction_,
+    adminGetDailyChallengeManager: typeof adminGetDailyChallengeManager === 'function' ? adminGetDailyChallengeManager : wtcMissingAction_,
+    adminSaveDailyChallengeConfig: typeof adminSaveDailyChallengeConfig === 'function' ? adminSaveDailyChallengeConfig : wtcMissingAction_,
+    adminPrepareDailyChallenge: typeof adminPrepareDailyChallenge === 'function' ? adminPrepareDailyChallenge : wtcMissingAction_,
 
     getStudentBootstrap: runtimeApiGetStudentBootstrap,
     getSubjects: runtimeApiGetSubjects,

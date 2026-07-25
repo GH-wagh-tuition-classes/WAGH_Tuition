@@ -466,6 +466,7 @@ function wtcTAGetAssignableTestsForScope_(scope) {
   var rows = wtcTAAuthoringRows_('MCQ_TEST_ENGINE');
   var tests = rows.filter(function(row) {
     if (WTC_TEST_ASSIGNMENTS_25F.VISIBLE_STATUSES.indexOf(wtcTANorm_(row.status)) < 0) return false;
+    if (wtcTANorm_(row.testType) === 'daily_challenge') return false;
     if (!row.testId || !row.mcqSetId || !row.chapterId) return false;
     return scope.chapterIds.indexOf(wtcTANorm_(row.chapterId)) >= 0;
   }).map(function(row) {

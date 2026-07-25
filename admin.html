@@ -8,6 +8,7 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
   <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-3a">
+  <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3b-r1">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -50,6 +51,9 @@
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="admissionLeadPanel" onclick="AdminApp.openPanel('admissionLeadPanel', this)">
         <span class="admin-nav-icon">📥</span><span>Admission Leads</span><b id="admissionLeadSidebarCount" class="admin-nav-count">0</b>
+      </button>
+      <button class="admin-nav-item" type="button" data-admin-nav="dailyChallengePanel" onclick="AdminApp.openPanel('dailyChallengePanel', this)">
+        <span class="admin-nav-icon">⚡</span><span>Chapter Challenge</span>
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="profileRequestPanel" onclick="AdminApp.openPanel('profileRequestPanel', this)">
         <span class="admin-nav-icon">🪪</span><span>Profile Requests</span><b id="profileRequestSidebarCount" class="admin-nav-count">0</b>
@@ -129,6 +133,11 @@
           <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('admissionLeadPanel')">
             <span class="admin-quick-icon">📥</span>
             <span><strong>Follow up admission leads</strong><small>Contact parents, book demos and track conversions.</small></span>
+            <b>→</b>
+          </button>
+          <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('dailyChallengePanel')">
+            <span class="admin-quick-icon">⚡</span>
+            <span><strong>Manage Chapter Challenge</strong><small>Select chapter pools, rotation and preview today’s 20 MCQs.</small></span>
             <b>→</b>
           </button>
           <button class="admin-quick-card" type="button" onclick="AdminApp.openPanel('profileRequestPanel')">
@@ -216,6 +225,39 @@
 
         <div class="admission-list-head"><span><b id="admissionVisibleCount">0</b> lead(s) shown</span><small>Prioritize overdue and report-requested leads first.</small></div>
         <div id="admissionLeadList" class="admission-lead-list"><div class="admission-empty">No lead data loaded yet.</div></div>
+      </div>
+    </section>
+
+    <section id="dailyChallengePanel" class="admin-panel" data-panel-title="Chapter Challenge" data-panel-subtitle="Select chapter pools and automate the separate daily 20-MCQ engagement challenge.">
+      <div class="admin-panel-card dc-admin-panel">
+        <div class="admin-section-heading">
+          <div><span class="admin-kicker">H1.3B-R1</span><h2>Daily Chapter Challenge Manager</h2><p class="muted">Configure one chapter rotation for each Board + Class + Medium group. Challenge scores remain temporary and never affect academic progress.</p></div>
+        </div>
+        <div class="dc-rule-note"><b>Separation rule:</b> this module does not write to Progress Tracker, Test Results, MCQ Attempts, Skill Reports or Gamification. Temporary anonymous scores are deleted automatically after closing.</div>
+        <div class="dc-admin-auth">
+          <div><label for="dcAdminPassword">Admin password confirmation</label><input id="dcAdminPassword" type="password" autocomplete="current-password" placeholder="Enter Admin password"></div>
+          <button id="dcAdminLoad" class="btn" type="button">Load Chapter Catalogue</button>
+        </div>
+        <div id="dcAdminStatus" class="dc-status info">Enter the Admin password, then load the chapter catalogue.</div>
+        <div class="dc-admin-form">
+          <div class="dc-grid">
+            <div class="dc-field"><label for="dcBoard">Board</label><select id="dcBoard"><option value="">Select board</option></select></div>
+            <div class="dc-field"><label for="dcClass">Class</label><select id="dcClass"><option value="">Select class</option></select></div>
+            <div class="dc-field"><label for="dcMedium">Medium</label><select id="dcMedium"><option value="">Select medium</option></select></div>
+            <div class="dc-field"><label for="dcSubject">Subject</label><select id="dcSubject"><option value="">Select subject</option></select></div>
+          </div>
+          <div class="dc-chapter-head"><div><h3>Select chapters in rotation order</h3><p class="muted">A chapter with fewer than 20 MCQs is automatically combined with the next selected chapter.</p></div></div>
+          <div id="dcChapterPool" class="dc-chapter-pool"><div class="dc-empty">Load the catalogue first.</div></div>
+          <div class="dc-grid two" style="margin-top:16px">
+            <div class="dc-field"><label for="dcRotationStart">Rotation start date</label><input id="dcRotationStart" type="date"></div>
+            <div class="dc-field"><label for="dcDuration">Duration in minutes</label><input id="dcDuration" type="number" min="5" max="60" value="20"></div>
+          </div>
+          <label class="dc-toggle"><input id="dcEnabled" type="checkbox" checked> Active for General and WTC Students</label>
+          <input id="dcConfigId" type="hidden"><p id="dcCurrentConfig" class="dc-current-config">No configuration loaded.</p>
+          <div class="dc-actions"><button id="dcAdminSave" class="btn" type="button">Save Chapter Rotation</button><div class="dc-field"><label for="dcPreviewDate">Prepare date</label><input id="dcPreviewDate" type="date"></div><button id="dcAdminPrepare" class="btn outline" type="button">Preview &amp; Freeze Challenge</button></div>
+        </div>
+        <div class="dc-admin-preview"><div id="dcPreview" class="dc-preview"><div class="dc-empty">Prepared 20-question preview will appear here.</div></div></div>
+        <div class="dc-admin-configs"><h3>Saved group configurations</h3><div id="dcConfigList" class="dc-config-list"><div class="dc-empty">No configurations loaded.</div></div></div>
       </div>
     </section>
 
@@ -608,6 +650,7 @@
 <script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js?v=h1-1"></script>
 <script src="assets/js/admin-admission-leads.js?v=h1-3a"></script>
+<script src="assets/js/admin-daily-challenge.js?v=h1-3b-r1"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#7c2d12">
+  <title>Daily 20-MCQ Challenge | WAGH Tuition Classes</title>
+  <link rel="icon" href="../../assets/images/favicon.png">
+  <link rel="stylesheet" href="../../assets/css/assigned-mcq-engine.css?v=phase-2-5f-1-0">
+  <link rel="stylesheet" href="../../assets/css/daily-challenge.css?v=h1-3b-1-0">
+</head>
+<body class="daily-challenge-page">
+<header class="assigned-topbar daily-topbar">
+  <a href="../../student.html"><img src="../../assets/images/logo.png" alt="WTC"><span>Daily Challenge</span></a>
+  <div><span id="dailyStudentName">Student</span><button id="dailyCloseWindow" class="ghost-button" type="button">Close</button></div>
+</header>
+<main class="assigned-app">
+  <section id="dailyLoading" class="assigned-loading"><div class="assigned-spinner"></div><h1>Preparing today’s challenge…</h1><p id="dailyLoadingText">Verifying your Student profile and freezing the 20-question test.</p></section>
+  <section id="dailyError" class="assigned-error hidden"><h1>Challenge could not be opened</h1><p id="dailyErrorText"></p><a class="primary-button" href="../../student.html">Return to Student Dashboard</a></section>
+  <section id="dailyQuiz" class="hidden">
+    <div class="assigned-hero daily-hero">
+      <div>
+        <span class="eyebrow">Official Daily Board Challenge</span>
+        <h1 id="dailyTestTitle">20-MCQ Challenge</h1>
+        <p id="dailyTestMeta"></p>
+        <blockquote id="dailyInstructions" class="daily-instructions"></blockquote>
+      </div>
+      <div class="assigned-timer daily-countdown"><small>Time left</small><strong id="dailyTimer">20:00</strong></div>
+    </div>
+    <div class="assigned-progress">
+      <div><span>Answered</span><strong><b id="dailyAnswered">0</b>/<b id="dailyTotal">20</b></strong></div>
+      <div class="assigned-progress-track"><span id="dailyProgressFill"></span></div>
+      <button id="dailyReviewButton" class="ghost-button" type="button">Review Unanswered</button>
+    </div>
+    <div class="daily-rule-strip"><span>One official attempt</span><span>Server-side scoring</span><span>Answers unlock after closing</span></div>
+    <div class="assigned-layout">
+      <aside class="assigned-palette-card"><h2>Questions</h2><div id="dailyPalette" class="assigned-palette"></div><div class="assigned-legend"><span><i class="answered"></i>Answered</span><span><i></i>Unanswered</span></div></aside>
+      <section id="dailyQuestionList" class="assigned-question-list"></section>
+    </div>
+    <div id="dailyResult" class="assigned-result hidden"></div>
+    <div class="assigned-bottom-actions">
+      <button id="dailySubmitButton" class="primary-button" type="button">Submit Official Attempt</button>
+      <button id="dailyCloseResult" class="ghost-button hidden" type="button">Close Challenge</button>
+      <a class="ghost-button" href="../../student.html">Student Dashboard</a>
+    </div>
+  </section>
+</main>
+<script src="../../assets/js/config.js"></script>
+<script src="../../assets/js/ui.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/api.js"></script>
+<script src="../../assets/js/daily-challenge-engine.js?v=h1-3b-1-0"></script>
+</body>
+</html>

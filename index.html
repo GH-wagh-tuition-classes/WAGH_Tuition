@@ -307,12 +307,17 @@
               <p id="diagnosticTestStatus" class="diagnostic-status" role="status" aria-live="polite"></p>
             </section>
 
-            <section id="diagnosticResultPanel" class="diagnostic-panel" aria-labelledby="diagnosticResultTitle" hidden>
+            <section id="diagnosticResultPanel" class="diagnostic-panel diagnostic-report-panel" aria-labelledby="diagnosticResultTitle" hidden>
               <div class="diagnostic-result-hero">
-                <div class="diagnostic-score-ring"><div><b id="diagnosticResultPercent">0%</b><span id="diagnosticResultScore">0/0 correct</span></div></div>
+                <div id="diagnosticScoreRing" class="diagnostic-score-ring" style="--score:0">
+                  <div><b id="diagnosticResultPercent">0%</b><span id="diagnosticResultScore">0/0 correct</span></div>
+                </div>
                 <div class="diagnostic-result-copy">
-                  <span class="eyebrow">Diagnostic completed</span>
-                  <h3 id="diagnosticResultTitle">Your chapter snapshot</h3>
+                  <div class="diagnostic-result-badges">
+                    <span class="eyebrow">Personalized diagnostic report</span>
+                    <strong id="diagnosticPerformanceBadge" class="diagnostic-performance-badge developing">Developing</strong>
+                  </div>
+                  <h3 id="diagnosticResultTitle">Your chapter learning snapshot</h3>
                   <p id="diagnosticResultMessage"></p>
                   <p id="diagnosticResultContext" class="diagnostic-result-context"></p>
                 </div>
@@ -322,16 +327,36 @@
                 <div class="diagnostic-result-stat"><b id="diagnosticCorrectCount">0</b><span>Correct</span></div>
                 <div class="diagnostic-result-stat"><b id="diagnosticWrongCount">0</b><span>Incorrect</span></div>
                 <div class="diagnostic-result-stat"><b id="diagnosticUnansweredCount">0</b><span>Unanswered</span></div>
+                <div class="diagnostic-result-stat"><b id="diagnosticElapsedTime">0m</b><span>Time used</span></div>
               </div>
 
-              <div class="diagnostic-focus-box">
-                <h4>Suggested focus topics</h4>
-                <div id="diagnosticWeakTopics" class="diagnostic-topic-chips"></div>
+              <div class="diagnostic-insight-grid">
+                <article class="diagnostic-insight-card strong">
+                  <span class="diagnostic-insight-icon" aria-hidden="true">✓</span>
+                  <div><h4>Strong topics</h4><p>Keep these concepts active through spaced practice.</p><div id="diagnosticStrongTopics" class="diagnostic-topic-chips"></div></div>
+                </article>
+                <article class="diagnostic-insight-card focus">
+                  <span class="diagnostic-insight-icon" aria-hidden="true">↗</span>
+                  <div><h4>Focus topics</h4><p>Revise these areas before taking a full chapter test.</p><div id="diagnosticWeakTopics" class="diagnostic-topic-chips"></div></div>
+                </article>
               </div>
 
-              <div class="diagnostic-report-card">
-                <h3>Get guidance and book a free demo</h3>
-                <p>Share a parent contact number so WTC can discuss the result and the next learning step.</p>
+              <article class="diagnostic-recommendation-card">
+                <span class="eyebrow">Recommended next step</span>
+                <h3 id="diagnosticRecommendationTitle">Build a focused chapter plan</h3>
+                <p id="diagnosticRecommendedAction">Review the focus topics and practise a targeted question set.</p>
+                <ol id="diagnosticPlanItems" class="diagnostic-plan-list"></ol>
+                <div class="diagnostic-conversion-actions">
+                  <button id="diagnosticBookDemo" class="btn btn-large" type="button">Get Report &amp; Book Free Demo</button>
+                  <button id="diagnosticCreateAccount" class="btn outline" type="button">Create Student Account</button>
+                  <button id="diagnosticRestart" class="text-link" type="button">Try another chapter</button>
+                </div>
+              </article>
+
+              <div id="diagnosticReportFormCard" class="diagnostic-report-card">
+                <span class="eyebrow">Parent guidance request</span>
+                <h3>Receive this report and discuss the next learning step</h3>
+                <p>Share a parent contact number. WTC can explain the result, recommend a study plan and arrange a free demo.</p>
                 <form id="diagnosticLeadForm" class="diagnostic-report-form" novalidate>
                   <div class="field">
                     <label for="diagnosticStudentName">Student name *</label>
@@ -348,16 +373,18 @@
                     </select>
                   </div>
                   <div class="honeypot" aria-hidden="true"><label for="diagnosticWebsite">Website</label><input id="diagnosticWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-                  <label class="consent-row"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted by WAGH Tuition Classes regarding this diagnostic result.</span></label>
+                  <label class="consent-row"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted by WAGH Tuition Classes regarding this diagnostic report.</span></label>
                   <div class="diagnostic-report-actions">
                     <button class="btn btn-large" type="submit">Send My Report &amp; Book Demo</button>
-                    <button id="diagnosticRestart" class="btn outline" type="button">Try Another Chapter</button>
                   </div>
                   <p id="diagnosticLeadStatus" class="form-status" role="status" aria-live="polite"></p>
                   <div id="diagnosticLeadSuccess" class="diagnostic-lead-success" hidden>
-                    <strong>Diagnostic enquiry prepared.</strong>
-                    <p>For the fastest response, send the result to WTC on WhatsApp.</p>
-                    <a id="diagnosticWhatsapp" class="btn whatsapp-btn" href="https://wa.me/919537036383" target="_blank" rel="noopener">Send Result on WhatsApp</a>
+                    <strong>Your personalized report request is ready.</strong>
+                    <p>Send it on WhatsApp for the fastest response, or create a student account to continue learning.</p>
+                    <div class="diagnostic-success-actions">
+                      <a id="diagnosticWhatsapp" class="btn whatsapp-btn" href="https://wa.me/919537036383" target="_blank" rel="noopener">Send Full Report on WhatsApp</a>
+                      <button id="diagnosticSuccessCreateAccount" class="btn outline" type="button">Create Student Account</button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -615,6 +642,7 @@
   <script src="assets/js/assessment-config.js"></script>
   <script src="assets/js/assessment-api.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/home-campaign.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/home-diagnostic.js"></script>
 </body>

@@ -7,7 +7,7 @@
   <title>Admin Dashboard | WAGH Tuition Classes</title>
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
-  <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-1">
+  <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-3a">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -168,22 +168,19 @@
       </div>
     </section>
 
-    <section id="admissionLeadPanel" class="admin-panel" data-panel-title="Admission Leads" data-panel-subtitle="Contact parents, schedule demo classes and track enquiry conversion.">
+    <section id="admissionLeadPanel" class="admin-panel" data-panel-title="Admission Leads" data-panel-subtitle="Prioritize follow-ups, read diagnostic reports and track campaign conversion.">
       <div class="admin-panel-card admission-admin-panel">
         <div class="admin-section-heading admission-admin-heading">
           <div>
-            <span class="admin-kicker">Admission Funnel H1.1</span>
-            <h2>Admission Leads Manager</h2>
-            <p class="muted">Leads come from the public demo form. Admin verification is required before parent contact details are displayed.</p>
+            <span class="admin-kicker">Conversion Engine H1.3A</span>
+            <h2>Admission Leads &amp; Diagnostic Reports</h2>
+            <p class="muted">Contact parents, review personalized diagnostic reports and track which campaigns convert into admissions.</p>
           </div>
           <button class="btn small outline" type="button" onclick="WTC_ADMISSION_ADMIN.load(this)">↻ Refresh leads</button>
         </div>
 
         <div class="admin-password-confirmation admission-admin-auth">
-          <div>
-            <label for="admissionLeadAdminPassword">Admin password confirmation</label>
-            <small>The password is used only for this request and is never saved in browser storage.</small>
-          </div>
+          <div><label for="admissionLeadAdminPassword">Admin password confirmation</label><small>The password is used only for this secure request and is never saved in browser storage.</small></div>
           <div class="password-field-row admission-password-row">
             <input id="admissionLeadAdminPassword" type="password" autocomplete="current-password" placeholder="Enter admin password">
             <button class="btn small outline" type="button" aria-label="Show or hide password" onclick="WTC_ADMISSION_ADMIN.togglePassword(this)">Show</button>
@@ -193,47 +190,32 @@
 
         <div id="admissionLeadStatus" class="admission-manager-status info" role="status" aria-live="polite">Enter the admin password and load admission leads.</div>
 
-        <div class="admission-summary-grid" aria-label="Admission lead summary">
-          <article><small>Total</small><strong id="admissionSummaryTotal">0</strong></article>
+        <div class="admission-summary-grid" aria-label="Admission conversion summary">
+          <article><small>Total leads</small><strong id="admissionSummaryTotal">0</strong></article>
           <article class="new"><small>New</small><strong id="admissionSummaryNew">0</strong></article>
-          <article class="contacted"><small>Contacted</small><strong id="admissionSummaryContacted">0</strong></article>
+          <article class="due"><small>Due today</small><strong id="admissionSummaryDueToday">0</strong></article>
+          <article class="overdue"><small>Overdue</small><strong id="admissionSummaryOverdue">0</strong></article>
           <article class="demo"><small>Demo booked</small><strong id="admissionSummaryDemo">0</strong></article>
           <article class="joined"><small>Joined</small><strong id="admissionSummaryJoined">0</strong></article>
-          <article class="lost"><small>Not interested</small><strong id="admissionSummaryNotInterested">0</strong></article>
+          <article class="conversion"><small>Conversion</small><strong id="admissionSummaryConversion">0%</strong></article>
+          <article class="reports"><small>Reports requested</small><strong id="admissionSummaryReports">0</strong></article>
+        </div>
+
+        <div class="admission-attribution-strip">
+          <span>Top traffic source <strong id="admissionTopTrafficSource">—</strong></span>
+          <span>Top campaign <strong id="admissionTopCampaign">—</strong></span>
         </div>
 
         <div class="admission-toolbar">
-          <label class="admin-search admission-search" for="admissionLeadSearch">
-            <span aria-hidden="true">⌕</span>
-            <input id="admissionLeadSearch" type="search" placeholder="Search name, mobile, class, subject or source" oninput="WTC_ADMISSION_ADMIN.applyFilters()">
-          </label>
-          <label class="admission-filter-field" for="admissionLeadStatusFilter">
-            <span>Status</span>
-            <select id="admissionLeadStatusFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()">
-              <option value="ALL">All statuses</option>
-              <option value="NEW">New</option>
-              <option value="CONTACTED">Contacted</option>
-              <option value="DEMO_BOOKED">Demo booked</option>
-              <option value="JOINED">Joined</option>
-              <option value="NOT_INTERESTED">Not interested</option>
-            </select>
-          </label>
-          <label class="admission-filter-field" for="admissionLeadSourceFilter">
-            <span>Source</span>
-            <select id="admissionLeadSourceFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()">
-              <option value="ALL">All sources</option>
-            </select>
-          </label>
+          <label class="admin-search admission-search" for="admissionLeadSearch"><span aria-hidden="true">⌕</span><input id="admissionLeadSearch" type="search" placeholder="Search name, mobile, chapter, campaign or notes" oninput="WTC_ADMISSION_ADMIN.applyFilters()"></label>
+          <label class="admission-filter-field" for="admissionLeadStatusFilter"><span>Status</span><select id="admissionLeadStatusFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()"><option value="ALL">All statuses</option><option value="NEW">New</option><option value="CONTACTED">Contacted</option><option value="DEMO_BOOKED">Demo booked</option><option value="JOINED">Joined</option><option value="NOT_INTERESTED">Not interested</option></select></label>
+          <label class="admission-filter-field" for="admissionLeadTypeFilter"><span>Lead type</span><select id="admissionLeadTypeFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()"><option value="ALL">All lead types</option><option value="DIAGNOSTIC">Diagnostic reports</option><option value="DEMO_FORM">Demo enquiries</option></select></label>
+          <label class="admission-filter-field" for="admissionLeadCampaignFilter"><span>Campaign</span><select id="admissionLeadCampaignFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()"><option value="ALL">All campaigns</option></select></label>
+          <label class="admission-filter-field" for="admissionLeadFollowupFilter"><span>Follow-up</span><select id="admissionLeadFollowupFilter" onchange="WTC_ADMISSION_ADMIN.applyFilters()"><option value="ALL">All follow-ups</option><option value="DUE_TODAY">Due today</option><option value="OVERDUE">Overdue</option><option value="UPCOMING">Upcoming</option><option value="NONE">No date</option><option value="CLOSED">Joined / closed</option></select></label>
         </div>
 
-        <div class="admission-list-head">
-          <span><b id="admissionVisibleCount">0</b> lead(s) shown</span>
-          <small>Newest enquiries appear first.</small>
-        </div>
-
-        <div id="admissionLeadList" class="admission-lead-list">
-          <div class="admission-empty">No lead data loaded yet.</div>
-        </div>
+        <div class="admission-list-head"><span><b id="admissionVisibleCount">0</b> lead(s) shown</span><small>Prioritize overdue and report-requested leads first.</small></div>
+        <div id="admissionLeadList" class="admission-lead-list"><div class="admission-empty">No lead data loaded yet.</div></div>
       </div>
     </section>
 
@@ -625,7 +607,7 @@
 <script src="assets/js/ai-content.js"></script>
 <script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js?v=h1-1"></script>
-<script src="assets/js/admin-admission-leads.js?v=h1-1"></script>
+<script src="assets/js/admin-admission-leads.js?v=h1-3a"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

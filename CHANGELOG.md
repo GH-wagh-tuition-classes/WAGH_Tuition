@@ -1,3 +1,9 @@
+# H1.3A — Diagnostic Report & Conversion Engine
+
+- Added personalized diagnostic reports, campaign attribution and conversion-focused Admin analytics.
+- Expanded ADMISSION_LEADS through a safe additive migration to 37 columns.
+- Preserved H1.0, H1.1 and H1.2 functionality.
+
 # Changelog — Home Diagnostic Funnel H1.2
 
 ## Added

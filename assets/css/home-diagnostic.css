@@ -69,3 +69,25 @@
 @media(max-width:900px){.diagnostic-shell{grid-template-columns:1fr}.diagnostic-intro{position:relative;top:auto}.diagnostic-workspace{min-height:0}}
 @media(max-width:620px){.diagnostic-section{padding-bottom:78px}.diagnostic-intro,.diagnostic-workspace{border-radius:19px;padding:20px}.diagnostic-selector-grid,.diagnostic-report-form{grid-template-columns:1fr}.diagnostic-selector-grid .field:last-of-type,.diagnostic-report-form .full-field,.diagnostic-report-form .consent-row,.diagnostic-report-form .diagnostic-report-actions,.diagnostic-report-form .form-status{grid-column:auto}.diagnostic-panel-head{display:block}.diagnostic-badge{margin-top:12px}.diagnostic-submit-row{display:block}.diagnostic-submit-row .btn{width:100%;min-width:0}.diagnostic-test-head{align-items:flex-start}.diagnostic-question-card{padding:17px}.diagnostic-question-meta{align-items:flex-start}.diagnostic-option{grid-template-columns:34px minmax(0,1fr) 18px;padding:12px}.diagnostic-question-actions{display:grid;grid-template-columns:1fr 1fr}.diagnostic-question-actions .btn:last-child{grid-column:1/-1}.diagnostic-result-hero{grid-template-columns:1fr;text-align:center;padding:22px}.diagnostic-score-ring{margin:auto}.diagnostic-result-stats{gap:7px}.diagnostic-result-stat{padding:12px 7px}.diagnostic-report-actions .btn{width:100%}}
 .path-actions{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:10px}.path-actions .text-link{margin-top:0}.diagnostic-path-link{color:#137d82!important}
+
+
+/* H1.3A — Personalized Diagnostic Report & Conversion */
+.diagnostic-report-panel{--report-accent:#168197}
+.diagnostic-score-ring{background:radial-gradient(circle,#fff 0 52%,transparent 53%),conic-gradient(#f5c451 calc(var(--score,0)*1%),rgba(255,255,255,.18) 0);transition:background .35s ease}
+.diagnostic-result-badges{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.diagnostic-performance-badge{display:inline-flex;align-items:center;border-radius:999px;padding:7px 11px;font-size:.75rem;font-weight:900;letter-spacing:.03em;background:#dbeafe;color:#1d4ed8}
+.diagnostic-performance-badge.excellent{background:#dcfce7;color:#166534}.diagnostic-performance-badge.good{background:#dff6f2;color:#08775e}.diagnostic-performance-badge.developing{background:#fef3c7;color:#8a5a00}.diagnostic-performance-badge.foundation{background:#fee2e2;color:#991b1b}
+.diagnostic-result-stats{grid-template-columns:repeat(4,1fr)}
+.diagnostic-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.diagnostic-insight-card{display:flex;gap:14px;border:1px solid #dbe9eb;border-radius:18px;padding:18px;background:#fff}
+.diagnostic-insight-card.strong{background:#f0fdf7;border-color:#bde8d1}.diagnostic-insight-card.focus{background:#fffaf0;border-color:#eadca8}
+.diagnostic-insight-card h4{margin:0 0 4px;color:#173f47}.diagnostic-insight-card p{margin:0 0 11px;color:#61767b;font-size:.86rem;line-height:1.45}
+.diagnostic-insight-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:12px;background:#168197;color:#fff;font-weight:900}.diagnostic-insight-card.focus .diagnostic-insight-icon{background:#d18a00}
+.diagnostic-insight-card.strong .diagnostic-topic-chips span{background:#dcfce7;color:#166534}.diagnostic-insight-card.focus .diagnostic-topic-chips span{background:#fff0c9;color:#775500}
+.diagnostic-recommendation-card{border-radius:20px;padding:22px;background:linear-gradient(135deg,#f0f9ff,#f0fdf4);border:1px solid #cae4e7;margin-bottom:24px}
+.diagnostic-recommendation-card h3{margin:5px 0 7px;color:#143f47}.diagnostic-recommendation-card>p{margin:0;color:#516b71;line-height:1.55}
+.diagnostic-plan-list{display:grid;gap:8px;margin:16px 0 0;padding-left:22px;color:#294f57}.diagnostic-plan-list li{padding-left:3px;line-height:1.45}
+.diagnostic-conversion-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}.diagnostic-conversion-actions .text-link{margin-left:auto}
+.diagnostic-report-card{border:1px solid #d8e8ea;border-radius:20px;padding:22px;background:#fbfefe}.diagnostic-report-card>h3{margin:5px 0 6px}
+.diagnostic-success-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+@media(max-width:720px){.diagnostic-result-stats{grid-template-columns:repeat(2,1fr)}.diagnostic-insight-grid{grid-template-columns:1fr}.diagnostic-conversion-actions .btn,.diagnostic-conversion-actions .text-link,.diagnostic-success-actions .btn{width:100%;text-align:center;margin-left:0}.diagnostic-result-badges{justify-content:center}}

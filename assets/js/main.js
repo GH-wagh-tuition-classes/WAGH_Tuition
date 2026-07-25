@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Home Page & Conversion Funnel H1.0 */
+/* WAGH Tuition Classes — Home Page & Conversion Funnel H1.3A */
 const WTC_HOME = (() => {
   const PHONE_DISPLAY = '95370 36383';
 
@@ -189,7 +189,7 @@ const WTC_HOME = (() => {
     const data = Object.fromEntries(new FormData(form).entries());
     if (String(data.website || '').trim()) return;
 
-    const lead = {
+    const baseLead = {
       studentName:String(data.studentName || '').trim(),
       parentMobile:normalizeMobile(data.parentMobile),
       className:String(data.className || '').trim(),
@@ -197,10 +197,11 @@ const WTC_HOME = (() => {
       medium:String(data.medium || '').trim(),
       subject:String(data.subject || '').trim(),
       preferredTime:String(data.preferredTime || 'Any suitable time').trim(),
-      source:sourceDetails(),
+      source:'DEMO_FORM',
       pageUrl:window.location.href.split('#')[0],
       consent:String(data.consent || '') === 'yes'
     };
+    const lead = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(baseLead) : baseLead;
 
     if (!/^\d{10}$/.test(lead.parentMobile)) {
       WTC_UI.setStatus('admissionStatus', 'Enter a valid 10-digit mobile number.', 'error');
@@ -276,5 +277,6 @@ const WTC_HOME = (() => {
   return { initialize, showAuthPanel, PHONE_DISPLAY };
 })();
 
+window.WTC_HOME = WTC_HOME;
 document.addEventListener('DOMContentLoaded', WTC_HOME.initialize);
 window.addEventListener('pageshow', () => WTC_HOME && WTC_AUTH && WTC_HOME.initialize && WTC_AUTH.getUser() && WTC_AUTH.redirectByRole(WTC_AUTH.getUser()));

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Home Diagnostic Funnel H1.2 */
+/* WAGH Tuition Classes — Diagnostic Report & Conversion Engine H1.3A */
 window.WTC_DIAGNOSTIC = (() => {
   const MAX_QUESTIONS = 10;
   const MIN_QUESTIONS = 3;
@@ -31,6 +31,9 @@ window.WTC_DIAGNOSTIC = (() => {
     byId('diagnosticSubject')?.addEventListener('change', onSubjectChange);
     byId('diagnosticChapter')?.addEventListener('change', onChapterChange);
     byId('diagnosticRestart')?.addEventListener('click', restart);
+    byId('diagnosticBookDemo')?.addEventListener('click', focusReportForm);
+    byId('diagnosticCreateAccount')?.addEventListener('click', openSignupFromReport);
+    byId('diagnosticSuccessCreateAccount')?.addEventListener('click', openSignupFromReport);
     byId('diagnosticLeadForm')?.addEventListener('submit', submitDiagnosticLead);
     byId('diagnosticParentMobile')?.addEventListener('input', event => {
       event.currentTarget.value = normalizeMobile(event.currentTarget.value).slice(0, 10);
@@ -287,12 +290,19 @@ window.WTC_DIAGNOSTIC = (() => {
         answers:{ ...state.answers }
       });
       if (!response || response.success === false) throw new Error(response?.message || 'The diagnostic could not be scored.');
+      const percent = Number(response.percent || 0);
+      const profile = localPerformanceProfile(percent);
       state.result = {
         correct:Number(response.correct || 0),
         total:Number(response.total || state.questions.length || 0),
-        percent:Number(response.percent || 0),
-        weakTopics:Array.isArray(response.weakTopics) ? response.weakTopics : [],
+        percent,
+        wrong:Number(response.wrong ?? Math.max(0, Number(response.total || 0) - Number(response.correct || 0) - Number(response.unanswered || 0))),
         unanswered:Number(response.unanswered || 0),
+        strongTopics:Array.isArray(response.strongTopics) ? response.strongTopics : [],
+        weakTopics:Array.isArray(response.weakTopics) ? response.weakTopics : [],
+        topicPerformance:Array.isArray(response.topicPerformance) ? response.topicPerformance : [],
+        performanceLevel:normalize(response.performanceLevel || profile.level),
+        recommendedAction:normalize(response.recommendedAction || profile.action),
         elapsedSec:Math.max(1, Math.round((Date.now() - state.startedAt) / 1000))
       };
       renderResult();
@@ -308,24 +318,53 @@ window.WTC_DIAGNOSTIC = (() => {
 
   function renderResult() {
     const result = state.result;
+    const profile = localPerformanceProfile(result.percent);
     const subjectName = state.selectedSubject?.subjectName || state.selectedSubject?.name || 'Subject';
     const chapterName = state.selectedChapter?.chapterName || state.selectedChapter?.name || 'Chapter';
+    const strongTopics = result.strongTopics.length ? result.strongTopics : inferStrongTopics(result.topicPerformance);
+    const weakTopics = result.weakTopics.length ? result.weakTopics : inferWeakTopics(result.topicPerformance);
+    const level = result.performanceLevel || profile.level;
+
     setText('diagnosticResultPercent', `${result.percent}%`);
     setText('diagnosticResultScore', `${result.correct}/${result.total} correct`);
     setText('diagnosticResultMessage', resultMessage(result.percent));
     setText('diagnosticResultContext', `${selectorContext().className} · ${selectorContext().board} · ${selectorContext().medium} · ${subjectName} · ${chapterName}`);
     setText('diagnosticCorrectCount', result.correct);
-    setText('diagnosticWrongCount', result.total - result.correct - result.unanswered);
+    setText('diagnosticWrongCount', result.wrong);
     setText('diagnosticUnansweredCount', result.unanswered);
-    const weakBox = byId('diagnosticWeakTopics');
-    if (weakBox) {
-      weakBox.innerHTML = result.weakTopics.length
-        ? result.weakTopics.map(topic => `<span>${escapeHTML(topic)}</span>`).join('')
-        : '<span class="strong-topic">Strong across the sampled topics</span>';
-    }
+    setText('diagnosticElapsedTime', formatDuration(result.elapsedSec));
+    setText('diagnosticPerformanceBadge', level);
+    setText('diagnosticRecommendationTitle', profile.title);
+    setText('diagnosticRecommendedAction', result.recommendedAction || profile.action);
+
+    const ring = byId('diagnosticScoreRing');
+    if (ring) ring.style.setProperty('--score', Math.max(0, Math.min(100, result.percent)));
+    const badge = byId('diagnosticPerformanceBadge');
+    if (badge) badge.className = `diagnostic-performance-badge ${normalizeLower(level).replace(/\s+/g, '-')}`;
+    renderTopicChips('diagnosticStrongTopics', strongTopics, 'No strong topic identified in this short sample yet.', 'strong-topic');
+    renderTopicChips('diagnosticWeakTopics', weakTopics, 'No major focus topic identified in this sample.', 'strong-topic');
+
+    const plan = byId('diagnosticPlanItems');
+    if (plan) plan.innerHTML = profile.steps.map(step => `<li>${escapeHTML(step)}</li>`).join('');
     const leadStatus = byId('diagnosticLeadStatus');
     if (leadStatus) { leadStatus.textContent = ''; leadStatus.className = 'form-status'; }
     byId('diagnosticLeadSuccess')?.setAttribute('hidden', '');
+  }
+
+  function renderTopicChips(id, topics, emptyText, emptyClass='') {
+    const box = byId(id);
+    if (!box) return;
+    box.innerHTML = topics.length
+      ? topics.slice(0, 5).map(topic => `<span>${escapeHTML(topic)}</span>`).join('')
+      : `<span class="${emptyClass}">${escapeHTML(emptyText)}</span>`;
+  }
+
+  function inferStrongTopics(items) {
+    return (items || []).filter(item => Number(item.percent || 0) >= 70).sort((a,b) => Number(b.percent || 0) - Number(a.percent || 0)).map(item => normalize(item.topic)).filter(Boolean).slice(0, 4);
+  }
+
+  function inferWeakTopics(items) {
+    return (items || []).filter(item => Number(item.percent || 0) < 70).sort((a,b) => Number(a.percent || 0) - Number(b.percent || 0)).map(item => normalize(item.topic)).filter(Boolean).slice(0, 4);
   }
 
   async function submitDiagnosticLead(event) {
@@ -355,7 +394,8 @@ window.WTC_DIAGNOSTIC = (() => {
     const subjectName = state.selectedSubject.subjectName || state.selectedSubject.name || '';
     const chapterId = normalize(state.selectedChapter.chapterId || state.selectedChapter.id);
     const chapterName = state.selectedChapter.chapterName || state.selectedChapter.name || '';
-    const payload = {
+    const reportRequestedAt = new Date().toISOString();
+    const basePayload = {
       studentName:normalize(data.studentName),
       parentMobile:mobile,
       className:context.className,
@@ -371,9 +411,14 @@ window.WTC_DIAGNOSTIC = (() => {
       diagnosticScore:state.result.correct,
       diagnosticTotal:state.result.total,
       diagnosticPercent:state.result.percent,
+      performanceLevel:state.result.performanceLevel,
+      strongTopics:state.result.strongTopics.join(', '),
       weakTopics:state.result.weakTopics.join(', '),
-      diagnosticTakenAt:new Date().toISOString()
+      recommendedAction:state.result.recommendedAction,
+      diagnosticTakenAt:reportRequestedAt,
+      reportRequestedAt
     };
+    const payload = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(basePayload) : basePayload;
 
     WTC_UI.setBusy?.(button, true, 'Sending report…');
     setLeadStatus('Saving the diagnostic report and demo request…', 'info');
@@ -404,7 +449,7 @@ window.WTC_DIAGNOSTIC = (() => {
 
   function buildWhatsAppMessage(payload, leadId='') {
     const lines = [
-      'Hello WAGH Tuition Classes, I completed the free diagnostic test.',
+      'Hello WAGH Tuition Classes, I completed the free chapter diagnostic.',
       '',
       `Student: ${payload.studentName}`,
       `Class: ${payload.className}`,
@@ -413,9 +458,13 @@ window.WTC_DIAGNOSTIC = (() => {
       `Subject: ${payload.subject}`,
       `Chapter: ${payload.chapterName}`,
       `Score: ${payload.diagnosticScore}/${payload.diagnosticTotal} (${payload.diagnosticPercent}%)`,
+      `Performance level: ${payload.performanceLevel || '—'}`,
+      `Strong topics: ${payload.strongTopics || 'Not identified in this sample'}`,
       `Focus topics: ${payload.weakTopics || 'No major weak topic in this sample'}`,
+      `Recommended next step: ${payload.recommendedAction || 'Focused revision and guided practice'}`,
       `Preferred contact time: ${payload.preferredTime}`
     ];
+    if (payload.campaign) lines.push(`Campaign: ${payload.campaign}`);
     if (leadId) lines.push(`Enquiry ID: ${leadId}`);
     lines.push('', 'Please share guidance and a free demo time.');
     return lines.join('\n');
@@ -428,6 +477,38 @@ window.WTC_DIAGNOSTIC = (() => {
   function savePendingLead(payload) {
     try { localStorage.setItem('wtcPendingDiagnosticLead', JSON.stringify({ ...payload, savedAt:Date.now() })); }
     catch (error) {}
+  }
+
+  function focusReportForm() {
+    byId('diagnosticReportFormCard')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    window.setTimeout(() => byId('diagnosticStudentName')?.focus({ preventScroll:true }), 450);
+  }
+
+  function openSignupFromReport() {
+    const context = selectorContext();
+    const name = normalize(byId('diagnosticStudentName')?.value);
+    if (name && byId('signupName')) byId('signupName').value = name;
+    if (byId('signupClass')) byId('signupClass').value = context.className;
+    if (byId('signupBoard')) byId('signupBoard').value = context.board;
+    if (byId('signupMedium')) byId('signupMedium').value = context.medium;
+    window.WTC_HOME?.showAuthPanel?.('signup');
+    byId('portal-access')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    window.setTimeout(() => (name ? byId('signupMobile') : byId('signupName'))?.focus({ preventScroll:true }), 450);
+  }
+
+  function formatDuration(seconds) {
+    const total = Math.max(0, Number(seconds || 0));
+    const minutes = Math.floor(total / 60);
+    const remain = total % 60;
+    return minutes ? `${minutes}m ${remain}s` : `${remain}s`;
+  }
+
+  function localPerformanceProfile(percent) {
+    const value = Number(percent || 0);
+    if (value >= 80) return { level:'Excellent', title:'Move from accuracy to mastery', action:'Continue with a full chapter test and spaced revision to maintain this strong performance.', steps:['Review the few missed or uncertain questions.','Attempt a full chapter test under time conditions.','Revisit the chapter after two to three days for retention.'] };
+    if (value >= 60) return { level:'Good', title:'Strengthen the focus topics', action:'Revise the weaker concepts and complete a focused practice set before taking the full chapter test.', steps:['Revise the listed focus topics from notes or lesson material.','Practise 10–15 targeted questions.','Retake a chapter test and compare accuracy.'] };
+    if (value >= 40) return { level:'Developing', title:'Rebuild concepts with guided practice', action:'Study the chapter in smaller sections, then practise one concept at a time with feedback.', steps:['Review the chapter’s key definitions and examples.','Practise each focus topic separately.','Book guidance before attempting a full test.'] };
+    return { level:'Foundation', title:'Start with the chapter foundations', action:'Begin with core concepts and worked examples before moving to MCQ practice.', steps:['Learn the basic terms and ideas first.','Follow worked examples step by step.','Use a guided demo to create a simple revision plan.'] };
   }
 
   function restart() {

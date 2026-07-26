@@ -260,7 +260,7 @@ const WTC_HOME = (() => {
 
   function initializeYear() {
     const year = byId('currentYear');
-    if (year) year.textContent = String(new Date().getFullYear());
+    if (year) year.textContent = String(window.WTC_TIME?.year?.() || new Date().getFullYear());
   }
 
   function initialize() {

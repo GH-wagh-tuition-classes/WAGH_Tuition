@@ -8,6 +8,10 @@ window.WTC_CONFIG = {
   LOGIN_PAGE: '/WAGH_Tuition/index.html#login',
   WHATSAPP_NUMBER: '919537036383',
   WHATSAPP_LINK: 'https://wa.me/919537036383',
+  TIMEZONE: 'Asia/Kolkata',
+  TIMEZONE_LABEL: 'India Standard Time (IST)',
+  DATE_KEY_FORMAT: 'YYYY-MM-DD',
+  DISPLAY_DATE_FORMAT: 'DD MMM YYYY, hh:mm A',
   PERFORMANCE: {
     CACHE_VERSION: 'stage1-si1-fv1-rp1-pcr1',
     API_TIMEOUT_MS: 15000,

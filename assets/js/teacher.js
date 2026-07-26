@@ -704,7 +704,7 @@ const TeacherApp = (() => {
     const rows = [['Record Type','Student/Test ID','Name/Title','Board/Chapter','Medium/Type','Attempts','Tests Attempted','Completion %','Average %','Progress %','Trend/Status']];
     (classReport.students || []).forEach(row => rows.push(['Student',row.studentId,row.name,row.board,row.medium,row.attemptCount,row.testsAttempted,row.testCompletionRate,row.averagePercent,row.progressPercent,row.trend]));
     (classReport.tests || []).forEach(row => rows.push(['Test',row.testId,row.testTitle,row.chapterName,row.testType,row.attemptCount,row.attemptedStudents,row.completionRate,row.averagePercent,'',row.performanceStatus]));
-    downloadCsv(rows, `WTC_Class_Report_${new Date().toISOString().slice(0,10)}.csv`);
+    downloadCsv(rows, `WTC_Class_Report_${window.WTC_TIME?.todayKey?.() || 'report'}.csv`);
   }
 
   function printTestReport() {
@@ -739,7 +739,7 @@ const TeacherApp = (() => {
   function csvCell(value) { const raw = String(value ?? ''); const safe = /^[=+@]/.test(raw) || /^-[^0-9.]/.test(raw) ? `'${raw}` : raw; return `"${safe.replace(/"/g, '""')}"`; }
   function safeFileName(value) { return String(value || 'Report').replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'Report'; }
   function signedNumber(value) { const number = numberText(value); return number > 0 ? `+${number}` : String(number); }
-  function dateTime(value) { const time = new Date(value || 0).getTime(); return Number.isFinite(time) ? time : 0; }
+  function dateTime(value) { return window.WTC_TIME?.parse?.(value)?.getTime?.() || 0; }
   function testMetric(label, value) { return `<div><small>${escapeHTML(label)}</small><b>${escapeHTML(String(value ?? '—'))}</b></div>`; }
   function reportStat(label, value) { return `<div class="teacher-report-stat"><small>${escapeHTML(label)}</small><strong>${escapeHTML(String(value ?? '—'))}</strong></div>`; }
   function reportPreviewMetric(label, value) { return `<div><small>${escapeHTML(label)}</small><b>${escapeHTML(String(value ?? '—'))}</b></div>`; }
@@ -1004,7 +1004,7 @@ const TeacherApp = (() => {
     if (!student) return showToast('Choose an assigned student.', 'error');
     if (!type || !dueDate || !note) return showToast('Student, type, due date and note are required.', 'error');
     if (note.length > 500) return showToast('The follow-up note must be 500 characters or fewer.', 'error');
-    const now = new Date().toISOString();
+    const now = window.WTC_TIME?.nowStamp?.() || '';
     if (editId) {
       const index = followUps.findIndex(item => item.id === editId);
       if (index < 0) return showToast('This follow-up could not be found.', 'error');
@@ -1037,7 +1037,7 @@ const TeacherApp = (() => {
     if (!item) return;
     if (action === 'complete') {
       item.status = 'COMPLETED';
-      item.completedAt = new Date().toISOString();
+      item.completedAt = window.WTC_TIME?.nowStamp?.() || '';
       item.updatedAt = item.completedAt;
       persistFollowUps();
       renderFollowUpWorkspace();
@@ -1045,7 +1045,7 @@ const TeacherApp = (() => {
     } else if (action === 'reopen') {
       item.status = 'OPEN';
       item.completedAt = '';
-      item.updatedAt = new Date().toISOString();
+      item.updatedAt = window.WTC_TIME?.nowStamp?.() || '';
       persistFollowUps();
       renderFollowUpWorkspace();
       showToast('Follow-up reopened.', 'success');
@@ -1135,10 +1135,10 @@ const TeacherApp = (() => {
   }
 
   function dueStateLabel(value) { return ({ overdue:'Overdue', 'due-today':'Due today', upcoming:'Upcoming', completed:'Completed' })[value] || 'Open'; }
-  function isoDate(value) { const date = value instanceof Date ? value : new Date(value); const offset = date.getTimezoneOffset(); return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10); }
-  function addDays(value, days) { const date = new Date(value); date.setDate(date.getDate() + Number(days || 0)); return date; }
-  function dateOnlyTime(value) { if (!value) return 0; const parts = String(value).slice(0, 10).split('-').map(Number); if (parts.length !== 3 || parts.some(Number.isNaN)) return 0; return new Date(parts[0], parts[1] - 1, parts[2]).getTime(); }
-  function formatDateOnly(value) { const time = dateOnlyTime(value); return time ? new Intl.DateTimeFormat('en-IN', { day:'2-digit', month:'short', year:'numeric' }).format(new Date(time)) : 'No due date'; }
+  function isoDate(value) { return window.WTC_TIME?.dateKey?.(value) || ''; }
+  function addDays(value, days) { return window.WTC_TIME?.addDays?.(value, days) || value; }
+  function dateOnlyTime(value) { return window.WTC_TIME?.parse?.(window.WTC_TIME?.dateKey?.(value) || value)?.getTime?.() || 0; }
+  function formatDateOnly(value) { return value ? (window.WTC_TIME?.formatDate?.(value) || String(value)) : 'No due date'; }
 
   function renderLoadError(message) {
     const safe = escapeHTML(message || 'Could not load teacher data.');
@@ -1260,11 +1260,7 @@ const TeacherApp = (() => {
 
   function formatDate(value, compact=false) {
     if (!value) return compact ? 'No activity recorded' : 'Date unavailable';
-    const raw = String(value);
-    let parsed = new Date(raw);
-    if (Number.isNaN(parsed.getTime()) && /^\d{4}-\d{2}-\d{2} /.test(raw)) parsed = new Date(raw.replace(' ', 'T'));
-    if (Number.isNaN(parsed.getTime())) return raw;
-    return new Intl.DateTimeFormat('en-IN', compact ? { day:'2-digit', month:'short', year:'numeric' } : { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }).format(parsed);
+    return compact ? (window.WTC_TIME?.formatDate?.(value) || String(value)) : (window.WTC_TIME?.formatDateTime?.(value) || String(value));
   }
 
   function clampPercent(value) { return Math.max(0, Math.min(100, numberText(value))); }

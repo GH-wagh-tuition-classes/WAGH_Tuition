@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Homepage Chapter Challenge Card H1.3B-R1 */
+/* WAGH Tuition Classes — Homepage Multi-Subject Chapter Challenge Card H1.3B-R2 */
 const WTC_HOME_DAILY_CHALLENGE = (() => {
   let user = null;
   let statusData = null;
@@ -34,7 +34,7 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
   }
 
   function renderLogin() {
-    setText('dailyChallengeSubject','One chapter challenge. 20 questions. Every day.');
+    setText('dailyChallengeSubject','One subject. Selected chapters. 20 questions every day.');
     setText('dailyChallengeMessage','Login as a Student to enter the official challenge attempt. Guests can still use the free chapter diagnostic below.');
     setText('dailyChallengeState','Student login required');
     setButton('Login to Join',false);
@@ -48,8 +48,8 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
       return setButton('Unavailable',true);
     }
     const challenge = data.challenge || {};
-    setText('dailyChallengeSubject',challenge.chapterNames?.join(' + ') || challenge.subjectName || 'Today’s Chapter');
-    setText('dailyChallengeMessage',`${challenge.questionCount || 20} chapter MCQs • ${challenge.durationMin || 20} minutes • One official attempt`);
+    setText('dailyChallengeSubject',`${challenge.subjectName ? `${challenge.subjectName} — ` : ''}${challenge.chapterNames?.join(' + ') || 'Today’s Chapter'}`);
+    setText('dailyChallengeMessage',`${challenge.questionCount || 20} chapter MCQs • ${challenge.durationMin || 20} minutes • Closes ${challenge.closesAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.closesAt) || 'today'} IST`);
     setText('dailyChallengeProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
     if (data.state === 'COMPLETED') {
       setText('dailyChallengeState',`Completed • ${data.result?.score || 0}/${data.result?.total || 20} • ${data.result?.percent || 0}%`);
@@ -60,8 +60,14 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
     } else if (data.state === 'EXPIRED') {
       setText('dailyChallengeState','Today’s official attempt has expired');
       setButton('Attempt Expired',true);
+    } else if (data.state === 'UPCOMING') {
+      setText('dailyChallengeState',`Opens ${challenge.opensAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.opensAt) || 'later'} IST`);
+      setButton('Not Open Yet',true);
+    } else if (data.state === 'CLOSED') {
+      setText('dailyChallengeState','Today’s challenge is closed');
+      setButton('Closed Today',true);
     } else {
-      setText('dailyChallengeState','Available now');
+      setText('dailyChallengeState','Available now in India Standard Time');
       setButton('Start Today’s Challenge',false);
     }
   }

@@ -95,7 +95,7 @@ const WTC_STUDENT_ASSIGNED_TESTS = (() => {
   function label(value) { return String(value || '').replace(/_/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
   function setText(id,value) { const el=document.getElementById(id); if(el)el.textContent=String(value ?? ''); }
   function setBusy(button,busy,labelText) { if(!button)return; if(window.WTC_UI?.setBusy)return WTC_UI.setBusy(button,busy,labelText); if(busy){button.dataset.old=button.textContent;button.textContent=labelText;button.disabled=true;}else{button.textContent=button.dataset.old||button.textContent;button.disabled=false;} }
-  function formatDate(value,dateOnly=false) { if(!value)return ''; const date=new Date(String(value).replace(' ','T')); if(Number.isNaN(date.getTime()))return String(value); return new Intl.DateTimeFormat('en-IN',dateOnly?{day:'2-digit',month:'short',year:'numeric'}:{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date); }
+  function formatDate(value,dateOnly=false) { if(!value)return ''; return dateOnly ? (window.WTC_TIME?.formatDate?.(value)||String(value)) : (window.WTC_TIME?.formatDateTime?.(value)||String(value)); }
   function normalize(value='') { return String(value || '').trim().toLowerCase(); }
   function esc(value='') { return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
   function attr(value='') { return esc(value).replace(/`/g,'&#096;'); }

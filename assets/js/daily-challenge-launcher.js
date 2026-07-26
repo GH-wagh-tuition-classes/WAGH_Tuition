@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Chapter Daily Challenge shared launcher H1.3B-R1 */
+/* WAGH Tuition Classes — Chapter Daily Challenge shared launcher H1.3B-R2 */
 window.WTC_DAILY_CHALLENGE = (() => {
   function identity(user) {
     return {

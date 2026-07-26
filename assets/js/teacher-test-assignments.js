@@ -365,7 +365,7 @@ const WTC_TEACHER_TEST_ASSIGNMENTS = (() => {
   function unique(values) { return [...new Set((values||[]).filter(Boolean))].sort(); }
   function uniqueObjects(values) { const map=new Map(); (values||[]).forEach(item=>{ if(item?.value&&!map.has(item.value))map.set(item.value,item); }); return [...map.values()].sort((a,b)=>a.label.localeCompare(b.label)); }
   function fillSelect(id,items,label) { const el=document.getElementById(id); if(!el)return; const current=el.value; el.innerHTML=`<option value="">${esc(label)}</option>`+items.map(item=>typeof item==='string'?`<option>${esc(item)}</option>`:`<option value="${attr(item.value)}">${esc(item.label)}</option>`).join(''); if([...el.options].some(option=>option.value===current))el.value=current; }
-  function formatDate(value,dateOnly=false) { if(!value)return 'No due date'; let date=new Date(String(value).replace(' ','T')); if(Number.isNaN(date.getTime()))return String(value); return new Intl.DateTimeFormat('en-IN',dateOnly?{day:'2-digit',month:'short',year:'numeric'}:{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date); }
+  function formatDate(value,dateOnly=false) { if(!value)return 'No due date'; return dateOnly ? (window.WTC_TIME?.formatDate?.(value)||String(value)) : (window.WTC_TIME?.formatDateTime?.(value)||String(value)); }
   function assignmentRequestKey(input={}) {
     return JSON.stringify({
       teacherId:identity().teacherId,

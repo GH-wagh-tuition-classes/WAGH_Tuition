@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Chapter Daily Challenge Engine H1.3B-R1 */
+/* WAGH Tuition Classes — Multi-Subject Chapter Daily Challenge Engine H1.3B-R2 */
 const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   let user = null;
   let challenge = null;
@@ -57,7 +57,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
 
   function start() {
     text('dailyTestTitle', challenge.testTitle || 'Daily Chapter Challenge');
-    text('dailyTestMeta', [challenge.chapterNames?.join(' + ') || challenge.subjectName, challenge.className, challenge.board, challenge.medium, `${questions.length} questions`, `${challenge.durationMin || 20} minutes`].filter(Boolean).join(' • '));
+    text('dailyTestMeta', [challenge.subjectName, challenge.chapterNames?.join(' + '), challenge.className, challenge.board, challenge.medium, `${questions.length} questions`, `${challenge.durationMin || 20} minutes`, `Closes ${challenge.closesAtDisplay || formatDateTime(challenge.closesAt)} IST`].filter(Boolean).join(' • '));
     text('dailyInstructions', challenge.instructions || 'This challenge is separate from academic progress. Exact answers remain hidden until closing.');
     text('dailyTotal', questions.length);
     renderPalette();
@@ -226,9 +226,9 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   function scrollToQuestion(id) { document.getElementById(`dailyQ-${cssEscape(id)}`)?.scrollIntoView({behavior:'smooth',block:'start'}); }
   function setBusy(button,busy,label) { if (!button) return; if (window.WTC_UI?.setBusy) return WTC_UI.setBusy(button,busy,label); button.disabled=busy; if (label) button.textContent=label; }
   function text(id,value) { const el=document.getElementById(id); if(el) el.textContent=String(value ?? ''); }
-  function parseTime(value) { if(!value)return 0; const raw=String(value).trim().replace(' ','T'); const withZone=/[zZ]|[+\-]\d\d:\d\d$/.test(raw)?raw:`${raw}+05:30`; const date=new Date(withZone); return Number.isNaN(date.getTime())?0:date.getTime(); }
+  function parseTime(value) { return window.WTC_TIME?.parse?.(value)?.getTime?.() || 0; }
   function formatClock(sec) { return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
-  function formatDateTime(value) { const ms=parseTime(value); if(!ms)return String(value||''); return new Intl.DateTimeFormat('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(ms)); }
+  function formatDateTime(value) { return window.WTC_TIME?.formatDateTime?.(value,{hideYear:true}) || String(value||''); }
   function cssEscape(value='') { return window.CSS?.escape ? CSS.escape(String(value)) : String(value).replace(/[^A-Za-z0-9_-]/g,'\\$&'); }
   function esc(value='') { return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
   function attr(value='') { return esc(value).replace(/`/g,'&#096;'); }

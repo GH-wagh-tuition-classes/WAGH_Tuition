@@ -394,7 +394,7 @@ window.WTC_DIAGNOSTIC = (() => {
     const subjectName = state.selectedSubject.subjectName || state.selectedSubject.name || '';
     const chapterId = normalize(state.selectedChapter.chapterId || state.selectedChapter.id);
     const chapterName = state.selectedChapter.chapterName || state.selectedChapter.name || '';
-    const reportRequestedAt = new Date().toISOString();
+    const reportRequestedAt = window.WTC_TIME?.nowStamp?.() || '';
     const basePayload = {
       studentName:normalize(data.studentName),
       parentMobile:mobile,

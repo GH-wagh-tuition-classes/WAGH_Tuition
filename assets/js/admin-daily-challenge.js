@@ -1,10 +1,11 @@
-/* WAGH Tuition Classes — Admin Multi-Subject Chapter Challenge Manager H1.3B-R2 */
+/* WAGH Tuition Classes — Admin Private Leaderboard & Challenge Manager H1.3C */
 window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
   let user = null;
   let data = null;
   let opened = false;
   let rotationItems = [];
   let applyingConfig = false;
+  let activeAnalytics = null;
 
   function open() {
     if (opened) return;
@@ -20,6 +21,9 @@ window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
     byId('dcAdminSave')?.addEventListener('click', save);
     byId('dcAdminPrepare')?.addEventListener('click', prepare);
     byId('dcAddChapters')?.addEventListener('click', addSelectedChapters);
+    byId('dcRefreshAnalytics')?.addEventListener('click', loadAnalytics);
+    document.querySelectorAll('[data-dc-state]').forEach(button => button.addEventListener('click', () => setChallengeState(button.dataset.dcState)));
+    byId('dcFlaggedAttempts')?.addEventListener('click', handleFlagReview);
     ['dcBoard', 'dcClass', 'dcMedium'].forEach(id => byId(id)?.addEventListener('change', () => cascadeGroup(id)));
     byId('dcSubject')?.addEventListener('change', renderAvailableChapters);
     ['dcRotationStart', 'dcPreviewDate'].forEach(id => byId(id)?.addEventListener('change', updateDateDisplays));
@@ -54,6 +58,7 @@ window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
       renderServerClock();
       renderSelectors();
       renderConfigs();
+      renderAnalyticsList(result.todayAnalytics || []);
       message('Chapter catalogue loaded. Select a Board + Class + Medium group, then add chapters from one or more subjects.', 'success');
     } catch (error) {
       message(error.message || 'Could not load challenge manager.', 'error');
@@ -262,6 +267,7 @@ window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
       const result = await WTC_API.call({ action: 'adminPrepareDailyChallenge', ...identity(), configId, challengeDate });
       if (result?.success === false) throw new Error(result.message || 'Challenge could not be prepared.');
       renderPreview(result);
+      renderAnalytics(result.analytics || null);
       message(result.message || 'Challenge prepared.', 'success');
     } catch (error) {
       message(error.message || 'Challenge could not be prepared.', 'error');
@@ -274,7 +280,135 @@ window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
     const challenge = result.challenge || {};
     const host = byId('dcPreview');
     if (!host) return;
+    if (challenge.challengeId) byId('dcActiveChallengeId').value = challenge.challengeId;
     host.innerHTML = `<div class="dc-preview-head"><div><small>Frozen challenge • ${esc(challenge.timezoneLabel || 'IST')}</small><h3>${esc(challenge.testTitle || 'Chapter Challenge')}</h3><p>${esc([challenge.className, challenge.board, challenge.medium, challenge.subjectName].filter(Boolean).join(' • '))}</p><p>${esc(challenge.opensAtDisplay || challenge.opensAt || '')} → ${esc(challenge.closesAtDisplay || challenge.closesAt || '')}</p></div><b>${challenge.questionCount || 20} MCQs</b></div><ol>${(result.preview || []).map(question => `<li><span>Q${question.questionNo}</span><div><b>${esc(question.text)}</b><small>${esc(question.subjectName || challenge.subjectName || '')} • ${esc(question.chapterName || '')} • ${esc(question.topic || 'General')} • ${esc(question.difficulty || 'Medium')}</small></div></li>`).join('')}</ol>`;
+  }
+
+  async function loadAnalytics() {
+    if (!data) return message('Load the challenge manager first.', 'error');
+    const button = byId('dcRefreshAnalytics');
+    setBusy(button, true, 'Refreshing…');
+    try {
+      const result = await WTC_API.call({
+        action: 'adminGetDailyChallengeAnalytics',
+        ...identity(),
+        configId: val('dcConfigId'),
+        challengeDate: val('dcPreviewDate') || data.serverDate || ''
+      });
+      if (result?.success === false) throw new Error(result.message || 'Analytics could not be loaded.');
+      renderAnalyticsList(result.analytics || []);
+      message(`Challenge analytics refreshed for ${result.dateDisplay || result.date || 'selected date'} IST.`, 'success');
+    } catch (error) {
+      message(error.message || 'Analytics could not be loaded.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  function renderAnalyticsList(list) {
+    const items = Array.isArray(list) ? list : [];
+    if (!items.length) {
+      activeAnalytics = null;
+      byId('dcActiveChallengeId').value = '';
+      renderAnalytics(null);
+      return;
+    }
+    const currentConfig = val('dcConfigId');
+    const chosen = items.find(item => item?.challenge?.challengeId === val('dcActiveChallengeId'))
+      || items.find(item => !currentConfig || item?.challenge?.configId === currentConfig)
+      || items[0];
+    renderAnalytics(chosen);
+  }
+
+  function renderAnalytics(analytics) {
+    activeAnalytics = analytics || null;
+    const challenge = analytics?.challenge || {};
+    if (challenge.challengeId) byId('dcActiveChallengeId').value = challenge.challengeId;
+    text('dcStartedCount', Number(analytics?.startedCount || 0));
+    text('dcCompletedCount', Number(analytics?.completedCount || 0));
+    text('dcRankedCount', Number(analytics?.rankedCount || 0));
+    text('dcFlaggedCount', Number(analytics?.flaggedCount || 0));
+    text('dcAveragePercent', `${Number(analytics?.averagePercent || 0)}%`);
+    const state = String(challenge.challengeState || 'DRAFT').toUpperCase();
+    const stateBadge = byId('dcChallengeState');
+    if (stateBadge) {
+      stateBadge.textContent = state;
+      stateBadge.className = `dc-state-badge ${state.toLowerCase()}`;
+    }
+    text('dcChallengeStateMeta', challenge.challengeId
+      ? `${challenge.testTitle || 'Chapter Challenge'} • ${challenge.challengeDateDisplay || challenge.challengeDate || ''} • ${challenge.opensAtDisplay || ''} → ${challenge.closesAtDisplay || ''} IST`
+      : 'Prepare a challenge to manage its state.');
+    renderAdminLeaderboard(analytics?.leaderboard || []);
+    renderFlaggedAttempts(analytics?.flaggedAttempts || []);
+  }
+
+  function renderAdminLeaderboard(rows) {
+    const host = byId('dcAdminLeaderboard');
+    if (!host) return;
+    if (!rows.length) {
+      host.innerHTML = '<div class="dc-empty">No eligible ranked attempts yet.</div>';
+      return;
+    }
+    host.innerHTML = `<div class="dc-table-row dc-table-head"><span>Rank</span><span>Participant</span><span>Score</span><span>Time</span></div>${rows.map(row => `<div class="dc-table-row"><b>#${Number(row.rank || 0)}</b><span>${esc(row.label || 'Hidden Student')}</span><span>${Number(row.score || 0)}/${Number(row.total || 20)} · ${Number(row.percent || 0)}%</span><span>${formatDuration(row.totalTimeSec)}</span></div>`).join('')}`;
+  }
+
+  function renderFlaggedAttempts(rows) {
+    const host = byId('dcFlaggedAttempts');
+    if (!host) return;
+    if (!rows.length) {
+      host.innerHTML = '<div class="dc-empty">No attempts need review.</div>';
+      return;
+    }
+    host.innerHTML = rows.map(row => `<article class="dc-flag-card" data-live-id="${attr(row.liveId)}"><div><b>${esc(row.label || 'Hidden Student')}</b><span>${Number(row.score || 0)}/${Number(row.total || 20)} · ${Number(row.percent || 0)}% · ${formatDuration(row.totalTimeSec)}</span><small>${esc(row.reason || 'Unusually fast completion.')} • ${esc(formatDateTime(row.submittedAt))} IST</small></div><div><button type="button" data-review="APPROVED">Approve Rank</button><button type="button" data-review="EXCLUDED" class="danger">Exclude</button></div></article>`).join('');
+  }
+
+  async function setChallengeState(state) {
+    const challengeId = val('dcActiveChallengeId');
+    if (!challengeId) return message('Prepare or select a challenge first.', 'error');
+    const button = document.querySelector(`[data-dc-state="${state}"]`);
+    setBusy(button, true, 'Saving…');
+    try {
+      const result = await WTC_API.call({
+        action: 'adminSetDailyChallengeState',
+        ...identity(), challengeId, challengeState: state, note: val('dcStateNote')
+      });
+      if (result?.success === false) throw new Error(result.message || 'Challenge state could not be changed.');
+      renderAnalytics(result.analytics || null);
+      message(result.message || `Challenge state changed to ${state}.`, 'success');
+    } catch (error) {
+      message(error.message || 'Challenge state could not be changed.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  async function handleFlagReview(event) {
+    const button = event.target.closest('button[data-review]');
+    if (!button) return;
+    const card = button.closest('[data-live-id]');
+    const liveId = card?.dataset.liveId || '';
+    if (!liveId) return;
+    setBusy(button, true, 'Saving…');
+    try {
+      const result = await WTC_API.call({
+        action: 'adminReviewDailyChallengeAttempt',
+        ...identity(), liveId, decision: button.dataset.review
+      });
+      if (result?.success === false) throw new Error(result.message || 'Attempt review could not be saved.');
+      renderAnalytics(result.analytics || null);
+      message(result.message || 'Attempt review saved.', 'success');
+    } catch (error) {
+      message(error.message || 'Attempt review could not be saved.', 'error');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  function formatDuration(seconds) {
+    const value = Math.max(0, Number(seconds || 0));
+    const minutes = Math.floor(value / 60);
+    const remainder = value % 60;
+    return `${minutes}:${String(remainder).padStart(2, '0')}`;
   }
 
   function renderConfigs() {
@@ -293,6 +427,7 @@ window.WTC_DAILY_CHALLENGE_ADMIN = (() => {
     const config = (data?.configs || []).find(item => item.configId === id);
     if (!config) return;
     restoreGroup(config);
+    loadAnalytics();
   }
 
   function restoreGroup(config) {

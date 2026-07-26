@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Homepage Multi-Subject Chapter Challenge Card H1.3B-R2 */
+/* WAGH Tuition Classes — Homepage Multi-Subject Chapter Challenge Card H1.3C */
 const WTC_HOME_DAILY_CHALLENGE = (() => {
   let user = null;
   let statusData = null;
@@ -52,7 +52,7 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
     setText('dailyChallengeMessage',`${challenge.questionCount || 20} chapter MCQs • ${challenge.durationMin || 20} minutes • Closes ${challenge.closesAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.closesAt) || 'today'} IST`);
     setText('dailyChallengeProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
     if (data.state === 'COMPLETED') {
-      setText('dailyChallengeState',`Completed • ${data.result?.score || 0}/${data.result?.total || 20} • ${data.result?.percent || 0}%`);
+      setText('dailyChallengeState',`Completed • ${data.result?.score || 0}/${data.result?.total || 20} • ${data.result?.percent || 0}%${data.leaderboardSummary?.selfRank ? ` • Rank #${data.leaderboardSummary.selfRank}` : ` • ${Number(data.leaderboardSummary?.completedCount||0)} completed`}`);
       setButton('View Today’s Result',false);
     } else if (data.state === 'IN_PROGRESS') {
       setText('dailyChallengeState','Attempt in progress — resume before time ends');
@@ -60,14 +60,17 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
     } else if (data.state === 'EXPIRED') {
       setText('dailyChallengeState','Today’s official attempt has expired');
       setButton('Attempt Expired',true);
-    } else if (data.state === 'UPCOMING') {
+    } else if (data.state === 'SUSPENDED') {
+      setText('dailyChallengeState','Suspended by Admin');
+      setButton('Suspended',true);
+    } else if (data.state === 'DRAFT' || data.state === 'UPCOMING') {
       setText('dailyChallengeState',`Opens ${challenge.opensAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.opensAt) || 'later'} IST`);
       setButton('Not Open Yet',true);
     } else if (data.state === 'CLOSED') {
       setText('dailyChallengeState','Today’s challenge is closed');
       setButton('Closed Today',true);
     } else {
-      setText('dailyChallengeState','Available now in India Standard Time');
+      setText('dailyChallengeState',`Available now • ${Number(data.leaderboardSummary?.startedCount||0)} joined • IST`);
       setButton('Start Today’s Challenge',false);
     }
   }

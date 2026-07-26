@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Multi-Subject Chapter Daily Challenge Engine H1.3B-R2 */
+/* WAGH Tuition Classes — Private Chapter Challenge Leaderboard Engine H1.3C */
 const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   let user = null;
   let challenge = null;
@@ -21,7 +21,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
       const data = await WTC_API.call({ action:'studentOpenDailyChallenge', ...identity(), page:location.pathname });
       if (data?.success === false) throw new Error(data.message || 'Today’s challenge could not be opened.');
       challenge = data.challenge || {};
-      if (data.completed) return showCompleted(data.result || {});
+      if (data.completed) return showCompleted(data.result || {}, data.leaderboard || null, data.streak || null);
       attempt = data.attempt || {};
       questions = Array.isArray(data.questions) ? data.questions.map(normalizeQuestion).filter(q => q.id) : [];
       if (questions.length !== 20) throw new Error('Today’s challenge does not contain the required 20 questions.');
@@ -74,6 +74,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
   function bindWindowActions() {
     document.getElementById('dailyCloseWindow')?.addEventListener('click', closeWindow);
     document.getElementById('dailyCloseResult')?.addEventListener('click', closeWindow);
+    document.getElementById('dailyRefreshLeaderboard')?.addEventListener('click', loadLeaderboard);
     window.addEventListener('beforeunload', saveDraft);
   }
 
@@ -156,7 +157,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
       });
       if (data?.success === false) throw new Error(data.message || 'Chapter Challenge result could not be saved.');
       clearDraft();
-      showResult(data.result || {}, data.answersAvailableAt || challenge.closesAt, !!data.reviewLocked, !!data.reused);
+      showResult(data.result || {}, data.answersAvailableAt || challenge.closesAt, !!data.reviewLocked, !!data.reused, data.leaderboard || null, data.streak || null);
     } catch (error) {
       submitting = false;
       setBusy(button, false);
@@ -170,7 +171,7 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
     }
   }
 
-  function showCompleted(result) {
+  function showCompleted(result, leaderboard=null, streak=null) {
     challenge ||= {};
     document.getElementById('dailyLoading')?.classList.add('hidden');
     document.getElementById('dailyQuiz')?.classList.remove('hidden');
@@ -178,22 +179,69 @@ const WTC_DAILY_CHALLENGE_ENGINE = (() => {
     document.querySelector('.assigned-progress')?.classList.add('hidden');
     document.querySelector('.daily-rule-strip')?.classList.add('hidden');
     document.querySelector('.assigned-layout')?.classList.add('hidden');
-    showResult(result, challenge.closesAt || '', true, true);
+    showResult(result, challenge.closesAt || '', true, true, leaderboard, streak);
   }
 
-  function showResult(result, answersAvailableAt='', reviewLocked=true, reused=false) {
+  function showResult(result, answersAvailableAt='', reviewLocked=true, reused=false, leaderboard=null, streak=null) {
     if (timer) clearInterval(timer);
     const box = document.getElementById('dailyResult');
     const strong = result.strongTopics || 'Keep practising';
     const weak = result.weakTopics || 'No major weak topic detected';
     box.classList.remove('hidden');
-    box.innerHTML = `<div class="assigned-result-head"><div><span class="eyebrow">Chapter Challenge Result</span><h2>${result.percent>=80?'Excellent board-pattern performance!':result.percent>=60?'Good attempt — revise the focus topics.':'Use the focus topics for your next revision.'}</h2></div><div class="assigned-result-score">${esc(result.percent || 0)}%</div></div><div class="assigned-result-grid"><div><small>Score</small><b>${esc(result.score || 0)}/${esc(result.total || 20)}</b></div><div><small>Correct</small><b>${esc(result.correctCount ?? result.score ?? 0)}</b></div><div><small>Wrong</small><b>${esc(result.wrongCount || 0)}</b></div><div><small>Unanswered</small><b>${esc(result.unansweredCount || 0)}</b></div></div><div class="daily-result-topics"><div><small>Strong topics</small><b>${esc(strong)}</b></div><div><small>Focus topics</small><b>${esc(weak)}</b></div></div><div class="daily-result-lock">🔒 Exact correct answers and explanations remain hidden until today’s challenge closes${answersAvailableAt ? ` at ${esc(formatDateTime(answersAvailableAt))}` : ''}.</div><p class="assigned-save-status">${reused?'✅ Your saved official result was loaded safely.':'✅ Your temporary Chapter Challenge result is ready and is not added to academic progress.'}</p>`;
+    box.innerHTML = `<div class="assigned-result-head"><div><span class="eyebrow">Chapter Challenge Result</span><h2>${result.percent>=80?'Excellent board-pattern performance!':result.percent>=60?'Good attempt — revise the focus topics.':'Use the focus topics for your next revision.'}</h2></div><div class="assigned-result-score">${esc(result.percent || 0)}%</div></div><div class="assigned-result-grid"><div><small>Score</small><b>${esc(result.score || 0)}/${esc(result.total || 20)}</b></div><div><small>Correct</small><b>${esc(result.correctCount ?? result.score ?? 0)}</b></div><div><small>Wrong</small><b>${esc(result.wrongCount || 0)}</b></div><div><small>Unanswered</small><b>${esc(result.unansweredCount || 0)}</b></div></div><div class="daily-result-topics"><div><small>Strong topics</small><b>${esc(strong)}</b></div><div><small>Focus topics</small><b>${esc(weak)}</b></div></div><div class="daily-result-lock">🔒 Exact correct answers and explanations remain hidden until today’s challenge closes${answersAvailableAt ? ` at ${esc(formatDateTime(answersAvailableAt))}` : ''}.</div><p class="assigned-save-status">${result.suspicious && !result.rankedEligible ? '⚠️ Your result is saved, but ranking is pending Admin review because the completion time was unusually fast.' : reused?'✅ Your saved official result was loaded safely.':'✅ Your temporary Chapter Challenge result is ready and is not added to academic progress.'}</p>`;
     document.getElementById('dailySubmitButton')?.classList.add('hidden');
     document.getElementById('dailyReviewButton')?.classList.add('hidden');
     document.getElementById('dailyCloseResult')?.classList.remove('hidden');
     document.querySelectorAll('.assigned-option').forEach(button => button.disabled = true);
+    renderLeaderboard(leaderboard, streak);
     box.scrollIntoView({ behavior:'smooth', block:'center' });
     submitting = true;
+  }
+
+  async function loadLeaderboard() {
+    const button = document.getElementById('dailyRefreshLeaderboard');
+    setBusy(button, true, 'Refreshing…');
+    try {
+      const data = await WTC_API.call({
+        action: 'studentGetDailyChallengeLeaderboard',
+        ...identity(), challengeId: challenge?.challengeId || ''
+      });
+      if (data?.success === false) throw new Error(data.message || 'Leaderboard could not be loaded.');
+      renderLeaderboard(data.leaderboard || null, data.streak || null);
+    } catch (error) {
+      text('dailyLeaderboardMessage', error.message || 'Leaderboard could not be loaded.');
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
+  function renderLeaderboard(leaderboard, streak) {
+    const section = document.getElementById('dailyLeaderboard');
+    if (!section) return;
+    section.classList.remove('hidden');
+    const streakHost = document.getElementById('dailyStreakCards');
+    if (streakHost) {
+      streakHost.innerHTML = `<div><small>Current streak</small><strong>${Number(streak?.currentStreak || 0)} day${Number(streak?.currentStreak || 0) === 1 ? '' : 's'}</strong></div><div><small>Best streak</small><strong>${Number(streak?.bestStreak || 0)} day${Number(streak?.bestStreak || 0) === 1 ? '' : 's'}</strong></div><div><small>Challenges completed</small><strong>${Number(streak?.completedDays || 0)}</strong></div>`;
+    }
+    const message = document.getElementById('dailyLeaderboardMessage');
+    const rowsHost = document.getElementById('dailyLeaderboardRows');
+    if (!leaderboard) {
+      if (message) message.textContent = 'Leaderboard data is being prepared.';
+      if (rowsHost) rowsHost.innerHTML = '';
+      return loadLeaderboard();
+    }
+    if (!leaderboard.visible) {
+      if (message) message.textContent = `Leaderboard opens after ${Number(leaderboard.minimumCompletions || 5)} eligible completions. ${Number(leaderboard.completedCount || 0)} completed so far.`;
+      if (rowsHost) rowsHost.innerHTML = `<div class="daily-leaderboard-wait"><b>${Number(leaderboard.startedCount || 0)}</b><span>students started</span><b>${Number(leaderboard.completedCount || 0)}</b><span>completed</span></div>`;
+      return;
+    }
+    if (message) message.textContent = leaderboard.privacy || 'Only your name is visible to you.';
+    if (rowsHost) rowsHost.innerHTML = (leaderboard.rows || []).map(row => `<div class="daily-leader-row ${row.isSelf ? 'self' : ''}"><b>#${Number(row.rank || 0)}</b><span>${esc(row.label || 'Hidden Student')}</span><strong>${Number(row.score || 0)}/${Number(row.total || 20)} · ${Number(row.percent || 0)}%</strong><small>${formatDuration(row.totalTimeSec)}</small></div>`).join('') || '<div class="daily-leaderboard-wait">No ranked attempts yet.</div>';
+  }
+
+  function formatDuration(seconds) {
+    const value = Math.max(0, Number(seconds || 0));
+    return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
   }
 
   function updateTimer() {

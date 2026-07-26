@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Student Portal Multi-Subject Chapter Challenge Widget H1.3B-R2 */
+/* WAGH Tuition Classes — Student Portal Multi-Subject Chapter Challenge Widget H1.3C */
 const WTC_STUDENT_DAILY_CHALLENGE = (() => {
   let user = null;
 
@@ -46,12 +46,13 @@ const WTC_STUDENT_DAILY_CHALLENGE = (() => {
     text('wtcDailyTitle',chapterLabel);
     text('wtcDailyMessage',`${challenge.subjectName || 'Subject'} • ${challenge.questionCount || 20} questions • ${challenge.durationMin || 20} minutes • Closes ${challenge.closesAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.closesAt) || 'today'} IST`);
     text('wtcDailyProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
-    if (data.state === 'COMPLETED') { const score=Number(data.result?.score||0),total=Number(data.result?.total||20),percent=Number(data.result?.percent||0); text('wtcDailyState',`Challenge score ${score}/${total} (${percent}%)`); if(button){button.textContent='View Challenge Result';button.disabled=false;} }
+    if (data.state === 'COMPLETED') { const score=Number(data.result?.score||0),total=Number(data.result?.total||20),percent=Number(data.result?.percent||0),rank=data.leaderboardSummary?.selfRank; text('wtcDailyState',`Challenge score ${score}/${total} (${percent}%)${rank ? ` • Rank #${rank}` : ` • ${Number(data.leaderboardSummary?.completedCount||0)} completed`}`); if(button){button.textContent='View Challenge Result';button.disabled=false;} }
     else if (data.state === 'IN_PROGRESS') { text('wtcDailyState','In progress'); if(button){button.textContent='Resume Challenge';button.disabled=false;} }
     else if (data.state === 'EXPIRED') { text('wtcDailyState','Attempt expired'); if(button){button.textContent='Expired';button.disabled=true;} }
-    else if (data.state === 'UPCOMING') { text('wtcDailyState',`Opens ${challenge.opensAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.opensAt) || 'later'} IST`); if(button){button.textContent='Not Open Yet';button.disabled=true;} }
+    else if (data.state === 'SUSPENDED') { text('wtcDailyState','Suspended by Admin'); if(button){button.textContent='Suspended';button.disabled=true;} }
+    else if (data.state === 'DRAFT' || data.state === 'UPCOMING') { text('wtcDailyState',`Opens ${challenge.opensAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.opensAt) || 'later'} IST`); if(button){button.textContent='Not Open Yet';button.disabled=true;} }
     else if (data.state === 'CLOSED') { text('wtcDailyState','Closed today'); if(button){button.textContent='Closed';button.disabled=true;} }
-    else { text('wtcDailyState','Available today • IST'); if(button){button.textContent='Start Challenge';button.disabled=false;} }
+    else { text('wtcDailyState',`Available today • ${Number(data.leaderboardSummary?.startedCount||0)} joined • IST`); if(button){button.textContent='Start Challenge';button.disabled=false;} }
   }
 
   function renderError(message) { document.getElementById('wtcDailyChallengeWidget')?.classList.remove('loading'); text('wtcDailyMessage',message); text('wtcDailyState','Unavailable'); }

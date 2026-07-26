@@ -5,7 +5,7 @@
 
 var WTC_VERSION = Object.freeze({
   PLATFORM: '1.0',
-  API: '1.7.1',
+  API: '1.8.0',
   BACKEND_ARCHITECTURE: '2.4',
   RUNTIME_API: '1.0',
   FEATURE_ENGINE: '1.0',
@@ -22,7 +22,7 @@ var WTC_VERSION = Object.freeze({
   HOME_PAGE: 'H1.3A',
   HOME_DIAGNOSTIC: 'H1.3A',
   HOME_CONVERSION: 'H1.3A',
-  DAILY_CHALLENGE: 'H1.3B-R2.1',
+  DAILY_CHALLENGE: 'H1.3C',
   DATE_TIME_STANDARD: 'IST-1.1'
 });
 

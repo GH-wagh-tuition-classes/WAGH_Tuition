@@ -1,7 +1,7 @@
 /* ============================================================================
    FILE: api_router.gs
    PURPOSE: Central cumulative Runtime API router.
-   HOTFIX: H1.3B-R2.1 restores all Phase 2.5A–2.5G Teacher/Test routes while
+   H1.3C preserves all Phase 2.5A–2.5G Teacher/Test routes while
            preserving Home, Admission, Diagnostic and Daily Challenge routes.
 ============================================================================ */
 
@@ -27,9 +27,13 @@ function wtcApiActionMap_() {
     studentGetDailyChallengeStatus: typeof studentGetDailyChallengeStatus === 'function' ? studentGetDailyChallengeStatus : wtcMissingAction_,
     studentOpenDailyChallenge: typeof studentOpenDailyChallenge === 'function' ? studentOpenDailyChallenge : wtcMissingAction_,
     saveDailyChallengeResult: typeof saveDailyChallengeResult === 'function' ? saveDailyChallengeResult : wtcMissingAction_,
+    studentGetDailyChallengeLeaderboard: typeof studentGetDailyChallengeLeaderboard === 'function' ? studentGetDailyChallengeLeaderboard : wtcMissingAction_,
     adminGetDailyChallengeManager: typeof adminGetDailyChallengeManager === 'function' ? adminGetDailyChallengeManager : wtcMissingAction_,
     adminSaveDailyChallengeConfig: typeof adminSaveDailyChallengeConfig === 'function' ? adminSaveDailyChallengeConfig : wtcMissingAction_,
     adminPrepareDailyChallenge: typeof adminPrepareDailyChallenge === 'function' ? adminPrepareDailyChallenge : wtcMissingAction_,
+    adminGetDailyChallengeAnalytics: typeof adminGetDailyChallengeAnalytics === 'function' ? adminGetDailyChallengeAnalytics : wtcMissingAction_,
+    adminSetDailyChallengeState: typeof adminSetDailyChallengeState === 'function' ? adminSetDailyChallengeState : wtcMissingAction_,
+    adminReviewDailyChallengeAttempt: typeof adminReviewDailyChallengeAttempt === 'function' ? adminReviewDailyChallengeAttempt : wtcMissingAction_,
 
     /* Student catalogue / Feature Engine */
     getStudentBootstrap: runtimeApiGetStudentBootstrap,

@@ -1,6 +1,6 @@
 # WAGH Tuition Classes — All API Scripts
 
-**Cumulative development baseline:** `v2.3.1-R2-H1.3B-R2`
+**Cumulative development baseline:** `v2.3.1-R2-H1.3C`
 
 This package contains the latest active API-related scripts assembled from the current WAGH Tuition Classes development baseline.
 
@@ -68,7 +68,7 @@ This ZIP is a source-code backup. It does not include Google Apps Script deploym
 
 ## Current Home Challenge Release
 
-Use **H1.3B-R2 Multi-Subject Chapter Daily Challenge**. H1.3B and H1.3B-R1 are superseded. See `docs/HOME_CHAPTER_CHALLENGE_H1_3B_R2_RELEASE.md`.
+Use **H1.3C Private Leaderboard, Challenge Controls and Analytics** on top of the tested H1.3B-R2.1 challenge base. Earlier H1.3B, H1.3B-R1 and H1.3B-R2 packages are superseded. See `docs/HOME_CHALLENGE_H1_3C_RELEASE.md`.
 
 ## Project Time Standard
 

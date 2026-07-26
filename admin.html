@@ -8,7 +8,7 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
   <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-3a">
-  <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3b-r2">
+  <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3c">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -231,7 +231,7 @@
     <section id="dailyChallengePanel" class="admin-panel" data-panel-title="Chapter Challenge" data-panel-subtitle="Build an ordered multi-subject chapter rotation for each Board + Class + Medium group.">
       <div class="admin-panel-card dc-admin-panel">
         <div class="admin-section-heading">
-          <div><span class="admin-kicker">H1.3B-R2</span><h2>Daily Chapter Challenge Manager</h2><p class="muted">Add chapters from multiple subjects to one ordered rotation. Each day still uses only one subject and exactly 20 unique Published MCQs.</p></div>
+          <div><span class="admin-kicker">H1.3C</span><h2>Daily Chapter Challenge Manager</h2><p class="muted">Add chapters from multiple subjects, freeze one daily chapter test, monitor temporary participation, and manage the privacy-safe leaderboard.</p></div>
         </div>
         <div class="dc-rule-note"><b>Separation rule:</b> this module never writes to Progress Tracker, Test Results, MCQ Attempts, Skill Reports or Gamification. Temporary anonymous scores are deleted after closing.</div>
         <div class="dc-time-standard"><div><b>Project time standard</b><span id="dcServerClock">Loading India time…</span></div><small>All challenge dates and times use Asia/Kolkata — Tapi, Gujarat, India (IST / UTC+05:30).</small></div>
@@ -277,6 +277,31 @@
           </div>
         </div>
         <div class="dc-admin-preview"><div id="dcPreview" class="dc-preview"><div class="dc-empty">Prepared 20-question preview will appear here.</div></div></div>
+        <section class="dc-admin-analytics" aria-labelledby="dcAnalyticsHeading">
+          <div class="dc-analytics-head"><div><span class="admin-kicker">H1.3C · Temporary analytics</span><h3 id="dcAnalyticsHeading">Private Leaderboard &amp; Challenge Control</h3><p class="muted">No names are stored in challenge data. Admin also sees anonymous participants only.</p></div><button id="dcRefreshAnalytics" class="btn outline" type="button">Refresh Analytics</button></div>
+          <input id="dcActiveChallengeId" type="hidden">
+          <div class="dc-analytics-cards">
+            <div><small>Started</small><strong id="dcStartedCount">0</strong></div>
+            <div><small>Completed</small><strong id="dcCompletedCount">0</strong></div>
+            <div><small>Ranked</small><strong id="dcRankedCount">0</strong></div>
+            <div><small>Flagged</small><strong id="dcFlaggedCount">0</strong></div>
+            <div><small>Average</small><strong id="dcAveragePercent">0%</strong></div>
+          </div>
+          <div class="dc-state-panel">
+            <div><small>Effective challenge status</small><strong id="dcChallengeState" class="dc-state-badge draft">DRAFT</strong><p id="dcChallengeStateMeta" class="muted">Prepare a challenge to manage its state.</p></div>
+            <div class="dc-state-note"><label for="dcStateNote">Optional Admin note</label><input id="dcStateNote" type="text" maxlength="200" placeholder="Reason for closing or suspending"></div>
+            <div class="dc-state-actions">
+              <button type="button" data-dc-state="DRAFT">Draft</button>
+              <button type="button" data-dc-state="OPEN">Open</button>
+              <button type="button" data-dc-state="CLOSED">Close</button>
+              <button type="button" data-dc-state="SUSPENDED">Suspend</button>
+            </div>
+          </div>
+          <div class="dc-analytics-grid">
+            <article class="dc-leaderboard-panel"><div class="dc-list-head"><h4>Anonymous Top 10</h4><small>Scores are temporary and deleted after expiry.</small></div><div id="dcAdminLeaderboard" class="dc-admin-table"><div class="dc-empty">No ranked attempts yet.</div></div></article>
+            <article class="dc-flagged-panel"><div class="dc-list-head"><h4>Fast-attempt review</h4><small>Flagged attempts are excluded until approved.</small></div><div id="dcFlaggedAttempts" class="dc-flag-list"><div class="dc-empty">No attempts need review.</div></div></article>
+          </div>
+        </section>
         <div class="dc-admin-configs"><h3>Saved Board + Class + Medium configurations</h3><div id="dcConfigList" class="dc-config-list"><div class="dc-empty">No configurations loaded.</div></div></div>
       </div>
     </section>
@@ -671,7 +696,7 @@
 <script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js?v=h1-1"></script>
 <script src="assets/js/admin-admission-leads.js?v=h1-3a-ist-hotfix-1"></script>
-<script src="assets/js/admin-daily-challenge.js?v=h1-3b-r2"></script>
+<script src="assets/js/admin-daily-challenge.js?v=h1-3c"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

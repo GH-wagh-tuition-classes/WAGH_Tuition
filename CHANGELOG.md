@@ -1,3 +1,19 @@
+# Changelog — H1.3C Private Leaderboard, Controls & Analytics
+
+- Added a privacy-preserving temporary leaderboard: Top 10 plus the current student.
+- Shows the current student’s name only to themselves; every other participant is `Hidden Student`.
+- Added a five-completion visibility threshold, deterministic tie-breaking and current-student rank.
+- Added `DAILY_CHALLENGE_PARTICIPATION` for date-only pseudonymous streak tracking without score history.
+- Added Admin Draft/Open/Closed/Suspended controls and live challenge analytics.
+- Added suspiciously fast attempt review with Approve Rank / Exclude actions.
+- Extended temporary `DAILY_CHALLENGE_LIVE` rows with review/ranking fields.
+- Preserved automatic expiry after challenge close + 24 hours.
+- Preserved H1.3B-R2.1 restored Student, Teacher and Admin routes.
+- Kept Daily Challenge fully separate from Student Progress, standard tests, skills and gamification.
+- Kept `Asia/Kolkata` as the authoritative project time zone.
+
+---
+
 # H1.3B-R2 — Multi-Subject Chapter Rotation & IST Standard
 
 - Supersedes H1.3B-R1.

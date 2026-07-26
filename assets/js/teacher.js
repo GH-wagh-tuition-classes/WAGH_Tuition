@@ -266,7 +266,7 @@ const TeacherApp = (() => {
     setText('teacherProfileClass', classLabel);
     setText('teacherProfileSubject', subjectLabel);
     setText('teacherProfileAccountStatus', profile.status || '—');
-    setText('teacherProfileUpdatedAt', profile.updatedAt || profile.createdAt || '—');
+    setText('teacherProfileUpdatedAt', formatDate(profile.updatedAt || profile.createdAt || ''));
 
     const profileStatus = document.getElementById('teacherProfileStatus');
     if (profileStatus) {

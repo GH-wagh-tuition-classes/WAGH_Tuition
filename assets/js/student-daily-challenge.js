@@ -42,10 +42,11 @@ const WTC_STUDENT_DAILY_CHALLENGE = (() => {
       text('wtcDailyTitle','Daily Challenge coming soon'); text('wtcDailyMessage',data.message || 'More published questions are required.'); text('wtcDailyState','Unavailable'); if(button)button.disabled=true; return;
     }
     const challenge=data.challenge || {};
-    text('wtcDailyTitle',challenge.testTitle || `Daily ${challenge.chapterNames?.join(' + ') || challenge.subjectName || ''} Challenge`);
-    text('wtcDailyMessage',`${challenge.subjectName || 'Subject'} • ${challenge.questionCount || 20} questions • ${challenge.durationMin || 20} minutes • ${challenge.chapterNames?.join(' + ') || 'selected chapter(s)'} • Closes ${challenge.closesAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.closesAt) || 'today'} IST`);
+    const chapterLabel=(challenge.chapterNames || []).filter(Boolean).join(' + ') || challenge.subjectName || 'Today’s Chapter Challenge';
+    text('wtcDailyTitle',chapterLabel);
+    text('wtcDailyMessage',`${challenge.subjectName || 'Subject'} • ${challenge.questionCount || 20} questions • ${challenge.durationMin || 20} minutes • Closes ${challenge.closesAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.closesAt) || 'today'} IST`);
     text('wtcDailyProfile',[challenge.className,challenge.board,challenge.medium].filter(Boolean).join(' • '));
-    if (data.state === 'COMPLETED') { text('wtcDailyState',`${data.result?.percent || 0}% completed`); if(button){button.textContent='View Result';button.disabled=false;} }
+    if (data.state === 'COMPLETED') { const score=Number(data.result?.score||0),total=Number(data.result?.total||20),percent=Number(data.result?.percent||0); text('wtcDailyState',`Challenge score ${score}/${total} (${percent}%)`); if(button){button.textContent='View Challenge Result';button.disabled=false;} }
     else if (data.state === 'IN_PROGRESS') { text('wtcDailyState','In progress'); if(button){button.textContent='Resume Challenge';button.disabled=false;} }
     else if (data.state === 'EXPIRED') { text('wtcDailyState','Attempt expired'); if(button){button.textContent='Expired';button.disabled=true;} }
     else if (data.state === 'UPCOMING') { text('wtcDailyState',`Opens ${challenge.opensAtDisplay || window.WTC_TIME?.formatDateTime?.(challenge.opensAt) || 'later'} IST`); if(button){button.textContent='Not Open Yet';button.disabled=true;} }

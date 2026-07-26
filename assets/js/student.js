@@ -682,13 +682,18 @@ Close
       <article class="recent-attempt">
         <div class="attempt-score ${Number(item.percent || 0) >= 75 ? 'strong' : ''}">${Number(item.percent || 0)}%</div>
         <div><b>${WTC_UI.escape(item.testTitle || 'MCQ Test')}</b><p>${WTC_UI.escape(item.chapterName || item.chapterId || '')}</p>
-        <small>${Number(item.correctCount || item.score || 0)}/${Number(item.total || 0)} correct · ${formatStudyTime(item.totalTimeSec || 0)} · ${WTC_UI.escape(item.createdAt || '')}</small></div>
+        <small>${Number(item.correctCount || item.score || 0)}/${Number(item.total || 0)} correct · ${formatStudyTime(item.totalTimeSec || 0)} · ${WTC_UI.escape(formatProjectDateTime(item.createdAt))}</small></div>
         <span class="attempt-tag">${Number(item.retryCount || 0) ? 'Retry ' + Number(item.retryCount || 0) : 'First attempt'}</span>
       </article>`).join('') : '<div class="progress-empty">🕘 No test attempts have been saved yet.</div>';
   }
 
   function setText(id, value) { const element = document.getElementById(id); if (element) element.textContent = value; }
   function setWidth(id, percent) { const element = document.getElementById(id); if (element) element.style.width = Math.max(0, Math.min(100, Number(percent || 0))) + '%'; }
+  function formatProjectDateTime(value) {
+    if (!value) return 'Date unavailable';
+    return window.WTC_TIME?.stampForDisplay?.(value) || window.WTC_TIME?.formatDateTime?.(value) || String(value);
+  }
+
   function formatStudyTime(seconds) {
     const value = Number(seconds || 0);
     if (value < 60) return value + ' sec';

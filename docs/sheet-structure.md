@@ -46,3 +46,9 @@ Existing H1.1 columns remain unchanged. The safe `installAdmissionLeadDiagnostic
 `chapterId`, `chapterName`, `diagnosticScore`, `diagnosticTotal`, `diagnosticPercent`, `weakTopics`, `diagnosticTakenAt`
 
 These fields are optional for ordinary demo enquiries and populated only for the public diagnostic funnel.
+
+## DAILY_CHALLENGE_LIVE (H1.3B-R2)
+
+Temporary Runtime-only sheet for anonymous live challenge enforcement and future private leaderboard calculation. It contains hashed participant/attempt identities, attempt timing, temporary score summary and `expiresOn`. It contains no student name, mobile number, raw student ID or per-question evidence. Rows are automatically removed after challenge close + 24 hours.
+
+The Multi-Subject Chapter Challenge does not write to `PROGRESS_TRACKER`, `TEST_RESULTS`, `MCQ_ATTEMPTS`, `MCQ_ATTEMPT_DETAILS`, `STUDENT_SKILL_REPORT` or `GAMIFICATION_DATA`.

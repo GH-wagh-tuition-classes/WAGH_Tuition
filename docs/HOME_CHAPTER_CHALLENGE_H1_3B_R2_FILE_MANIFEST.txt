@@ -1,0 +1,59 @@
+H1.3B-R2 CHANGED / ADDED FILE MANIFEST
+=========================================
+
+FRONTEND HTML
+- admin.html
+- index.html
+- student.html
+- teacher.html
+- parent.html
+- tests/online-test/assigned-test.html
+- tests/online-test/daily-challenge.html
+
+FRONTEND JAVASCRIPT
+- assets/js/time.js                              [NEW canonical IST utility]
+- assets/js/config.js
+- assets/js/admin-daily-challenge.js
+- assets/js/daily-challenge-launcher.js
+- assets/js/home-daily-challenge.js
+- assets/js/student-daily-challenge.js
+- assets/js/daily-challenge-engine.js
+- assets/js/teacher.js
+- assets/js/admin-admission-leads.js
+- assets/js/main.js
+- assets/js/home-diagnostic.js
+- assets/js/student-assigned-tests.js
+- assets/js/teacher-test-assignments.js
+
+FRONTEND CSS
+- assets/css/admin-daily-challenge.css
+
+RUNTIME APPS SCRIPT
+- apps-script/1_runtime_app_script/datetime.gs    [NEW canonical IST utility]
+- apps-script/1_runtime_app_script/daily_challenge.gs
+- apps-script/1_runtime_app_script/api_router.gs
+- apps-script/1_runtime_app_script/health_check.gs
+- apps-script/1_runtime_app_script/version.gs
+- apps-script/1_runtime_app_script/test_assignments.gs
+- apps-script/1_runtime_app_script/teacher_dashboard.gs
+- apps-script/1_runtime_app_script/admission_leads.gs
+
+AUTHORING APPS SCRIPT
+- apps-script/2_authoring_apps_script/public_diagnostic.gs
+
+LEGACY BACKUP CONSISTENCY
+- apps-script/teacher_dashboard.gs
+
+DOCUMENTATION
+- docs/HOME_CHAPTER_CHALLENGE_H1_3B_R2_RELEASE.md
+- docs/HOME_CHAPTER_CHALLENGE_H1_3B_R2_TEST.md
+- docs/HOME_CHAPTER_CHALLENGE_H1_3B_R2_FILE_MANIFEST.txt
+- docs/PROJECT_TIME_STANDARD_IST.md
+- docs/ACTIVE_FILE_MANIFEST.md
+- docs/api-routes.md
+- docs/sheet-structure.md
+- CHANGELOG.md
+- README_FIRST.md
+- SHA256SUMS.txt
+
+The patch-only ZIP preserves these exact relative paths.

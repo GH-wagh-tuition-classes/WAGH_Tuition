@@ -51,3 +51,19 @@ Authoring/published-content actions:
 
 Public diagnostic sessions expire after approximately 30 minutes and do not write to `TEST_RESULTS`, `PROGRESS_TRACKER` or MCQ progress.
 
+
+## H1.3B-R2 Multi-Subject Chapter Challenge routes
+
+| Action | Access | Purpose |
+|---|---|---|
+| `studentGetDailyChallengeStatus` | Active General/WTC Student | Read today’s configured chapter challenge state. |
+| `studentOpenDailyChallenge` | Active General/WTC Student | Start/resume one official temporary attempt. |
+| `saveDailyChallengeResult` | Active General/WTC Student | Server-score and store only a temporary anonymous summary. |
+| `adminGetDailyChallengeManager` | Admin password verified | Load the subject/chapter catalogue, Published MCQ counts, IST server time and saved multi-subject rotations. |
+| `adminSaveDailyChallengeConfig` | Admin password verified | Save/suspend an ordered multi-subject chapter rotation for a Board + Class + Medium group. |
+| `adminPrepareDailyChallenge` | Admin password verified | Preview and freeze the exact 20-question, one-subject challenge for an IST date. |
+
+These routes do not update academic progress or standard test-result sheets.
+
+
+All Runtime API envelopes use `Asia/Kolkata` and include `serverDate`, `serverTime`, `timezone` and `timezoneLabel` when those fields are not already supplied by the action.

@@ -67,3 +67,15 @@ These routes do not update academic progress or standard test-result sheets.
 
 
 All Runtime API envelopes use `Asia/Kolkata` and include `serverDate`, `serverTime`, `timezone` and `timezoneLabel` when those fields are not already supplied by the action.
+
+## H1.3C Private Leaderboard and Challenge-control routes
+
+| Action | Access | Purpose |
+|---|---|---|
+| `studentGetDailyChallengeLeaderboard` | Active General/WTC Student | Return the privacy leaderboard and date-only challenge streak for the current student. Other participants are labelled `Hidden Student`. |
+| `adminGetDailyChallengeAnalytics` | Admin password verified | Return per-date anonymous participation, completion, ranking, flag and average metrics. |
+| `adminSetDailyChallengeState` | Admin password verified | Set a frozen challenge to `DRAFT`, `OPEN`, `CLOSED` or `SUSPENDED`. |
+| `adminReviewDailyChallengeAttempt` | Admin password verified | Approve a suspicious temporary attempt for ranking or exclude it. |
+
+The existing H1.3B-R2.1 Student and Admin challenge actions remain available. H1.3C returns no other student name, mobile number, raw student ID or participant hash to the student browser.
+

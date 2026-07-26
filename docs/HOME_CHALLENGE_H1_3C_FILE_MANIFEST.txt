@@ -1,0 +1,35 @@
+WAGH Tuition Classes — H1.3C changed files
+Base: H1.3B-R2.1 tested stable
+
+RUNTIME APPS SCRIPT — REPLACE
+apps-script/1_runtime_app_script/daily_challenge.gs
+apps-script/1_runtime_app_script/api_router.gs
+apps-script/1_runtime_app_script/version.gs
+
+FRONTEND — REPLACE
+admin.html
+index.html
+student.html
+tests/online-test/daily-challenge.html
+assets/js/admin-daily-challenge.js
+assets/js/daily-challenge-engine.js
+assets/js/daily-challenge-launcher.js
+assets/js/home-daily-challenge.js
+assets/js/student-daily-challenge.js
+assets/css/admin-daily-challenge.css
+assets/css/daily-challenge.css
+assets/css/home-daily-challenge.css
+assets/css/student-daily-challenge.css
+
+DOCUMENTATION — ADD/REPLACE
+docs/HOME_CHALLENGE_H1_3C_RELEASE.md
+docs/HOME_CHALLENGE_H1_3C_TEST.md
+docs/HOME_CHALLENGE_H1_3C_FILE_MANIFEST.txt
+docs/ACTIVE_FILE_MANIFEST.md
+docs/api-routes.md
+docs/sheet-structure.md
+CHANGELOG.md
+SHA256SUMS.txt
+
+NO AUTHORING CODE REPLACEMENT REQUIRED.
+Run installDailyChallengeLeaderboardSystem() once in Runtime Apps Script.

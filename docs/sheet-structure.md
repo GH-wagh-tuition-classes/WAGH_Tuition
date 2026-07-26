@@ -52,3 +52,30 @@ These fields are optional for ordinary demo enquiries and populated only for the
 Temporary Runtime-only sheet for anonymous live challenge enforcement and future private leaderboard calculation. It contains hashed participant/attempt identities, attempt timing, temporary score summary and `expiresOn`. It contains no student name, mobile number, raw student ID or per-question evidence. Rows are automatically removed after challenge close + 24 hours.
 
 The Multi-Subject Chapter Challenge does not write to `PROGRESS_TRACKER`, `TEST_RESULTS`, `MCQ_ATTEMPTS`, `MCQ_ATTEMPT_DETAILS`, `STUDENT_SKILL_REPORT` or `GAMIFICATION_DATA`.
+
+## DAILY_CHALLENGE_LIVE — H1.3C additions
+
+H1.3C non-destructively appends these temporary ranking/review fields when missing:
+
+`studentType`, `suspiciousFlag`, `suspiciousReason`, `reviewStatus`, `rankedEligible`
+
+The sheet remains temporary and pseudonymous. It contains no student name, mobile number or raw student ID. Score rows are automatically removed after challenge close plus 24 hours.
+
+## DAILY_CHALLENGE_PARTICIPATION — H1.3C
+
+Date-only pseudonymous participation records used for challenge streaks.
+
+Columns:
+
+`participationId, participantHash, challengeDate, challengeId, studentType, completedAt, createdAt, updatedAt`
+
+This sheet intentionally stores no score, percentage, correct/wrong count, completion time, name, mobile number or raw student ID. It is not connected to academic progress.
+
+## MCQ_TEST_ENGINE — H1.3C challenge metadata
+
+The existing Authoring sheet is extended additively with:
+
+`challengeState, frozenAt, stateUpdatedAt, stateUpdatedBy, stateNote`
+
+Allowed challenge states are `DRAFT`, `OPEN`, `CLOSED` and `SUSPENDED`.
+

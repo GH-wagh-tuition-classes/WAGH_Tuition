@@ -127,3 +127,36 @@ The whole-subject H1.3B implementation must not be promoted.
 - One official attempt per challenge.
 - No challenge writes to academic progress/result/skill/gamification sheets.
 - Only `DAILY_CHALLENGE_LIVE` stores temporary anonymous summaries.
+
+## Home Chapter Challenge H1.3C — ACTIVE
+
+Base: tested H1.3B-R2.1. H1.3C preserves the multi-subject chapter rotation, IST standard and restored Phase 2.5 routes.
+
+### Runtime
+- `apps-script/1_runtime_app_script/daily_challenge.gs` — private temporary leaderboard, date-only participation streaks, challenge-state controls, suspicious-attempt review and Admin live analytics.
+- `apps-script/1_runtime_app_script/api_router.gs` — preserves all H1.3B-R2.1 routes and adds four H1.3C actions.
+- `apps-script/1_runtime_app_script/version.gs` — H1.3C registry.
+
+### Runtime data
+- `DAILY_CHALLENGE_LIVE` — temporary pseudonymous scores and ranking/review metadata; automatic expiry remains active.
+- `DAILY_CHALLENGE_PARTICIPATION` — date-only pseudonymous completion record for streaks; no score or personal identity.
+- `MCQ_TEST_ENGINE` — additive `challengeState`, freeze and state-audit metadata.
+
+### Admin
+- `admin.html` — private leaderboard analytics, state controls and flagged-attempt review.
+- `assets/js/admin-daily-challenge.js` — H1.3C Admin workflows.
+- `assets/css/admin-daily-challenge.css` — responsive analytics/control styling.
+
+### Student/Home
+- `tests/online-test/daily-challenge.html` — private leaderboard and streak panel.
+- `assets/js/daily-challenge-engine.js` — leaderboard/streak loading and pending-review result state.
+- `assets/css/daily-challenge.css` — responsive private leaderboard styling.
+- `assets/js/home-daily-challenge.js`, `assets/js/student-daily-challenge.js` — participation/rank summaries.
+- `index.html`, `student.html` — H1.3C cache/version entry points.
+
+### Locked rules
+- Other students’ names are never returned to the student browser.
+- Daily Challenge scores remain temporary and do not enter academic progress.
+- Only participation dates may persist for challenge streaks.
+- All challenge dates/times use `Asia/Kolkata` (IST).
+

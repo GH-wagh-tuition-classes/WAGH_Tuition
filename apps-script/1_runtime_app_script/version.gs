@@ -5,7 +5,7 @@
 
 var WTC_VERSION = Object.freeze({
   PLATFORM: '1.0',
-  API: '1.6',
+  API: '1.7.1',
   BACKEND_ARCHITECTURE: '2.4',
   RUNTIME_API: '1.0',
   FEATURE_ENGINE: '1.0',
@@ -22,7 +22,8 @@ var WTC_VERSION = Object.freeze({
   HOME_PAGE: 'H1.3A',
   HOME_DIAGNOSTIC: 'H1.3A',
   HOME_CONVERSION: 'H1.3A',
-  DAILY_CHALLENGE: 'H1.3B-R1'
+  DAILY_CHALLENGE: 'H1.3B-R2.1',
+  DATE_TIME_STANDARD: 'IST-1.1'
 });
 
 function getSystemVersion() {
@@ -30,8 +31,11 @@ function getSystemVersion() {
     success: true,
     app: WTC_BACKEND.APP_NAME,
     versions: wtcVersionPayload_(),
+    serverDate: (typeof wtcProjectToday_ === 'function' ? wtcProjectToday_() : Utilities.formatDate(new Date(), WTC_BACKEND.TIMEZONE, 'yyyy-MM-dd')),
     serverTime: wtcBackendNow_(),
-    timezone: WTC_BACKEND.TIMEZONE
+    timezone: WTC_BACKEND.TIMEZONE,
+    timezoneLabel: 'India Standard Time (IST)',
+    scriptTimezone: Session.getScriptTimeZone()
   };
 }
 
@@ -55,6 +59,7 @@ function wtcVersionPayload_() {
     homePage: WTC_VERSION.HOME_PAGE,
     homeDiagnostic: WTC_VERSION.HOME_DIAGNOSTIC,
     homeConversion: WTC_VERSION.HOME_CONVERSION,
-    dailyChallenge: WTC_VERSION.DAILY_CHALLENGE
+    dailyChallenge: WTC_VERSION.DAILY_CHALLENGE,
+    dateTimeStandard: WTC_VERSION.DATE_TIME_STANDARD
   };
 }

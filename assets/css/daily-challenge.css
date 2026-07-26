@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Daily 20-MCQ Challenge H1.3B */
+/* WAGH Tuition Classes — Daily 20-MCQ Challenge H1.3C */
 .daily-challenge-page{background:linear-gradient(180deg,#fff7ed 0,#f8fafc 34%,#eef2ff 100%)}
 .daily-topbar{background:#431407}
 .daily-hero{background:linear-gradient(135deg,#7c2d12,#9a3412 58%,#c2410c);box-shadow:0 20px 55px rgba(124,45,18,.22)}
@@ -17,3 +17,12 @@
 @keyframes dailyPulse{50%{transform:scale(1.025)}}
 @media(max-width:700px){.daily-rule-strip{display:grid;grid-template-columns:1fr}.daily-result-topics{grid-template-columns:1fr}.daily-instructions{font-size:13px}.daily-topbar>div>span{display:none}}
 @media(prefers-reduced-motion:reduce){.daily-countdown.warning{animation:none}}
+
+/* H1.3C — private temporary leaderboard and participation streak */
+.daily-leaderboard{margin-top:20px;padding:20px;border:1px solid #fed7aa;border-radius:20px;background:#fff;box-shadow:0 18px 45px rgba(124,45,18,.08)}
+.daily-leaderboard-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.daily-leaderboard-head h2{margin:4px 0}.daily-leaderboard-head p{margin:0;color:#64748b;max-width:640px}
+.daily-streak-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}.daily-streak-cards>div{padding:13px;border:1px solid #e2e8f0;border-radius:13px;background:#f8fafc;display:grid;gap:3px}.daily-streak-cards small{color:#64748b;font-weight:800}.daily-streak-cards strong{color:#7c2d12;font-size:1.1rem}
+.daily-leaderboard-message{padding:11px 13px;border-radius:11px;background:#fff7ed;color:#9a3412;font-weight:800}
+.daily-leaderboard-rows{display:grid;gap:7px;margin-top:12px}.daily-leader-row{display:grid;grid-template-columns:50px minmax(120px,1fr) minmax(110px,.75fr) 70px;gap:9px;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.daily-leader-row.self{border-color:#f97316;background:#fff7ed;box-shadow:0 0 0 2px rgba(249,115,22,.09)}.daily-leader-row>b{color:#c2410c}.daily-leader-row small{text-align:right;color:#64748b;font-weight:800}
+.daily-leaderboard-wait{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:9px;align-items:center;padding:15px;border:1px dashed #fdba74;border-radius:12px;color:#7c2d12}.daily-leaderboard-wait b{font-size:1.35rem}.daily-leaderboard-foot{display:block;margin-top:12px;color:#64748b}
+@media(max-width:700px){.daily-leaderboard-head{display:grid}.daily-streak-cards{grid-template-columns:1fr}.daily-leader-row{grid-template-columns:42px minmax(105px,1fr) 92px}.daily-leader-row small{display:none}.daily-leaderboard-wait{grid-template-columns:auto 1fr}}

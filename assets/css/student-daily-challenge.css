@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Student Daily Challenge Widget H1.3B */
+/* WAGH Tuition Classes — Student Daily Challenge Widget H1.3C */
 .wtc-daily-widget{display:flex;align-items:center;justify-content:space-between;gap:22px;margin:18px 0;padding:22px 24px;border:1px solid #fed7aa;border-radius:22px;background:linear-gradient(135deg,#fff7ed,#ffedd5);box-shadow:0 16px 38px rgba(154,52,18,.1)}
 .wtc-daily-widget.loading{opacity:.76}
 .wtc-daily-copy{display:flex;align-items:center;gap:16px;min-width:0}

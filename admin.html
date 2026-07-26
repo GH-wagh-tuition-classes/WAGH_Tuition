@@ -8,7 +8,7 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
   <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-3a">
-  <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3b-r1">
+  <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3b-r2">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -228,36 +228,56 @@
       </div>
     </section>
 
-    <section id="dailyChallengePanel" class="admin-panel" data-panel-title="Chapter Challenge" data-panel-subtitle="Select chapter pools and automate the separate daily 20-MCQ engagement challenge.">
+    <section id="dailyChallengePanel" class="admin-panel" data-panel-title="Chapter Challenge" data-panel-subtitle="Build an ordered multi-subject chapter rotation for each Board + Class + Medium group.">
       <div class="admin-panel-card dc-admin-panel">
         <div class="admin-section-heading">
-          <div><span class="admin-kicker">H1.3B-R1</span><h2>Daily Chapter Challenge Manager</h2><p class="muted">Configure one chapter rotation for each Board + Class + Medium group. Challenge scores remain temporary and never affect academic progress.</p></div>
+          <div><span class="admin-kicker">H1.3B-R2</span><h2>Daily Chapter Challenge Manager</h2><p class="muted">Add chapters from multiple subjects to one ordered rotation. Each day still uses only one subject and exactly 20 unique Published MCQs.</p></div>
         </div>
-        <div class="dc-rule-note"><b>Separation rule:</b> this module does not write to Progress Tracker, Test Results, MCQ Attempts, Skill Reports or Gamification. Temporary anonymous scores are deleted automatically after closing.</div>
+        <div class="dc-rule-note"><b>Separation rule:</b> this module never writes to Progress Tracker, Test Results, MCQ Attempts, Skill Reports or Gamification. Temporary anonymous scores are deleted after closing.</div>
+        <div class="dc-time-standard"><div><b>Project time standard</b><span id="dcServerClock">Loading India time…</span></div><small>All challenge dates and times use Asia/Kolkata — Tapi, Gujarat, India (IST / UTC+05:30).</small></div>
         <div class="dc-admin-auth">
           <div><label for="dcAdminPassword">Admin password confirmation</label><input id="dcAdminPassword" type="password" autocomplete="current-password" placeholder="Enter Admin password"></div>
           <button id="dcAdminLoad" class="btn" type="button">Load Chapter Catalogue</button>
         </div>
         <div id="dcAdminStatus" class="dc-status info">Enter the Admin password, then load the chapter catalogue.</div>
         <div class="dc-admin-form">
-          <div class="dc-grid">
+          <div class="dc-grid group-grid">
             <div class="dc-field"><label for="dcBoard">Board</label><select id="dcBoard"><option value="">Select board</option></select></div>
             <div class="dc-field"><label for="dcClass">Class</label><select id="dcClass"><option value="">Select class</option></select></div>
             <div class="dc-field"><label for="dcMedium">Medium</label><select id="dcMedium"><option value="">Select medium</option></select></div>
-            <div class="dc-field"><label for="dcSubject">Subject</label><select id="dcSubject"><option value="">Select subject</option></select></div>
           </div>
-          <div class="dc-chapter-head"><div><h3>Select chapters in rotation order</h3><p class="muted">A chapter with fewer than 20 MCQs is automatically combined with the next selected chapter.</p></div></div>
-          <div id="dcChapterPool" class="dc-chapter-pool"><div class="dc-empty">Load the catalogue first.</div></div>
-          <div class="dc-grid two" style="margin-top:16px">
-            <div class="dc-field"><label for="dcRotationStart">Rotation start date</label><input id="dcRotationStart" type="date"></div>
-            <div class="dc-field"><label for="dcDuration">Duration in minutes</label><input id="dcDuration" type="number" min="5" max="60" value="20"></div>
+
+          <div class="dc-builder-grid">
+            <article class="dc-builder-card">
+              <div class="dc-chapter-head"><div><h3>Add chapters</h3><p class="muted">Choose a subject, select chapters and add them to the shared group rotation.</p></div></div>
+              <div class="dc-field"><label for="dcSubject">Subject</label><select id="dcSubject"><option value="">Select subject</option></select></div>
+              <div id="dcChapterPool" class="dc-chapter-pool"><div class="dc-empty">Load the catalogue and select the academic group first.</div></div>
+              <button id="dcAddChapters" class="btn outline dc-add-button" type="button">Add Selected Chapters</button>
+            </article>
+
+            <article class="dc-builder-card">
+              <div class="dc-chapter-head"><div><h3>Ordered multi-subject rotation</h3><p class="muted">Use ↑ and ↓ to control the daily order. Same-subject chapters may combine when the primary chapter has fewer than 20 MCQs.</p></div></div>
+              <div id="dcRotationList" class="dc-rotation-list"><div class="dc-empty">No chapters added to this group rotation.</div></div>
+              <p id="dcRotationSummary" class="dc-current-config">0 rotation items.</p>
+            </article>
+          </div>
+
+          <div class="dc-grid schedule-grid" style="margin-top:16px">
+            <div class="dc-field"><label for="dcRotationStart">Rotation start date</label><input id="dcRotationStart" type="date"><small id="dcRotationStartDisplay">India date</small></div>
+            <div class="dc-field"><label for="dcOpensTime">Daily opening time</label><input id="dcOpensTime" type="time" value="06:00"><small>IST</small></div>
+            <div class="dc-field"><label for="dcClosesTime">Daily closing time</label><input id="dcClosesTime" type="time" value="23:59"><small>IST</small></div>
+            <div class="dc-field"><label for="dcDuration">Attempt duration</label><input id="dcDuration" type="number" min="5" max="60" value="20"><small>Minutes</small></div>
           </div>
           <label class="dc-toggle"><input id="dcEnabled" type="checkbox" checked> Active for General and WTC Students</label>
           <input id="dcConfigId" type="hidden"><p id="dcCurrentConfig" class="dc-current-config">No configuration loaded.</p>
-          <div class="dc-actions"><button id="dcAdminSave" class="btn" type="button">Save Chapter Rotation</button><div class="dc-field"><label for="dcPreviewDate">Prepare date</label><input id="dcPreviewDate" type="date"></div><button id="dcAdminPrepare" class="btn outline" type="button">Preview &amp; Freeze Challenge</button></div>
+          <div class="dc-actions">
+            <button id="dcAdminSave" class="btn" type="button">Save Multi-Subject Rotation</button>
+            <div class="dc-field dc-prepare-date"><label for="dcPreviewDate">Prepare date</label><input id="dcPreviewDate" type="date"><small id="dcPreviewDateDisplay">India date</small></div>
+            <button id="dcAdminPrepare" class="btn outline" type="button">Preview &amp; Freeze Challenge</button>
+          </div>
         </div>
         <div class="dc-admin-preview"><div id="dcPreview" class="dc-preview"><div class="dc-empty">Prepared 20-question preview will appear here.</div></div></div>
-        <div class="dc-admin-configs"><h3>Saved group configurations</h3><div id="dcConfigList" class="dc-config-list"><div class="dc-empty">No configurations loaded.</div></div></div>
+        <div class="dc-admin-configs"><h3>Saved Board + Class + Medium configurations</h3><div id="dcConfigList" class="dc-config-list"><div class="dc-empty">No configurations loaded.</div></div></div>
       </div>
     </section>
 
@@ -641,6 +661,7 @@
 </div>
 
 <script src="assets/js/config.js"></script>
+<script src="assets/js/time.js?v=ist-1-0"></script>
 <script src="assets/js/ui.js?v=admin-ui-2-0"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/api.js?v=h1-1"></script>
@@ -650,7 +671,7 @@
 <script src="assets/js/static-content-importer.js"></script>
 <script src="assets/js/admin.js?v=h1-1"></script>
 <script src="assets/js/admin-admission-leads.js?v=h1-3a"></script>
-<script src="assets/js/admin-daily-challenge.js?v=h1-3b-r1"></script>
+<script src="assets/js/admin-daily-challenge.js?v=h1-3b-r2"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

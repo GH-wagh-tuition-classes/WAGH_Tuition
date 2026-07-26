@@ -1,3 +1,14 @@
+# H1.3B-R2 — Multi-Subject Chapter Rotation & IST Standard
+
+- Supersedes H1.3B-R1.
+- Added one Board + Class + Medium rotation containing chapters from multiple subjects.
+- Preserved one subject per daily challenge and same-subject fallback only.
+- Added configurable opening time, closing time, duration and rotation start date.
+- Removed UTC calendar-date assumptions and made `Asia/Kolkata` the server-authoritative project standard.
+- Added shared browser and Runtime Apps Script date/time utilities.
+- Added safe workbook time-zone verification without changing project architecture or academic data.
+- Preserved temporary anonymous challenge scores and complete separation from academic progress.
+
 # H1.3B — Daily 20-MCQ Whole-Subject Challenge
 
 - Added one deterministic daily subject for each Class + Board + Medium group.
@@ -108,3 +119,12 @@
 - Student profile approval system.
 - Admin dashboard and content publishing workflow.
 - Stable WAGH Tuition environment.
+
+## H1.3B-R1 — Chapter Daily Challenge — SUPERSEDED BY H1.3B-R2
+
+- Supersedes the whole-subject H1.3B package.
+- Added Admin-controlled chapter pools and automatic chapter rotation.
+- Opened participation to active General and WTC Student accounts.
+- Removed all challenge writes to academic progress, standard test results, attempt evidence, skill reports and gamification.
+- Added temporary anonymous `DAILY_CHALLENGE_LIVE` storage with automatic expiry cleanup.
+- Added Admin Chapter Challenge Manager and 20-question preview/freeze flow.

@@ -1,8 +1,8 @@
 # WAGH Tuition Classes — All API Scripts
 
-**Cumulative development baseline:** `v2.3.2p-SI1-FV1-RP1-PCR1`
+**Cumulative development baseline:** `v2.3.1-R2-H1.3B-R2`
 
-This package contains the latest active API-related scripts assembled from the tested WAGH Tuition Classes development release.
+This package contains the latest active API-related scripts assembled from the current WAGH Tuition Classes development baseline.
 
 ## Folder 01 — Runtime Apps Script
 
@@ -22,8 +22,13 @@ Active files included:
 - `health_check.gs`
 - `version.gs`
 - `profile_change_requests.gs`
+- `admission_leads.gs`
+- `datetime.gs`
+- `daily_challenge.gs`
+- `test_assignments.gs`
+- `teacher_dashboard.gs`
 
-This cumulative set includes Stage 1 performance changes, reliable/profile-specific MCQ progress, duplicate attempt protection, and Student Profile Change Approval System v1.0.
+This cumulative set includes Stage 1 performance changes, reliable/profile-specific MCQ progress, duplicate attempt protection, Student Profile Change Approval System v1.0, and Home Page Admission Funnel H1.0.
 
 ## Folder 02 — Authoring Apps Script
 
@@ -60,3 +65,11 @@ They are reference/backup copies. Keep their paths under `assets/js/` in GitHub.
 ## Restoration note
 
 This ZIP is a source-code backup. It does not include Google Apps Script deployment IDs, script properties, OAuth settings, triggers, or workbook data. Those remain in the respective Google Apps Script projects and Google Sheets.
+
+## Current Home Challenge Release
+
+Use **H1.3B-R2 Multi-Subject Chapter Daily Challenge**. H1.3B and H1.3B-R1 are superseded. See `docs/HOME_CHAPTER_CHALLENGE_H1_3B_R2_RELEASE.md`.
+
+## Project Time Standard
+
+All application calendar dates and user-facing timestamps use **Asia/Kolkata (India Standard Time)** for Tapi, Gujarat, India. See `docs/PROJECT_TIME_STANDARD_IST.md`.

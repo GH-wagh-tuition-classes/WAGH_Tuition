@@ -35,7 +35,7 @@ const WTC_HOME_DAILY_CHALLENGE = (() => {
 
   function renderLogin() {
     setText('dailyChallengeSubject','One subject. Selected chapters. 20 questions every day.');
-    setText('dailyChallengeMessage','Login as a Student to enter the official challenge attempt. Guests can still use the free chapter diagnostic below.');
+    setText('dailyChallengeMessage','Login as a Student to enter the official challenge attempt. Guests can use the Targeted Test from the Free Tests card without logging in.');
     setText('dailyChallengeState','Student login required');
     setButton('Login to Join',false);
   }

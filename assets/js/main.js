@@ -1,8 +1,11 @@
-/* WAGH Tuition Classes — Home Page QA & Conversion Polish H1.4.2 */
+/* WAGH Tuition Classes — Homepage Interaction Consolidation H1.4.3 */
 const WTC_HOME = (() => {
   const PHONE_DISPLAY = '95370 36383';
   let authHashRoutingInitialized = false;
+  let experienceRoutingInitialized = false;
   let mobileBarBehaviorInitialized = false;
+  let activeExperience = '';
+  let experienceReturnFocus = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -70,7 +73,20 @@ const WTC_HOME = (() => {
     });
   }
 
-  function showAuthPanel(name='login') {
+  function setAuthDrawerExpanded(expanded) {
+    const drawer = byId('portal-access');
+    if (!drawer) return;
+    drawer.hidden = !expanded;
+    document.querySelectorAll('[data-auth-target]').forEach(control => {
+      control.setAttribute('aria-expanded', String(expanded && control.dataset.authTarget === currentAuthPanel()));
+    });
+  }
+
+  function currentAuthPanel() {
+    return byId('signupPanel')?.hidden === false ? 'signup' : 'login';
+  }
+
+  function showAuthPanel(name='login', { updateHash=false }={}) {
     const isSignup = name === 'signup';
     const loginTab = byId('loginTab');
     const signupTab = byId('signupTab');
@@ -84,33 +100,36 @@ const WTC_HOME = (() => {
     signupPanel.classList.toggle('active', isSignup);
     loginPanel.hidden = isSignup;
     signupPanel.hidden = !isSignup;
+    setAuthDrawerExpanded(true);
+
+    if (updateHash) {
+      const nextHash = isSignup ? '#signup' : '#login';
+      if (window.location.hash.toLowerCase() !== nextHash) history.pushState({ wtcAuth:isSignup ? 'signup' : 'login' }, '', nextHash);
+    }
   }
 
-  function routeAuthHash({ focus=false, behavior='smooth' }={}) {
+  function hideAuthPanel({ clearHash=true }={}) {
+    setAuthDrawerExpanded(false);
+    const hash = String(window.location.hash || '').toLowerCase();
+    if (clearHash && (hash === '#login' || hash === '#signup')) {
+      history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+    }
+  }
+
+  function routeAuthHash() {
     const hash = String(window.location.hash || '').toLowerCase();
     if (hash !== '#login' && hash !== '#signup') return false;
-
-    const panelName = hash === '#signup' ? 'signup' : 'login';
-    showAuthPanel(panelName);
-
-    window.requestAnimationFrame(() => {
-      byId('portal-access')?.scrollIntoView({ behavior, block:'start' });
-      if (!focus) return;
-      window.setTimeout(() => {
-        byId(panelName === 'signup' ? 'signupName' : 'loginMobile')?.focus({ preventScroll:true });
-      }, behavior === 'smooth' ? 420 : 40);
-    });
+    showAuthPanel(hash === '#signup' ? 'signup' : 'login');
     return true;
   }
 
   function initializeAuthHashRouting() {
     if (authHashRoutingInitialized) {
-      routeAuthHash({ focus:false, behavior:'auto' });
+      routeAuthHash();
       return;
     }
     authHashRoutingInitialized = true;
-    window.addEventListener('hashchange', () => routeAuthHash({ focus:true, behavior:'smooth' }));
-    routeAuthHash({ focus:false, behavior:'auto' });
+    routeAuthHash();
   }
 
   function initializeAuthTabs() {
@@ -118,8 +137,15 @@ const WTC_HOME = (() => {
       button.addEventListener('click', () => showAuthPanel(button.dataset.authTab || 'login'));
     });
 
-    document.querySelectorAll('[data-auth-target]').forEach(link => {
-      link.addEventListener('click', () => showAuthPanel(link.dataset.authTarget || 'login'));
+    document.querySelectorAll('[data-auth-target]').forEach(control => {
+      control.addEventListener('click', event => {
+        event.preventDefault();
+        showAuthPanel(control.dataset.authTarget || 'login', { updateHash:true });
+      });
+    });
+
+    document.querySelectorAll('[data-auth-close]').forEach(button => {
+      button.addEventListener('click', () => hideAuthPanel());
     });
 
     const loginForm = byId('loginForm');
@@ -132,6 +158,132 @@ const WTC_HOME = (() => {
       event.preventDefault();
       WTC_AUTH.handleSignup();
     });
+  }
+
+  function experienceNameFromHash() {
+    const hash = String(window.location.hash || '').toLowerCase();
+    return hash === '#daily-challenge' ? 'daily-challenge' : hash === '#diagnostic' ? 'diagnostic' : '';
+  }
+
+  function experienceModal(name) {
+    return document.querySelector(`[data-experience-modal="${name}"]`);
+  }
+
+  function focusableElements(dialog) {
+    return [...dialog.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+      .filter(element => !element.hidden && element.offsetParent !== null);
+  }
+
+  function openExperience(name, { updateHash=false, trigger=null }={}) {
+    const modal = experienceModal(name);
+    if (!modal) return false;
+    if (activeExperience && activeExperience !== name) closeExperience({ clearHash:false, restoreFocus:false });
+
+    experienceReturnFocus = trigger instanceof HTMLElement ? trigger : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    modal.hidden = false;
+    activeExperience = name;
+    document.body.classList.add('experience-modal-open');
+    modal.querySelector('.experience-modal-dialog')?.focus({ preventScroll:true });
+
+    if (updateHash) {
+      const nextHash = `#${name}`;
+      if (window.location.hash.toLowerCase() !== nextHash) history.pushState({ wtcExperience:name }, '', nextHash);
+      else history.replaceState({ ...(history.state || {}), wtcExperience:name }, '', nextHash);
+    }
+    return true;
+  }
+
+  function closeExperience({ clearHash=true, restoreFocus=true }={}) {
+    if (!activeExperience) return;
+    const modal = experienceModal(activeExperience);
+    if (modal) modal.hidden = true;
+    activeExperience = '';
+    document.body.classList.remove('experience-modal-open');
+
+    if (clearHash && experienceNameFromHash()) {
+      history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+    }
+    if (restoreFocus && experienceReturnFocus?.isConnected) experienceReturnFocus.focus({ preventScroll:true });
+    experienceReturnFocus = null;
+  }
+
+  function requestExperienceClose() {
+    if (history.state?.wtcExperience && experienceNameFromHash()) history.back();
+    else closeExperience();
+  }
+
+  function routeExperienceHash({ prepareBackEntry=false }={}) {
+    const name = experienceNameFromHash();
+    if (!name) {
+      closeExperience({ clearHash:false });
+      return false;
+    }
+
+    if (prepareBackEntry && !history.state?.wtcExperience) {
+      const hash = `#${name}`;
+      history.replaceState({ wtcExperienceBase:true }, '', `${window.location.pathname}${window.location.search}`);
+      history.pushState({ wtcExperience:name }, '', hash);
+    }
+    openExperience(name);
+    return true;
+  }
+
+  function scrollExperienceTop(name) {
+    const modal = experienceModal(name);
+    const body = modal?.querySelector('.experience-modal-body');
+    body?.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function initializeExperienceModals() {
+    document.querySelectorAll('[data-experience-target]').forEach(control => {
+      control.addEventListener('click', event => {
+        event.preventDefault();
+        openExperience(control.dataset.experienceTarget || '', { updateHash:true, trigger:control });
+      });
+    });
+    document.querySelectorAll('[data-experience-close]').forEach(control => {
+      control.addEventListener('click', requestExperienceClose);
+    });
+
+    if (!experienceRoutingInitialized) {
+      experienceRoutingInitialized = true;
+      window.addEventListener('popstate', () => {
+        routeAuthHash();
+        routeExperienceHash();
+      });
+      window.addEventListener('hashchange', () => {
+        routeAuthHash();
+        routeExperienceHash();
+      });
+      document.addEventListener('keydown', event => {
+        if (!activeExperience) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          requestExperienceClose();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        const dialog = experienceModal(activeExperience)?.querySelector('.experience-modal-dialog');
+        if (!dialog) return;
+        const focusable = focusableElements(dialog);
+        if (!focusable.length) {
+          event.preventDefault();
+          dialog.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    }
+
+    routeExperienceHash({ prepareBackEntry:true });
   }
 
   function initializePasswordToggles() {
@@ -292,6 +444,12 @@ const WTC_HOME = (() => {
     window.visualViewport?.addEventListener('resize', update);
   }
 
+  function resetPlainHomepagePosition() {
+    if (window.location.hash) return;
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.requestAnimationFrame(() => window.scrollTo({ top:0, left:0, behavior:'auto' }));
+  }
+
   function autoRedirectLoggedUser() {
     if (!window.WTC_CONFIG || typeof WTC_AUTH === 'undefined') return false;
     const user = WTC_AUTH.getUser();
@@ -313,18 +471,23 @@ const WTC_HOME = (() => {
     if (autoRedirectLoggedUser()) return;
     initializeYear();
     initializeContactLinks();
+    resetPlainHomepagePosition();
     initializeMenu();
     initializeAuthTabs();
     initializeAuthHashRouting();
+    initializeExperienceModals();
     initializePasswordToggles();
     initializeClassChoices();
     initializeAdmissionForm();
     initializeMobileConversionBar();
   }
 
-  return { initialize, showAuthPanel, routeAuthHash, PHONE_DISPLAY };
+  return { initialize, showAuthPanel, hideAuthPanel, routeAuthHash, openExperience, closeExperience, scrollExperienceTop, PHONE_DISPLAY };
 })();
 
 window.WTC_HOME = WTC_HOME;
 document.addEventListener('DOMContentLoaded', WTC_HOME.initialize);
-window.addEventListener('pageshow', () => WTC_HOME && WTC_AUTH && WTC_HOME.initialize && WTC_AUTH.getUser() && WTC_AUTH.redirectByRole(WTC_AUTH.getUser()));
+window.addEventListener('pageshow', () => {
+  if (!window.location.hash) window.scrollTo({ top:0, left:0, behavior:'auto' });
+  if (WTC_HOME && WTC_AUTH && WTC_HOME.initialize && WTC_AUTH.getUser()) WTC_AUTH.redirectByRole(WTC_AUTH.getUser());
+});

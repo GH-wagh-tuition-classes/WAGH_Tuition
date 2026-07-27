@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Diagnostic Report & Conversion Engine H1.3A */
+/* WAGH Tuition Classes — Diagnostic Report & Conversion Engine H1.4.3 modal integration */
 window.WTC_DIAGNOSTIC = (() => {
   const MAX_QUESTIONS = 10;
   const MIN_QUESTIONS = 3;
@@ -191,7 +191,7 @@ window.WTC_DIAGNOSTIC = (() => {
       state.submitConfirmUntil = 0;
       showPanel('diagnosticTestPanel');
       renderQuestion();
-      byId('diagnostic')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      window.WTC_HOME?.scrollExperienceTop?.('diagnostic');
     } catch (error) {
       setSelectorStatus(error.message || 'The diagnostic test could not be prepared.', 'error');
       WTC_UI.toast?.(error.message || 'Diagnostic test unavailable.', 'error');
@@ -492,9 +492,9 @@ window.WTC_DIAGNOSTIC = (() => {
     if (byId('signupClass')) byId('signupClass').value = context.className;
     if (byId('signupBoard')) byId('signupBoard').value = context.board;
     if (byId('signupMedium')) byId('signupMedium').value = context.medium;
-    window.WTC_HOME?.showAuthPanel?.('signup');
-    byId('portal-access')?.scrollIntoView({ behavior:'smooth', block:'start' });
-    window.setTimeout(() => (name ? byId('signupMobile') : byId('signupName'))?.focus({ preventScroll:true }), 450);
+    window.WTC_HOME?.closeExperience?.({ clearHash:true, restoreFocus:false });
+    window.WTC_HOME?.showAuthPanel?.('signup', { updateHash:true });
+    WTC_UI.toast?.('Student Signup is open below the homepage buttons.', 'info');
   }
 
   function formatDuration(seconds) {
@@ -522,11 +522,11 @@ window.WTC_DIAGNOSTIC = (() => {
     byId('diagnosticLeadForm')?.reset();
     showPanel('diagnosticSelectorPanel');
     setSelectorStatus('Your previous selection is preserved. Choose a chapter or start again.', 'info');
-    byId('diagnostic')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    window.WTC_HOME?.scrollExperienceTop?.('diagnostic');
   }
 
   async function openForClass(className) {
-    byId('diagnostic')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    window.WTC_HOME?.openExperience?.('diagnostic', { updateHash:true });
     if (!state.subjects.length && !state.loadingCatalog) await loadCatalog();
     const select = byId('diagnosticClass');
     if (select && [...select.options].some(option => option.value === className)) {

@@ -96,7 +96,7 @@ The whole-subject H1.3B implementation must not be promoted.
 - `tests/online-test/daily-challenge.html` — runner shell.
 
 
-## Home Chapter Challenge H1.3B-R2 — ACTIVE
+## Home Chapter Challenge H1.3B-R2 — SUPERSEDED BY H1.3B-R2.1
 
 ### Time standard
 - `assets/js/time.js` — canonical browser date/time utility for `Asia/Kolkata`.
@@ -128,7 +128,7 @@ The whole-subject H1.3B implementation must not be promoted.
 - No challenge writes to academic progress/result/skill/gamification sheets.
 - Only `DAILY_CHALLENGE_LIVE` stores temporary anonymous summaries.
 
-## Home Chapter Challenge H1.3C — ACTIVE
+## Home Chapter Challenge H1.3C — PRODUCTION LOCKED
 
 Base: tested H1.3B-R2.1. H1.3C preserves the multi-subject chapter rotation, IST standard and restored Phase 2.5 routes.
 
@@ -159,4 +159,40 @@ Base: tested H1.3B-R2.1. H1.3C preserves the multi-subject chapter rotation, IST
 - Daily Challenge scores remain temporary and do not enter academic progress.
 - Only participation dates may persist for challenge streaks.
 - All challenge dates/times use `Asia/Kolkata` (IST).
+
+
+
+## Production lock
+
+- Lock ID: `WTC-H1.3C-PROD-LOCK-20260727-R1`
+- Lock date: 27 Jul 2026 (IST)
+- Architecture: `LOCKED v2.3.1 R2` — unchanged
+- Exact tested base: H1.3B-R2.1 plus H1.3C
+- Superseded: H1.3B, H1.3B-R1, H1.3B-R2
+- Stable promotion must preserve environment-specific API URLs, repository base path, Script Properties, deployment IDs, triggers and workbook data.
+
+## H1.4 Referral & Growth Tracking — SUPERSEDED BY H1.4.1
+
+- `apps-script/1_runtime_app_script/referral_growth.gs` — referral code issuance, first-touch attribution, privacy-safe counters, Admin lifecycle and reward approval controls.
+- `assets/js/home-referral.js` — public referral attribution and invitation banner.
+- `assets/js/student-referral.js` — private Refer & Grow dashboard.
+- `assets/js/admin-referral-growth.js` — Admin Referral Growth panel.
+- `assets/css/home-referral.css`, `assets/css/student-referral.css`, `assets/css/admin-referral-growth.css` — responsive referral UI.
+- `REFERRAL_CODES` and `REFERRAL_TRACKER` — separate referral data, never academic progress.
+
+## H1.4.1 Referral Session Hotfix — TESTED DEVELOPMENT BASE
+
+- `assets/js/auth.js` — safely exposes the existing authentication helper for modular frontend consumers.
+- `assets/js/api.js` — restores device identity use for referral deduplication.
+- `assets/js/student-referral.js` — reliable session lookup, automatic dashboard load and safe share-button gating.
+- `index.html`, `student.html`, `teacher.html`, `admin.html` — cache-version updates only where required.
+
+## H1.4.2 Homepage QA & Conversion Polish — DEVELOPMENT
+
+Frontend only. No Runtime or Authoring Apps Script changes.
+
+- `index.html` — stable canonical/social metadata, virtual `#login` links and student-focused Daily Challenge wording.
+- `assets/css/main.css` — compact header at crowded widths, improved tablet hero layout, mobile keyboard-safe conversion bar and brighter parent copy.
+- `assets/js/main.js` — `#login`/`#signup` hash router and mobile conversion-bar focus behavior.
+- Production lock remains `WTC-H1.3C-PROD-LOCK-20260727-R1` until H1.4.2 passes live testing and receives a separate lock.
 

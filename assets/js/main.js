@@ -1,6 +1,8 @@
-/* WAGH Tuition Classes — Home Page & Conversion Funnel H1.3A */
+/* WAGH Tuition Classes — Home Page QA & Conversion Polish H1.4.2 */
 const WTC_HOME = (() => {
   const PHONE_DISPLAY = '95370 36383';
+  let authHashRoutingInitialized = false;
+  let mobileBarBehaviorInitialized = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -82,6 +84,33 @@ const WTC_HOME = (() => {
     signupPanel.classList.toggle('active', isSignup);
     loginPanel.hidden = isSignup;
     signupPanel.hidden = !isSignup;
+  }
+
+  function routeAuthHash({ focus=false, behavior='smooth' }={}) {
+    const hash = String(window.location.hash || '').toLowerCase();
+    if (hash !== '#login' && hash !== '#signup') return false;
+
+    const panelName = hash === '#signup' ? 'signup' : 'login';
+    showAuthPanel(panelName);
+
+    window.requestAnimationFrame(() => {
+      byId('portal-access')?.scrollIntoView({ behavior, block:'start' });
+      if (!focus) return;
+      window.setTimeout(() => {
+        byId(panelName === 'signup' ? 'signupName' : 'loginMobile')?.focus({ preventScroll:true });
+      }, behavior === 'smooth' ? 420 : 40);
+    });
+    return true;
+  }
+
+  function initializeAuthHashRouting() {
+    if (authHashRoutingInitialized) {
+      routeAuthHash({ focus:false, behavior:'auto' });
+      return;
+    }
+    authHashRoutingInitialized = true;
+    window.addEventListener('hashchange', () => routeAuthHash({ focus:true, behavior:'smooth' }));
+    routeAuthHash({ focus:false, behavior:'auto' });
   }
 
   function initializeAuthTabs() {
@@ -247,6 +276,22 @@ const WTC_HOME = (() => {
     });
   }
 
+  function initializeMobileConversionBar() {
+    if (mobileBarBehaviorInitialized) return;
+    const bar = document.querySelector('.mobile-conversion-bar');
+    if (!bar) return;
+    mobileBarBehaviorInitialized = true;
+
+    const isEditable = element => element instanceof Element && element.matches('input, select, textarea, [contenteditable="true"]');
+    const update = () => bar.classList.toggle('is-suppressed', isEditable(document.activeElement));
+
+    document.addEventListener('focusin', event => {
+      if (isEditable(event.target)) bar.classList.add('is-suppressed');
+    });
+    document.addEventListener('focusout', () => window.setTimeout(update, 80));
+    window.visualViewport?.addEventListener('resize', update);
+  }
+
   function autoRedirectLoggedUser() {
     if (!window.WTC_CONFIG || typeof WTC_AUTH === 'undefined') return false;
     const user = WTC_AUTH.getUser();
@@ -270,12 +315,14 @@ const WTC_HOME = (() => {
     initializeContactLinks();
     initializeMenu();
     initializeAuthTabs();
+    initializeAuthHashRouting();
     initializePasswordToggles();
     initializeClassChoices();
     initializeAdmissionForm();
+    initializeMobileConversionBar();
   }
 
-  return { initialize, showAuthPanel, PHONE_DISPLAY };
+  return { initialize, showAuthPanel, routeAuthHash, PHONE_DISPLAY };
 })();
 
 window.WTC_HOME = WTC_HOME;

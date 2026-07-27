@@ -1,0 +1,51 @@
+WAGH TUITION CLASSES — H1.4 REFERRAL & GROWTH TRACKING
+BASE: WTC-H1.3C-PROD-LOCK-20260727-R1
+RELEASE TYPE: CUMULATIVE DEVELOPMENT PATCH
+
+ADD — RUNTIME APPS SCRIPT
+apps-script/1_runtime_app_script/referral_growth.gs
+
+REPLACE — RUNTIME APPS SCRIPT (CUMULATIVE)
+apps-script/1_runtime_app_script/api_router.gs
+apps-script/1_runtime_app_script/version.gs
+
+ADD — FRONTEND JAVASCRIPT
+assets/js/home-referral.js
+assets/js/student-referral.js
+assets/js/admin-referral-growth.js
+
+ADD — FRONTEND CSS
+assets/css/home-referral.css
+assets/css/student-referral.css
+assets/css/admin-referral-growth.css
+
+REPLACE — FRONTEND HTML
+index.html
+student.html
+admin.html
+
+REPLACE — FRONTEND JAVASCRIPT
+assets/js/api.js
+assets/js/auth.js
+assets/js/main.js
+assets/js/home-diagnostic.js
+assets/js/student.js
+
+ADD — DOCUMENTATION
+docs/HOME_REFERRAL_GROWTH_H1_4_RELEASE.md
+docs/HOME_REFERRAL_GROWTH_H1_4_TEST.md
+docs/HOME_REFERRAL_GROWTH_H1_4_FILE_MANIFEST.txt
+docs/HOME_REFERRAL_GROWTH_H1_4_VALIDATION.md
+docs/HOME_REFERRAL_GROWTH_H1_4_SHA256SUMS.txt
+
+DO NOT CHANGE
+assets/fonts/
+assets/js/config.js
+assets/js/assessment-config.js
+apps-script/1_runtime_app_script/teacher_assignments.gs (external deployed dependency)
+all stable environment URLs, Script Properties, triggers and workbook IDs
+Authoring Apps Script
+academic progress/test/skill/gamification schemas
+
+NO CONTENT RE-IMPORT REQUIRED
+NO AUTHORING DEPLOYMENT REQUIRED

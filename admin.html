@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="assets/css/admin.css?v=admin-ui-2-0">
   <link rel="stylesheet" href="assets/css/admin-admission-leads.css?v=h1-3a">
   <link rel="stylesheet" href="assets/css/admin-daily-challenge.css?v=h1-3c">
+  <link rel="stylesheet" href="assets/css/admin-referral-growth.css?v=h1-4">
   <link rel="stylesheet" href="assets/css/admin-ai.css?v=admin-ui-2-0">
   <!-- stylesheet for teacher assignment by admin -->
   <link rel="stylesheet" href="assets/css/admin-teacher-assignments.css?v=phase-2-5g-1-0">
@@ -54,6 +55,9 @@
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="dailyChallengePanel" onclick="AdminApp.openPanel('dailyChallengePanel', this)">
         <span class="admin-nav-icon">⚡</span><span>Chapter Challenge</span>
+      </button>
+      <button class="admin-nav-item" type="button" data-admin-nav="referralGrowthPanel" onclick="AdminApp.openPanel('referralGrowthPanel', this);WTC_REFERRAL_ADMIN.open()">
+        <span class="admin-nav-icon">🤝</span><span>Referral Growth</span><b id="referralSidebarCount" class="admin-nav-count">0</b>
       </button>
       <button class="admin-nav-item" type="button" data-admin-nav="profileRequestPanel" onclick="AdminApp.openPanel('profileRequestPanel', this)">
         <span class="admin-nav-icon">🪪</span><span>Profile Requests</span><b id="profileRequestSidebarCount" class="admin-nav-count">0</b>
@@ -303,6 +307,40 @@
           </div>
         </section>
         <div class="dc-admin-configs"><h3>Saved Board + Class + Medium configurations</h3><div id="dcConfigList" class="dc-config-list"><div class="dc-empty">No configurations loaded.</div></div></div>
+      </div>
+    </section>
+
+    <section id="referralGrowthPanel" class="admin-panel" data-panel-title="Referral Growth" data-panel-subtitle="Track referral links, conversion stages and manually approved rewards without exposing data to students.">
+      <div class="referral-admin-hero">
+        <div><span class="admin-eyebrow">H1.4 GROWTH ENGINE</span><h2>Referral &amp; Growth Tracking</h2><p>Follow each referral from link visit to admission. Student dashboards show only private aggregate stages; complete details remain Admin-only.</p></div>
+        <div class="referral-admin-auth">
+          <label><span>Admin password</span><div class="password-field"><input id="referralAdminPassword" type="password" autocomplete="current-password" placeholder="Verify before loading"><button class="password-toggle" type="button" onclick="WTC_REFERRAL_ADMIN.togglePassword(this)">Show</button></div></label>
+          <button id="referralLoadButton" class="btn" type="button">Load Referrals</button>
+        </div>
+      </div>
+
+      <div class="referral-admin-stats" aria-label="Referral conversion summary">
+        <div class="referral-admin-stat"><b id="referralSummaryCodes">0</b><span>Active codes</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryClicks">0</b><span>Link visits</span></div>
+        <div class="referral-admin-stat"><b id="referralSummarySignups">0</b><span>Signups</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryEnquiries">0</b><span>Enquiries</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryJoined">0</b><span>Joined</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryPending">0</b><span>Reward review</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryConversion">0%</b><span>Visit-to-join</span></div>
+        <div class="referral-admin-stat"><b id="referralSummaryTop">—</b><span>Top referrer</span></div>
+      </div>
+
+      <div class="referral-admin-toolbar">
+        <input id="referralSearch" type="search" placeholder="Search code, referrer, student, mobile or lead" oninput="WTC_REFERRAL_ADMIN.applyFilters()">
+        <select id="referralStageFilter" onchange="WTC_REFERRAL_ADMIN.applyFilters()"><option value="ALL">All stages</option><option value="CLICKED">Clicked</option><option value="SIGNED_UP">Signed up</option><option value="ENQUIRY">Enquiry</option><option value="DEMO_BOOKED">Demo booked</option><option value="JOINED">Joined</option><option value="REWARD_APPROVED">Reward approved</option><option value="REJECTED">Rejected</option></select>
+        <select id="referralRewardFilter" onchange="WTC_REFERRAL_ADMIN.applyFilters()"><option value="ALL">All rewards</option><option value="NOT_ELIGIBLE">Not eligible</option><option value="PENDING">Pending review</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option></select>
+        <select id="referralCodeFilter" onchange="WTC_REFERRAL_ADMIN.applyFilters()"><option value="ALL">All referral codes</option></select>
+      </div>
+      <p id="referralAdminStatus" class="referral-admin-status info" role="status" aria-live="polite">Enter the Admin password and load referral data.</p>
+
+      <div class="referral-admin-layout">
+        <div id="referralRecords" class="referral-admin-list"><div class="referral-empty">Referral records will appear here.</div></div>
+        <aside class="referral-code-directory"><h3>Referral code directory</h3><p class="muted">Codes are issued when students open Refer &amp; Grow. Disable a code when misuse is suspected.</p><div id="referralCodeDirectory"><p class="muted">Load referral data to view codes.</p></div></aside>
       </div>
     </section>
 
@@ -688,8 +726,8 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/time.js?v=ist-1-0"></script>
 <script src="assets/js/ui.js?v=admin-ui-2-0"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/api.js?v=h1-1"></script>
+<script src="assets/js/auth.js?v=h1-4"></script>
+<script src="assets/js/api.js?v=h1-4"></script>
 <script src="assets/js/assessment-config.js"></script>
 <script src="assets/js/assessment-api.js"></script>
 <script src="assets/js/ai-content.js"></script>
@@ -697,6 +735,7 @@
 <script src="assets/js/admin.js?v=h1-1"></script>
 <script src="assets/js/admin-admission-leads.js?v=h1-3a-ist-hotfix-1"></script>
 <script src="assets/js/admin-daily-challenge.js?v=h1-3c"></script>
+<script src="assets/js/admin-referral-growth.js?v=h1-4"></script>
 <script src="assets/js/admin-teacher-assignments.js?v=phase-2-5g-1-0"></script>
 </body>
 </html>

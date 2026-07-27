@@ -21,7 +21,7 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="preload" href="assets/images/hero-study.jpg" as="image">
   <link rel="stylesheet" href="assets/css/portal.css">
-  <link rel="stylesheet" href="assets/css/main.css?v=h1-4-2">
+  <link rel="stylesheet" href="assets/css/main.css?v=h1-4-3">
   <link rel="stylesheet" href="assets/css/home-diagnostic.css">
   <link rel="stylesheet" href="assets/css/home-daily-challenge.css?v=h1-3c-1-0">
   <link rel="stylesheet" href="assets/css/home-referral.css?v=h1-4">
@@ -52,8 +52,7 @@
       <nav id="navLinks" class="nav-links" aria-label="Main navigation">
         <a href="#learning-paths">Classes</a>
         <a href="#how-it-works">How it works</a>
-        <a href="#daily-challenge">Daily Challenge</a>
-        <a href="#diagnostic">Free Test</a>
+        <a href="#free-tests">Free Tests</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
         <a href="#login" data-auth-target="login">Login</a>
@@ -69,15 +68,101 @@
           <span class="badge">CBSE · GSEB · Classes 5 to 10</span>
           <aside id="referralWelcomeBanner" class="referral-welcome" hidden aria-live="polite">
             <span class="referral-welcome-icon" aria-hidden="true">🤝</span>
-            <div><strong>You were invited to learn with WTC</strong><p>Referral code <code id="referralWelcomeCode">WTC</code> is saved for this visit. Take a free diagnostic, create an account or request a demo.</p></div>
+            <div><strong>You were invited to learn with WTC</strong><p>Referral code <code id="referralWelcomeCode">WTC</code> is saved for this visit. Take a free test, create an account or request a demo.</p></div>
           </aside>
           <h1 id="heroTitle">Build stronger concepts and <b>better study habits</b></h1>
           <p class="lead">Chapter-wise lessons, solutions, practice tests and progress support—organized for your board, class and medium.</p>
 
           <div class="hero-actions">
-            <a class="btn btn-large" href="#diagnostic">Take Free Diagnostic</a>
+            <a class="btn btn-large" href="#free-tests">Take a Free Test</a>
             <a class="btn outline btn-large" href="#admission">Book a Free Demo</a>
-            <a class="btn outline btn-large" href="#login" data-auth-target="login">Student Login</a>
+          </div>
+
+          <div class="hero-auth-launcher" aria-label="Student account access">
+            <button id="heroLoginButton" class="btn outline btn-large" type="button" data-auth-target="login" aria-controls="portal-access" aria-expanded="false">Student Login</button>
+            <button id="heroSignupButton" class="btn outline btn-large" type="button" data-auth-target="signup" aria-controls="portal-access" aria-expanded="false">Student Signup</button>
+          </div>
+
+          <div id="portal-access" class="hero-auth-drawer" aria-labelledby="portalTitle" hidden>
+            <div class="hero-auth-drawer-head">
+              <div>
+                <span class="eyebrow">Student portal</span>
+                <h2 id="portalTitle">Access your WTC account</h2>
+              </div>
+              <button class="auth-drawer-close" type="button" data-auth-close aria-label="Hide login and signup panel">Close</button>
+            </div>
+            <div class="card auth-shell">
+<div aria-label="Portal access options" class="auth-tabs" role="tablist">
+<button aria-controls="loginPanel" aria-selected="true" data-auth-tab="login" id="loginTab" role="tab" type="button">Login</button>
+<button aria-controls="signupPanel" aria-selected="false" data-auth-tab="signup" id="signupTab" role="tab" type="button">Student Signup</button>
+</div>
+<section aria-labelledby="loginTab" class="auth-panel active" id="loginPanel" role="tabpanel">
+<h3>Login</h3>
+<form id="loginForm" novalidate="">
+<div class="field">
+<label for="loginRole">Portal role</label>
+<select autocomplete="organization-title" id="loginRole" name="role">
+<option value="Student">Student</option>
+<option value="Teacher">Teacher</option>
+<option value="Admin">Admin</option>
+<option value="Parent">Parent</option>
+</select>
+</div>
+<div class="field">
+<label for="loginMobile">Mobile number</label>
+<input autocomplete="username" id="loginMobile" inputmode="numeric" maxlength="10" minlength="10" name="mobile" pattern="[0-9]{10}" placeholder="10-digit mobile number" required="" type="tel"/>
+</div>
+<div class="field">
+<label for="loginPassword">Password</label>
+<div class="password-field">
+<input autocomplete="current-password" id="loginPassword" name="password" required="" type="password"/>
+<button aria-label="Show password" class="password-toggle" data-password-toggle="loginPassword" type="button">Show</button>
+</div>
+</div>
+<button class="btn btn-large full-button" type="submit">Login to Portal</button>
+<p aria-live="polite" class="form-status" id="loginStatus" role="status"></p>
+</form>
+</section>
+<section aria-labelledby="signupTab" class="auth-panel" hidden="" id="signupPanel" role="tabpanel">
+<h3>Create Student Account</h3>
+<form id="signupForm" novalidate="">
+<div class="field">
+<label for="signupName">Student name</label>
+<input autocomplete="name" id="signupName" maxlength="80" name="name" required="" type="text"/>
+</div>
+<div class="field">
+<label for="signupMobile">Mobile number</label>
+<input autocomplete="username" id="signupMobile" inputmode="numeric" maxlength="10" minlength="10" name="mobile" pattern="[0-9]{10}" placeholder="10-digit mobile number" required="" type="tel"/>
+</div>
+<div class="field">
+<label for="signupPassword">Create password</label>
+<div class="password-field">
+<input autocomplete="new-password" id="signupPassword" minlength="4" name="password" required="" type="password"/>
+<button aria-label="Show password" class="password-toggle" data-password-toggle="signupPassword" type="button">Show</button>
+</div>
+</div>
+<div class="form-grid two-columns compact-grid">
+<div class="field">
+<label for="signupBoard">Board</label>
+<select id="signupBoard" name="board" required=""><option>CBSE</option><option>GSEB</option></select>
+</div>
+<div class="field">
+<label for="signupClass">Class</label>
+<select id="signupClass" name="className" required="">
+<option>Class 5</option><option>Class 6</option><option>Class 7</option>
+<option>Class 8</option><option>Class 9</option><option>Class 10</option>
+</select>
+</div>
+<div class="field full-field">
+<label for="signupMedium">Medium</label>
+<select id="signupMedium" name="medium" required=""><option>English Medium</option><option>Gujarati Medium</option></select>
+</div>
+</div>
+<button class="btn success btn-large full-button" type="submit">Create Student Account</button>
+<p aria-live="polite" class="form-status" id="signupStatus" role="status"></p>
+</form>
+</section>
+</div>
           </div>
 
           <ul class="hero-points" aria-label="WTC learning highlights">
@@ -123,7 +208,7 @@
               <p>Build clear basics, confidence and regular study habits.</p>
               <div class="path-actions">
                 <button class="text-link" type="button" data-class-choice="Class 5">Enquire for Classes 5–6 <span aria-hidden="true">→</span></button>
-                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 5">Try free diagnostic <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 5">Try targeted test <span aria-hidden="true">→</span></button>
               </div>
             </div>
           </article>
@@ -135,7 +220,7 @@
               <p>Understand key concepts and improve school-test preparation.</p>
               <div class="path-actions">
                 <button class="text-link" type="button" data-class-choice="Class 7">Enquire for Classes 7–8 <span aria-hidden="true">→</span></button>
-                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 7">Try free diagnostic <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 7">Try targeted test <span aria-hidden="true">→</span></button>
               </div>
             </div>
           </article>
@@ -147,7 +232,7 @@
               <p>Strengthen important chapters before the board year.</p>
               <div class="path-actions">
                 <button class="text-link" type="button" data-class-choice="Class 9">Enquire for Class 9 <span aria-hidden="true">→</span></button>
-                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 9">Try free diagnostic <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 9">Try targeted test <span aria-hidden="true">→</span></button>
               </div>
             </div>
           </article>
@@ -160,7 +245,7 @@
               <p>Chapter revision, question practice and structured test preparation.</p>
               <div class="path-actions">
                 <button class="text-link" type="button" data-class-choice="Class 10">Enquire for Class 10 <span aria-hidden="true">→</span></button>
-                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 10">Try free diagnostic <span aria-hidden="true">→</span></button>
+                <button class="text-link diagnostic-path-link" type="button" data-diagnostic-class="Class 10">Try targeted test <span aria-hidden="true">→</span></button>
               </div>
             </div>
           </article>
@@ -235,7 +320,48 @@
 
 
 
-    <section id="daily-challenge" class="section-block daily-home-section" aria-labelledby="dailyChallengeHeading">
+    <section id="free-tests" class="section-block free-tests-section" aria-labelledby="freeTestsTitle">
+      <div class="container free-tests-grid">
+        <div class="free-tests-copy">
+          <span class="eyebrow light-eyebrow">Free tests</span>
+          <h2 id="freeTestsTitle">Take free tests to improve your score</h2>
+          <p class="lead free-tests-lead">Choose a daily practice challenge or a targeted chapter test to identify where you need more attention.</p>
+          <p class="free-tests-note">Both options are free. Daily Challenge results remain separate from academic progress.</p>
+        </div>
+
+        <div class="free-test-options" aria-label="Choose a free test">
+          <button class="free-test-option" type="button" data-experience-target="daily-challenge" aria-haspopup="dialog" aria-controls="dailyChallengeModal">
+            <span class="free-test-option-icon" aria-hidden="true">⚡</span>
+            <span class="free-test-option-copy">
+              <strong>Daily Chapter Challenge</strong>
+              <small>20 questions · 20 minutes · Private leaderboard</small>
+              <span>Practise a fresh chapter challenge every day.</span>
+            </span>
+            <span class="free-test-option-arrow" aria-hidden="true">→</span>
+          </button>
+
+          <button class="free-test-option" type="button" data-experience-target="diagnostic" aria-haspopup="dialog" aria-controls="diagnosticModal">
+            <span class="free-test-option-icon" aria-hidden="true">🎯</span>
+            <span class="free-test-option-copy">
+              <strong>Targeted Test</strong>
+              <small>Choose board, class, medium, subject and chapter</small>
+              <span>Find your strengths and focus areas.</span>
+            </span>
+            <span class="free-test-option-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div id="dailyChallengeModal" class="experience-modal" data-experience-modal="daily-challenge" hidden>
+      <div class="experience-modal-backdrop" data-experience-close aria-hidden="true"></div>
+      <div class="experience-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="dailyChallengeHeading" tabindex="-1">
+        <div class="experience-modal-toolbar">
+          <span>Daily Chapter Challenge</span>
+          <button type="button" data-experience-close aria-label="Close Daily Chapter Challenge">Close</button>
+        </div>
+        <div class="experience-modal-body">
+<section id="daily-challenge" class="section-block daily-home-section" aria-labelledby="dailyChallengeHeading">
       <div class="container">
         <div id="dailyChallengeCard" class="daily-home-card">
           <div class="daily-home-copy">
@@ -262,11 +388,22 @@
         </div>
       </div>
     </section>
+        </div>
+      </div>
+    </div>
 
-    <section id="diagnostic" class="section-block diagnostic-section" aria-labelledby="diagnosticTitle">
+    <div id="diagnosticModal" class="experience-modal" data-experience-modal="diagnostic" hidden>
+      <div class="experience-modal-backdrop" data-experience-close aria-hidden="true"></div>
+      <div class="experience-modal-dialog experience-modal-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="diagnosticTitle" tabindex="-1">
+        <div class="experience-modal-toolbar">
+          <span>Targeted Test</span>
+          <button type="button" data-experience-close aria-label="Close Targeted Test">Close</button>
+        </div>
+        <div class="experience-modal-body">
+<section id="diagnostic" class="section-block diagnostic-section" aria-labelledby="diagnosticTitle">
       <div class="container">
         <div class="diagnostic-heading">
-          <span class="eyebrow">Free chapter diagnostic</span>
+          <span class="eyebrow">Targeted chapter test</span>
           <h2 id="diagnosticTitle">Find the student’s current starting point</h2>
           <p class="sub">Choose the learning path in order: class, board, medium, subject and chapter. The test uses available published chapter questions.</p>
         </div>
@@ -319,7 +456,7 @@
                   </div>
                 </div>
                 <div class="diagnostic-submit-row">
-                  <button id="diagnosticStartButton" class="btn btn-large" type="submit" disabled>Start Free Diagnostic</button>
+                  <button id="diagnosticStartButton" class="btn btn-large" type="submit" disabled>Start Targeted Test</button>
                 </div>
                 <p id="diagnosticSelectorStatus" class="diagnostic-status info" role="status" aria-live="polite">Loading available learning paths…</p>
               </form>
@@ -336,7 +473,7 @@
               <div class="diagnostic-progress" aria-hidden="true"><i id="diagnosticProgressBar"></i></div>
               <article id="diagnosticQuestionCard" class="diagnostic-question-card">
                 <div class="diagnostic-question-meta">
-                  <span>Chapter Diagnostic</span>
+                  <span>Targeted Test</span>
                   <small>Select one answer</small>
                 </div>
                 <h3 id="diagnosticQuestionText"></h3>
@@ -357,7 +494,7 @@
                 </div>
                 <div class="diagnostic-result-copy">
                   <div class="diagnostic-result-badges">
-                    <span class="eyebrow">Personalized diagnostic report</span>
+                    <span class="eyebrow">Personalized test report</span>
                     <strong id="diagnosticPerformanceBadge" class="diagnostic-performance-badge developing">Developing</strong>
                   </div>
                   <h3 id="diagnosticResultTitle">Your chapter learning snapshot</h3>
@@ -416,7 +553,7 @@
                     </select>
                   </div>
                   <div class="honeypot" aria-hidden="true"><label for="diagnosticWebsite">Website</label><input id="diagnosticWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-                  <label class="consent-row"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted by WAGH Tuition Classes regarding this diagnostic report.</span></label>
+                  <label class="consent-row"><input type="checkbox" name="consent" value="yes" required><span>I agree to be contacted by WAGH Tuition Classes regarding this test report.</span></label>
                   <div class="diagnostic-report-actions">
                     <button class="btn btn-large" type="submit">Send My Report &amp; Book Demo</button>
                   </div>
@@ -436,6 +573,9 @@
         </div>
       </div>
     </section>
+        </div>
+      </div>
+    </div>
 
     <section id="admission" class="section-block admission-section" aria-labelledby="admissionTitle">
       <div class="container admission-grid">
@@ -535,96 +675,6 @@
       </div>
     </section>
 
-    <section id="portal-access" class="section-block soft" aria-labelledby="portalTitle">
-      <div class="container portal-grid">
-        <div class="portal-copy">
-          <span class="eyebrow">Existing students and staff</span>
-          <h2 id="portalTitle">Access your WTC portal</h2>
-          <p class="lead">Login to continue learning, or create a student account when instructed by WAGH Tuition Classes.</p>
-          <ul class="portal-list">
-            <li>Students access subjects, chapters, tests and progress.</li>
-            <li>Teachers and administrators use their assigned role login.</li>
-            <li>Parent access remains available only for activated accounts.</li>
-          </ul>
-        </div>
-
-        <div class="card auth-shell">
-          <div class="auth-tabs" role="tablist" aria-label="Portal access options">
-            <button id="loginTab" type="button" role="tab" aria-selected="true" aria-controls="loginPanel" data-auth-tab="login">Login</button>
-            <button id="signupTab" type="button" role="tab" aria-selected="false" aria-controls="signupPanel" data-auth-tab="signup">Student Signup</button>
-          </div>
-
-          <section id="loginPanel" class="auth-panel active" role="tabpanel" aria-labelledby="loginTab">
-            <h3>Login</h3>
-            <form id="loginForm" novalidate>
-              <div class="field">
-                <label for="loginRole">Portal role</label>
-                <select id="loginRole" name="role" autocomplete="organization-title">
-                  <option value="Student">Student</option>
-                  <option value="Teacher">Teacher</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Parent">Parent</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="loginMobile">Mobile number</label>
-                <input id="loginMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="username" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
-              </div>
-              <div class="field">
-                <label for="loginPassword">Password</label>
-                <div class="password-field">
-                  <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
-                  <button class="password-toggle" type="button" data-password-toggle="loginPassword" aria-label="Show password">Show</button>
-                </div>
-              </div>
-              <button class="btn btn-large full-button" type="submit">Login to Portal</button>
-              <p id="loginStatus" class="form-status" role="status" aria-live="polite"></p>
-            </form>
-          </section>
-
-          <section id="signupPanel" class="auth-panel" role="tabpanel" aria-labelledby="signupTab" hidden>
-            <h3>Create Student Account</h3>
-            <form id="signupForm" novalidate>
-              <div class="field">
-                <label for="signupName">Student name</label>
-                <input id="signupName" name="name" type="text" autocomplete="name" maxlength="80" required>
-              </div>
-              <div class="field">
-                <label for="signupMobile">Mobile number</label>
-                <input id="signupMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="username" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
-              </div>
-              <div class="field">
-                <label for="signupPassword">Create password</label>
-                <div class="password-field">
-                  <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="4" required>
-                  <button class="password-toggle" type="button" data-password-toggle="signupPassword" aria-label="Show password">Show</button>
-                </div>
-              </div>
-              <div class="form-grid two-columns compact-grid">
-                <div class="field">
-                  <label for="signupBoard">Board</label>
-                  <select id="signupBoard" name="board" required><option>CBSE</option><option>GSEB</option></select>
-                </div>
-                <div class="field">
-                  <label for="signupClass">Class</label>
-                  <select id="signupClass" name="className" required>
-                    <option>Class 5</option><option>Class 6</option><option>Class 7</option>
-                    <option>Class 8</option><option>Class 9</option><option>Class 10</option>
-                  </select>
-                </div>
-                <div class="field full-field">
-                  <label for="signupMedium">Medium</label>
-                  <select id="signupMedium" name="medium" required><option>English Medium</option><option>Gujarati Medium</option></select>
-                </div>
-              </div>
-              <button class="btn success btn-large full-button" type="submit">Create Student Account</button>
-              <p id="signupStatus" class="form-status" role="status" aria-live="polite"></p>
-            </form>
-          </section>
-        </div>
-      </div>
-    </section>
-
     <section id="contact" class="section-block contact-section" aria-labelledby="contactTitle">
       <div class="container contact-card">
         <div>
@@ -652,8 +702,7 @@
       <div>
         <h3>Explore</h3>
         <a href="#learning-paths">Classes</a>
-        <a href="#daily-challenge">Daily Challenge</a>
-        <a href="#diagnostic">Free diagnostic</a>
+        <a href="#free-tests">Free tests</a>
         <a href="#features">Learning support</a>
         <a href="#parents">For parents</a>
       </div>
@@ -677,7 +726,7 @@
   <nav class="mobile-conversion-bar" aria-label="Quick contact">
     <a href="tel:+919537036383"><span aria-hidden="true">☎</span> Call</a>
     <a data-whatsapp href="https://wa.me/919537036383" target="_blank" rel="noopener"><span aria-hidden="true">◉</span> WhatsApp</a>
-    <a href="#diagnostic"><span aria-hidden="true">★</span> Free Test</a>
+    <a href="#free-tests"><span aria-hidden="true">★</span> Free Test</a>
   </nav>
 
   <script src="assets/js/config.js"></script>
@@ -688,10 +737,10 @@
   <script src="assets/js/assessment-api.js"></script>
   <script src="assets/js/auth.js?v=h1-4-1"></script>
   <script src="assets/js/daily-challenge-launcher.js?v=h1-3c-1-0"></script>
-  <script src="assets/js/home-daily-challenge.js?v=h1-3c-1-0"></script>
+  <script src="assets/js/home-daily-challenge.js?v=h1-4-3"></script>
   <script src="assets/js/home-campaign.js"></script>
   <script src="assets/js/home-referral.js?v=h1-4-1"></script>
-  <script src="assets/js/main.js?v=h1-4-2"></script>
-  <script src="assets/js/home-diagnostic.js?v=h1-4"></script>
+  <script src="assets/js/main.js?v=h1-4-3"></script>
+  <script src="assets/js/home-diagnostic.js?v=h1-4-3"></script>
 </body>
 </html>

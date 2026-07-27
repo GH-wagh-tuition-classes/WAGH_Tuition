@@ -3,9 +3,9 @@
 **Production-locked cumulative baseline:** `v2.3.1-R2-H1.3C`  
 **Production lock ID:** `WTC-H1.3C-PROD-LOCK-20260727-R1`
 
-**Current development frontend:** `H1.4.2`  
+**Current development frontend:** `H1.4.3`  
 **Referral base:** tested `H1.4.1`  
-**Production lock remains:** H1.3C until H1.4.2 live testing and a new production-lock step are completed.
+**Production lock remains:** H1.3C until H1.4.3 live testing and a new production-lock step are completed.
 
 This package contains the exact user-tested H1.3C cumulative source selected for controlled promotion from WAGH Tuition Classes development to the stable WAGH Tuition environment. The production lock adds documentation and checksums only; it does not change runtime behaviour.
 

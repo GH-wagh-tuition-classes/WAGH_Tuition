@@ -1,0 +1,21 @@
+WAGH Tuition Classes — H1.4.1 Referral Dashboard Loading Hotfix
+BASE: H1.4 development release
+
+REPLACE FRONTEND FILES
+student.html
+index.html
+admin.html
+teacher.html
+assets/js/auth.js
+assets/js/api.js
+assets/js/student-referral.js
+
+ADD DOCUMENTATION
+docs/HOME_REFERRAL_GROWTH_H1_4_1_HOTFIX.md
+docs/HOME_REFERRAL_GROWTH_H1_4_1_TEST.md
+docs/HOME_REFERRAL_GROWTH_H1_4_1_FILE_MANIFEST.txt
+
+NO APPS SCRIPT DEPLOYMENT
+NO SHEET MIGRATION
+NO TRIGGER CHANGE
+KEEP assets/fonts/ UNCHANGED

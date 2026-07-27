@@ -176,3 +176,6 @@ const WTC_AUTH = (() => {
     logout
   };
 })();
+
+// H1.4.1 compatibility bridge for feature modules that access the auth API through window.
+window.WTC_AUTH = WTC_AUTH;

@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — H1.4 Student Referral Dashboard */
+/* WAGH Tuition Classes — H1.4.1 Student Referral Dashboard hotfix */
 window.WTC_STUDENT_REFERRAL = (() => {
   let dashboard = null;
   let loading = null;
@@ -6,7 +6,11 @@ window.WTC_STUDENT_REFERRAL = (() => {
   const byId = id => document.getElementById(id);
   const escapeHTML = value => window.WTC_UI?.escape ? WTC_UI.escape(value) : String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 
-  function currentUser() { return window.WTC_AUTH?.getUser?.() || null; }
+  function currentUser() {
+    if (typeof WTC_AUTH !== 'undefined' && typeof WTC_AUTH.getUser === 'function') return WTC_AUTH.getUser();
+    if (window.WTC_AUTH && typeof window.WTC_AUTH.getUser === 'function') return window.WTC_AUTH.getUser();
+    return null;
+  }
   function referralLink(code) {
     const base = String(window.WTC_CONFIG?.BASE_URL || '/');
     const normalized = base.endsWith('/') ? base : `${base}/`;
@@ -27,7 +31,11 @@ window.WTC_STUDENT_REFERRAL = (() => {
   async function load(force=false) {
     if (loading && !force) return loading;
     const user = currentUser();
-    if (!user) return;
+    if (!user) {
+      setText('studentReferralCode', 'Session unavailable');
+      setStatus('Your student session could not be read. Reload the portal or sign in again.', 'error');
+      return null;
+    }
     setStatus('Preparing your referral link…', 'info');
     loading = (async () => {
       try {
@@ -36,6 +44,7 @@ window.WTC_STUDENT_REFERRAL = (() => {
         dashboard = data;
         render();
         setStatus('Your referral dashboard is ready.', 'success');
+        return dashboard;
       } catch (error) {
         setStatus(error.message || 'Referral dashboard could not be loaded.', 'error');
       } finally { loading = null; }
@@ -70,9 +79,18 @@ window.WTC_STUDENT_REFERRAL = (() => {
     }
   }
 
-  async function copyLink() {
+  async function ensureDashboard() {
     if (!dashboard?.referralCode) await load();
-    const link = referralLink(dashboard?.referralCode || '');
+    if (!dashboard?.referralCode) {
+      WTC_UI.toast('Referral link is not ready yet.', 'error');
+      return false;
+    }
+    return true;
+  }
+
+  async function copyLink() {
+    if (!(await ensureDashboard())) return;
+    const link = referralLink(dashboard.referralCode);
     try {
       await navigator.clipboard.writeText(link);
       WTC_UI.toast('Referral link copied.', 'success');
@@ -87,9 +105,9 @@ window.WTC_STUDENT_REFERRAL = (() => {
   }
 
   async function shareWhatsApp() {
-    if (!dashboard?.referralCode) await load();
+    if (!(await ensureDashboard())) return;
     const user = currentUser();
-    const link = referralLink(dashboard?.referralCode || '');
+    const link = referralLink(dashboard.referralCode);
     const message = [
       `Hello! ${user?.name || 'A WTC student'} invited you to WAGH Tuition Classes.`,
       'Take a free diagnostic test, join the Daily Chapter Challenge or book a free demo:',
@@ -100,8 +118,8 @@ window.WTC_STUDENT_REFERRAL = (() => {
   }
 
   async function nativeShare() {
-    if (!dashboard?.referralCode) await load();
-    const link = referralLink(dashboard?.referralCode || '');
+    if (!(await ensureDashboard())) return;
+    const link = referralLink(dashboard.referralCode);
     if (!navigator.share) return copyLink();
     try {
       await navigator.share({ title:'WAGH Tuition Classes', text:'Join WTC for a free diagnostic test and structured learning support.', url:link });
@@ -132,6 +150,7 @@ window.WTC_STUDENT_REFERRAL = (() => {
     byId('studentReferralCopy')?.addEventListener('click', copyLink);
     byId('studentReferralWhatsApp')?.addEventListener('click', shareWhatsApp);
     byId('studentReferralShare')?.addEventListener('click', nativeShare);
+    if (byId('referralSection')?.classList.contains('active')) load();
   });
 
   return { load, copyLink, shareWhatsApp, nativeShare };

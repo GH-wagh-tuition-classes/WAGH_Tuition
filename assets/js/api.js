@@ -176,7 +176,9 @@ const WTC_API = (() => {
   }
 
   function deviceId() {
-    return window.WTC_AUTH?.deviceId ? WTC_AUTH.deviceId() : '';
+    if (typeof WTC_AUTH !== 'undefined' && typeof WTC_AUTH.deviceId === 'function') return WTC_AUTH.deviceId();
+    if (window.WTC_AUTH && typeof window.WTC_AUTH.deviceId === 'function') return window.WTC_AUTH.deviceId();
+    return '';
   }
 
   function subjectPayload(student) {

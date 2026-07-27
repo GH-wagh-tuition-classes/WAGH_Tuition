@@ -1,0 +1,8 @@
+/* WAGH Tuition Classes — H1.4 referral landing banner */
+.referral-welcome{display:flex;align-items:flex-start;gap:12px;margin:14px 0 0;padding:14px 16px;border:1px solid rgba(25,117,138,.25);border-radius:18px;background:linear-gradient(135deg,#ecfeff,#fff7df);box-shadow:0 10px 28px rgba(15,118,110,.08)}
+.referral-welcome[hidden]{display:none}
+.referral-welcome-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:14px;background:#19758a;color:#fff;font-size:20px}
+.referral-welcome strong{display:block;color:#123b46;font-size:15px}
+.referral-welcome p{margin:4px 0 0;color:#49656d;font-size:13px;line-height:1.5}
+.referral-welcome code{font:800 12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;color:#0f6173;background:#fff;padding:3px 7px;border:1px solid #cde7ec;border-radius:999px}
+@media(max-width:640px){.referral-welcome{padding:12px}.referral-welcome-icon{flex-basis:38px;height:38px}}

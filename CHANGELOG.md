@@ -1,3 +1,27 @@
+# H1.4.2 — Homepage QA & Conversion Polish
+
+- Added working `#login` and `#signup` hash routing without changing the existing login-page configuration.
+- Improved header responsiveness with a compact menu on crowded laptop widths and a wider desktop header container.
+- Improved 1024px hero layout by stacking the hero before it becomes cramped.
+- Hid the mobile conversion bar while a form field is focused and added safe-area spacing.
+- Replaced technical Daily Challenge copy with student-focused wording.
+- Added canonical URL, absolute Open Graph image, Open Graph URL and Twitter/X card metadata for referral sharing.
+- Increased parent-section body-text contrast.
+- Frontend only: no Apps Script, workbook, API-route, authentication or architecture changes.
+- Built on the tested H1.4.1 referral hotfix and the H1.3C production-lock baseline.
+
+---
+
+# Production Lock — WTC-H1.3C-PROD-LOCK-20260727-R1
+
+- Date: 27 Jul 2026 (IST)
+- Status: User-tested H1.3C cumulative source locked for controlled stable promotion.
+- Architecture: LOCKED v2.3.1 R2, unchanged.
+- Functional code changes in this lock step: none.
+- Documentation/checksum corrections: production lock, stable-promotion checklist, rollback guide, feature-status addendum and final validation report.
+
+---
+
 # Changelog — H1.3C Private Leaderboard, Controls & Analytics
 
 - Added a privacy-preserving temporary leaderboard: Top 10 plus the current student.

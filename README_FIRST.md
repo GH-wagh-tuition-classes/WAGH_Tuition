@@ -1,8 +1,13 @@
 # WAGH Tuition Classes — All API Scripts
 
-**Cumulative development baseline:** `v2.3.1-R2-H1.3C`
+**Production-locked cumulative baseline:** `v2.3.1-R2-H1.3C`  
+**Production lock ID:** `WTC-H1.3C-PROD-LOCK-20260727-R1`
 
-This package contains the latest active API-related scripts assembled from the current WAGH Tuition Classes development baseline.
+**Current development frontend:** `H1.4.2`  
+**Referral base:** tested `H1.4.1`  
+**Production lock remains:** H1.3C until H1.4.2 live testing and a new production-lock step are completed.
+
+This package contains the exact user-tested H1.3C cumulative source selected for controlled promotion from WAGH Tuition Classes development to the stable WAGH Tuition environment. The production lock adds documentation and checksums only; it does not change runtime behaviour.
 
 ## Folder 01 — Runtime Apps Script
 
@@ -73,3 +78,13 @@ Use **H1.3C Private Leaderboard, Challenge Controls and Analytics** on top of th
 ## Project Time Standard
 
 All application calendar dates and user-facing timestamps use **Asia/Kolkata (India Standard Time)** for Tapi, Gujarat, India. See `docs/PROJECT_TIME_STANDARD_IST.md`.
+
+
+## Production lock status
+
+- Lock ID: `WTC-H1.3C-PROD-LOCK-20260727-R1`
+- Lock date: 27 Jul 2026 (IST)
+- Architecture remains: `LOCKED v2.3.1 R2`
+- Functional source: unchanged from the user-tested H1.3C cumulative build
+- Promotion status: ready for controlled stable promotion after backups and environment review
+- See `docs/H1_3C_PRODUCTION_LOCK.md`.

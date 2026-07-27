@@ -1,15 +1,15 @@
 /* ============================================================================
    FILE: api_router.gs
    PURPOSE: Central cumulative Runtime API router.
-   H1.3C preserves all Phase 2.5A–2.5G Teacher/Test routes while
-           preserving Home, Admission, Diagnostic and Daily Challenge routes.
+   H1.4 preserves all Phase 2.5A–2.5G Teacher/Test routes while
+           adding Referral and Growth Tracking to the H1.3C production base.
 ============================================================================ */
 
 function wtcApiActionMap_() {
   return {
     /* Authentication / profile */
     login: login,
-    signupStudent: signupStudent,
+    signupStudent: typeof signupStudentWithReferral === 'function' ? signupStudentWithReferral : signupStudent,
     updateStudentProfile: typeof protectedStudentProfileUpdate === 'function' ? protectedStudentProfileUpdate : updateStudentProfile,
     changeStudentPassword: typeof changeStudentPassword === 'function' ? changeStudentPassword : wtcMissingAction_,
     createProfileChangeRequest: typeof createProfileChangeRequest === 'function' ? createProfileChangeRequest : wtcMissingAction_,
@@ -19,9 +19,18 @@ function wtcApiActionMap_() {
     logAccess: logAccess,
 
     /* Admission / conversion */
-    saveAdmissionLead: typeof saveAdmissionLead === 'function' ? saveAdmissionLead : wtcMissingAction_,
+    saveAdmissionLead: typeof saveAdmissionLeadWithReferral === 'function' ? saveAdmissionLeadWithReferral : (typeof saveAdmissionLead === 'function' ? saveAdmissionLead : wtcMissingAction_),
     adminGetAdmissionLeads: typeof adminGetAdmissionLeads === 'function' ? adminGetAdmissionLeads : wtcMissingAction_,
-    adminUpdateAdmissionLead: typeof adminUpdateAdmissionLead === 'function' ? adminUpdateAdmissionLead : wtcMissingAction_,
+    adminUpdateAdmissionLead: typeof adminUpdateAdmissionLeadWithReferral === 'function' ? adminUpdateAdmissionLeadWithReferral : (typeof adminUpdateAdmissionLead === 'function' ? adminUpdateAdmissionLead : wtcMissingAction_),
+
+    /* H1.4 Referral and Growth Tracking */
+    trackReferralVisit: typeof trackReferralVisit === 'function' ? trackReferralVisit : wtcMissingAction_,
+    studentGetReferralDashboard: typeof studentGetReferralDashboard === 'function' ? studentGetReferralDashboard : wtcMissingAction_,
+    studentRecordReferralShare: typeof studentRecordReferralShare === 'function' ? studentRecordReferralShare : wtcMissingAction_,
+    adminGetReferralGrowth: typeof adminGetReferralGrowth === 'function' ? adminGetReferralGrowth : wtcMissingAction_,
+    adminUpdateReferralRecord: typeof adminUpdateReferralRecord === 'function' ? adminUpdateReferralRecord : wtcMissingAction_,
+    adminUpdateReferralReward: typeof adminUpdateReferralReward === 'function' ? adminUpdateReferralReward : wtcMissingAction_,
+    adminSetReferralCodeStatus: typeof adminSetReferralCodeStatus === 'function' ? adminSetReferralCodeStatus : wtcMissingAction_,
 
     /* Chapter Daily Challenge */
     studentGetDailyChallengeStatus: typeof studentGetDailyChallengeStatus === 'function' ? studentGetDailyChallengeStatus : wtcMissingAction_,

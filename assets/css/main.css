@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Home Page QA & Conversion Polish H1.4.2 */
+/* WAGH Tuition Classes — Homepage Interaction Consolidation H1.4.3 */
 
 body{overflow-x:hidden}
 .skip-link{position:fixed;left:14px;top:-80px;z-index:100000;background:#fff;color:var(--primary);padding:10px 14px;border-radius:10px;font-weight:900;box-shadow:var(--shadow)}
@@ -236,3 +236,69 @@ footer a:hover{color:#fff}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+/* H1.4.3 — inline account access */
+.hero-auth-launcher{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:-14px 0 26px}
+.hero-auth-launcher .btn{width:100%}
+.hero-auth-launcher .btn[aria-expanded="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+.hero-auth-drawer{margin:0 0 28px;border:1px solid rgba(25,117,138,.24);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 20px 48px rgba(20,73,91,.16);overflow:hidden}
+.hero-auth-drawer[hidden]{display:none!important}
+.hero-auth-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 0}
+.hero-auth-drawer-head h2{font-size:clamp(24px,3vw,32px);margin:10px 0 0}
+.auth-drawer-close{border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--primary-dark);padding:10px 13px;font-weight:900;cursor:pointer}
+.hero-auth-drawer .auth-shell{margin:18px 20px 20px;box-shadow:none;border:1px solid var(--border)}
+
+/* H1.4.3 — consolidated free-test card */
+.free-tests-section{background:linear-gradient(135deg,#103f50,#19758a);color:#fff}
+.free-tests-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:center}
+.free-tests-copy h2{margin-top:15px}
+.free-tests-lead{color:#f1fbfd}
+.free-tests-note{margin:0;color:#dff5f8;font-size:14px;line-height:1.6;font-weight:700}
+.free-test-options{display:grid;gap:16px}
+.free-test-option{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;text-align:left;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:rgba(255,255,255,.11);color:#fff;padding:20px;cursor:pointer;transition:transform .2s ease,background .2s ease,border-color .2s ease}
+.free-test-option:hover,.free-test-option:focus-visible{transform:translateY(-3px);background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.36);outline:0}
+.free-test-option-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#fff;color:var(--primary-dark);font-size:23px}
+.free-test-option-copy{display:grid;gap:5px}
+.free-test-option-copy strong{font-size:21px}
+.free-test-option-copy small{color:#e7f7fa;font-size:13px;font-weight:850;line-height:1.45}
+.free-test-option-copy>span{color:#f1fbfd;line-height:1.55}
+.free-test-option-arrow{font-size:25px;font-weight:950}
+
+/* H1.4.3 — accessible modal experiences */
+body.experience-modal-open{overflow:hidden}
+.experience-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px}
+.experience-modal[hidden]{display:none!important}
+.experience-modal-backdrop{position:absolute;inset:0;background:rgba(4,15,24,.72);backdrop-filter:blur(5px)}
+.experience-modal-dialog{position:relative;z-index:1;width:min(980px,100%);max-height:calc(100dvh - 36px);display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.42);border-radius:24px;background:#f8fcfd;box-shadow:0 30px 90px rgba(0,0,0,.36)}
+.experience-modal-dialog-wide{width:min(1180px,100%)}
+.experience-modal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border)}
+.experience-modal-toolbar span{font-weight:950;color:var(--ink)}
+.experience-modal-toolbar button{border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--primary-dark);padding:9px 13px;font-weight:900;cursor:pointer}
+.experience-modal-body{min-height:0;overflow:auto;overscroll-behavior:contain}
+.experience-modal .section-block{padding:24px 0;scroll-margin-top:0}
+.experience-modal .daily-home-section,.experience-modal .diagnostic-section{background:transparent}
+.experience-modal .container{width:min(100% - 28px,1120px)}
+.experience-modal .daily-home-card{margin:0}
+
+@media(max-width:1080px){
+  .free-tests-grid{grid-template-columns:1fr;gap:30px}
+}
+
+@media(max-width:760px){
+  .experience-modal{padding:0;place-items:stretch}
+  .experience-modal-dialog,.experience-modal-dialog-wide{width:100%;max-height:100dvh;height:100dvh;border:0;border-radius:0}
+  .experience-modal-toolbar{padding-top:max(14px,env(safe-area-inset-top));position:sticky;top:0;z-index:4}
+  .experience-modal .section-block{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
+  .free-test-option{padding:17px;gap:13px}
+}
+
+@media(max-width:520px){
+  .hero-auth-launcher{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .hero-auth-launcher .btn{padding-left:10px;padding-right:10px;font-size:13px}
+  .hero-auth-drawer-head{padding:16px 16px 0}
+  .hero-auth-drawer .auth-shell{margin:14px}
+  .free-test-option{grid-template-columns:auto minmax(0,1fr)}
+  .free-test-option-arrow{display:none}
+  .free-test-option-copy strong{font-size:18px}
+}
+

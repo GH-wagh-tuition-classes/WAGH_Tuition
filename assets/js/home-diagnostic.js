@@ -418,7 +418,8 @@ window.WTC_DIAGNOSTIC = (() => {
       diagnosticTakenAt:reportRequestedAt,
       reportRequestedAt
     };
-    const payload = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(basePayload) : basePayload;
+    let payload = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(basePayload) : basePayload;
+    if (window.WTC_REFERRAL_ATTRIBUTION?.decorate) payload = WTC_REFERRAL_ATTRIBUTION.decorate(payload);
 
     WTC_UI.setBusy?.(button, true, 'Sending report…');
     setLeadStatus('Saving the diagnostic report and demo request…', 'info');

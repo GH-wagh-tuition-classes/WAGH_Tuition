@@ -43,7 +43,7 @@ window.StudentApp = (() => {
   }
 
   function recordSection(sectionId) {
-    const simple = ['homeSection','subjectsSection','progressSection','profileSection'].includes(sectionId);
+    const simple = ['homeSection','subjectsSection','progressSection','referralSection','profileSection'].includes(sectionId);
     const route = {
       sectionId,
       subjectId:simple ? null : selectedSubjectId(),
@@ -228,6 +228,7 @@ window.addEventListener("popstate", () => {
 
     if (sectionId === 'progressSection') loadProgress();
     if (sectionId === 'profileSection') loadMyProfileRequests();
+    if (sectionId === 'referralSection') window.WTC_STUDENT_REFERRAL?.load?.();
     if (options.persist !== false) recordSection(sectionId);
   }
 

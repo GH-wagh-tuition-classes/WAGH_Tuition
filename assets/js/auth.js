@@ -130,6 +130,7 @@ const WTC_AUTH = (() => {
     fd.name = String(fd.name || '').trim();
     fd.mobile = normalizeMobile(fd.mobile);
     fd.password = String(fd.password || '').trim();
+    if (window.WTC_REFERRAL_ATTRIBUTION?.getCode) fd.referralCode = WTC_REFERRAL_ATTRIBUTION.getCode();
 
     if (!fd.name || !/^\d{10}$/.test(fd.mobile) || !fd.password) {
       WTC_UI.setStatus('signupStatus', 'Enter a student name, valid mobile number and password.', 'error');

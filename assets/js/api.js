@@ -264,6 +264,29 @@ const WTC_API = (() => {
     }, {
       dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
     }),
+    trackReferralVisit: data => raw({ action:'trackReferralVisit', ...data, deviceId:data?.deviceId || deviceId() }, { dedupe:false, retries:0 }),
+    getReferralDashboard: student => raw({
+      action:'studentGetReferralDashboard',
+      studentId:student?.studentId || student?.id || '',
+      mobile:student?.mobile || '',
+      deviceId:deviceId()
+    }, { dedupe:false, retries:1 }),
+    recordReferralShare: student => raw({
+      action:'studentRecordReferralShare',
+      studentId:student?.studentId || student?.id || '',
+      mobile:student?.mobile || '',
+      deviceId:deviceId()
+    }, { dedupe:false, retries:0 }),
+    getReferralGrowth: data => raw({ action:'adminGetReferralGrowth', ...data, deviceId:deviceId() }, { dedupe:false, retries:1 }),
+    updateReferralRecord: data => raw({ action:'adminUpdateReferralRecord', ...data, deviceId:deviceId() }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    updateReferralReward: data => raw({ action:'adminUpdateReferralReward', ...data, deviceId:deviceId() }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
+    setReferralCodeStatus: data => raw({ action:'adminSetReferralCodeStatus', ...data, deviceId:deviceId() }, {
+      dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)
+    }),
     updateStudentProfile: async profile => {
       const data = await raw({ action:'updateStudentProfile', ...profile, deviceId:deviceId() }, {
         dedupe:false, retries:0, timeoutMs:Number(performanceConfig().WRITE_TIMEOUT_MS || 45000)

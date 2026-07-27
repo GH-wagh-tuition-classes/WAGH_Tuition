@@ -201,7 +201,8 @@ const WTC_HOME = (() => {
       pageUrl:window.location.href.split('#')[0],
       consent:String(data.consent || '') === 'yes'
     };
-    const lead = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(baseLead) : baseLead;
+    let lead = window.WTC_CAMPAIGN?.decorateLead ? WTC_CAMPAIGN.decorateLead(baseLead) : baseLead;
+    if (window.WTC_REFERRAL_ATTRIBUTION?.decorate) lead = WTC_REFERRAL_ATTRIBUTION.decorate(lead);
 
     if (!/^\d{10}$/.test(lead.parentMobile)) {
       WTC_UI.setStatus('admissionStatus', 'Enter a valid 10-digit mobile number.', 'error');

@@ -288,12 +288,40 @@ body.experience-modal-open .floating-whatsapp{display:none!important}
 .experience-modal[data-experience-modal="diagnostic"] .experience-modal-body{background:#f8fcfd}
 .experience-modal[data-experience-modal="diagnostic"] .diagnostic-section{background:transparent}
 
+
+/* H1.4.4-R1 — Targeted Test clean runner state */
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active{
+  padding-top:14px;
+}
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active .diagnostic-heading,
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active .diagnostic-intro{
+  display:none!important;
+}
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active .diagnostic-shell{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+}
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active .diagnostic-workspace{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+}
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active #diagnosticTestPanel,
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active #diagnosticResultPanel{
+  width:min(100%,980px);
+  margin:0 auto!important;
+}
+
 @media(max-width:1080px){
   .free-tests-grid{grid-template-columns:1fr;gap:30px}
 }
 
 @media(max-width:760px){
   .experience-modal .section-block{padding:22px 0 calc(34px + env(safe-area-inset-bottom))}
+  .experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active{padding:10px 0 calc(22px + env(safe-area-inset-bottom))}
+  .experience-modal[data-experience-modal="diagnostic"] .diagnostic-section.diagnostic-run-active>.container{width:min(100% - 12px,1180px)}
   .free-test-option{padding:17px;gap:13px}
 }
 

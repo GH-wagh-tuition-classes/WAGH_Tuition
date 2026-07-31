@@ -196,3 +196,27 @@ Frontend only. No Runtime or Authoring Apps Script changes.
 - `assets/js/main.js` — `#login`/`#signup` hash router and mobile conversion-bar focus behavior.
 - Production lock remains `WTC-H1.3C-PROD-LOCK-20260727-R1` until H1.4.2 passes live testing and receives a separate lock.
 
+## Homepage Interaction Consolidation H1.4.3 — DEVELOPMENT
+
+Frontend-only cumulative patch on tested H1.4.1/H1.4.2:
+
+- `index.html` — hero inline Login/Signup drawer, consolidated Free Tests card, Daily Challenge modal and Targeted Test modal.
+- `assets/css/main.css` — inline account drawer, Free Tests card and responsive accessible modal styling.
+- `assets/js/main.js` — plain-home top reset, no-scroll auth drawer, modal/deep-link/history/focus management.
+- `assets/js/home-diagnostic.js` — opens Targeted Test modal from class shortcuts and integrates signup conversion with the inline drawer.
+- `assets/js/home-daily-challenge.js` — modal-appropriate guest copy.
+
+No Runtime or Authoring Apps Script, workbook, API route, migration, authentication architecture or folder structure changes. H1.4.3 remains development-only until live testing passes.
+
+## H1.4.4 Full-Screen Free Tests & Inline Student Login — DEVELOPMENT
+
+Frontend-only cumulative patch on H1.4.3:
+
+- `index.html` — Student-only Daily Challenge login form and H1.4.4 cache versions.
+- `assets/css/main.css` — full-screen Daily Challenge/Targeted Test shell, fixed toolbar, safe-area handling and hidden homepage floating controls.
+- `assets/css/home-daily-challenge.css` — readable inline Student login styling and mobile challenge refinements.
+- `assets/js/main.js` — full-screen experience refresh/cleanup integration.
+- `assets/js/auth.js` — backward-compatible non-redirect login options with required-role verification.
+- `assets/js/home-daily-challenge.js` — Student-only same-screen login and challenge refresh.
+
+No Runtime or Authoring Apps Script, workbook, API route, migration, authentication architecture or folder structure changes. H1.4.4 remains development-only until live testing passes.

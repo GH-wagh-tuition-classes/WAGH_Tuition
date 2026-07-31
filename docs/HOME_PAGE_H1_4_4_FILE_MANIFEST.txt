@@ -1,0 +1,31 @@
+WAGH Tuition Classes — H1.4.4 file manifest
+BASE: H1.4.3 frontend + tested H1.4.1 referral
+RELEASE TYPE: Frontend-only development patch
+
+REPLACE FUNCTIONAL FILES
+index.html
+assets/css/main.css
+assets/css/home-daily-challenge.css
+assets/js/main.js
+assets/js/auth.js
+assets/js/home-daily-challenge.js
+
+UPDATE DOCUMENTATION
+CHANGELOG.md
+README_FIRST.md
+docs/ACTIVE_FILE_MANIFEST.md
+docs/HOME_PAGE_H1_4_4_RELEASE.md
+docs/HOME_PAGE_H1_4_4_TEST.md
+docs/HOME_PAGE_H1_4_4_VALIDATION.md
+docs/HOME_PAGE_H1_4_4_FILE_MANIFEST.txt
+SHA256SUMS.txt
+
+DO NOT CHANGE
+apps-script/
+assets/js/config.js
+assets/js/assessment-config.js
+Google Sheets
+Script Properties
+Apps Script deployment URLs
+triggers
+assets/fonts/

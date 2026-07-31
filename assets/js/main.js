@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Homepage Full-Screen Test Experience H1.4.4 */
+/* WAGH Tuition Classes — Homepage Full-Screen Test Experience H1.4.4-R1 */
 const WTC_HOME = (() => {
   const PHONE_DISPLAY = '95370 36383';
   let authHashRoutingInitialized = false;
@@ -6,6 +6,7 @@ const WTC_HOME = (() => {
   let mobileBarBehaviorInitialized = false;
   let activeExperience = '';
   let experienceReturnFocus = null;
+  let diagnosticStateObserver = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -187,6 +188,9 @@ const WTC_HOME = (() => {
 
     if (name === 'daily-challenge') {
       window.WTC_HOME_DAILY_CHALLENGE?.refresh?.();
+    } else if (name === 'diagnostic') {
+      syncDiagnosticExperienceState({ scrollOnChange:false });
+      window.requestAnimationFrame(() => syncDiagnosticExperienceState({ scrollOnChange:false }));
     }
 
     if (updateHash) {
@@ -239,6 +243,54 @@ const WTC_HOME = (() => {
     const modal = experienceModal(name);
     const body = modal?.querySelector('.experience-modal-body');
     body?.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function syncDiagnosticExperienceState({ scrollOnChange=true }={}) {
+    const section = byId('diagnostic');
+    if (!section) return 'selection';
+
+    const selectorPanel = byId('diagnosticSelectorPanel');
+    const testPanel = byId('diagnosticTestPanel');
+    const resultPanel = byId('diagnosticResultPanel');
+    const state = testPanel && !testPanel.hidden
+      ? 'test'
+      : resultPanel && !resultPanel.hidden
+        ? 'result'
+        : selectorPanel && !selectorPanel.hidden
+          ? 'selection'
+          : 'loading';
+    const previousState = section.dataset.diagnosticState || '';
+    const running = state === 'test' || state === 'result';
+
+    section.dataset.diagnosticState = state;
+    section.classList.toggle('diagnostic-run-active', running);
+    experienceModal('diagnostic')?.setAttribute('data-diagnostic-state', state);
+
+    if (scrollOnChange && previousState && previousState !== state && activeExperience === 'diagnostic') {
+      window.requestAnimationFrame(() => {
+        const body = experienceModal('diagnostic')?.querySelector('.experience-modal-body');
+        body?.scrollTo({ top:0, left:0, behavior:'auto' });
+      });
+    }
+    return state;
+  }
+
+  function initializeDiagnosticExperienceState() {
+    const panels = [
+      byId('diagnosticSelectorPanel'),
+      byId('diagnosticTestPanel'),
+      byId('diagnosticResultPanel')
+    ].filter(Boolean);
+    if (!panels.length) return;
+
+    syncDiagnosticExperienceState({ scrollOnChange:false });
+    if (diagnosticStateObserver) return;
+
+    diagnosticStateObserver = new MutationObserver(() => syncDiagnosticExperienceState());
+    panels.forEach(panel => diagnosticStateObserver.observe(panel, {
+      attributes:true,
+      attributeFilter:['hidden']
+    }));
   }
 
   function initializeExperienceModals() {
@@ -482,6 +534,7 @@ const WTC_HOME = (() => {
     initializeMenu();
     initializeAuthTabs();
     initializeAuthHashRouting();
+    initializeDiagnosticExperienceState();
     initializeExperienceModals();
     initializePasswordToggles();
     initializeClassChoices();

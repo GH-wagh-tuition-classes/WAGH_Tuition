@@ -21,9 +21,9 @@
   <link rel="icon" href="assets/images/favicon.png">
   <link rel="preload" href="assets/images/hero-study.jpg" as="image">
   <link rel="stylesheet" href="assets/css/portal.css">
-  <link rel="stylesheet" href="assets/css/main.css?v=h1-4-3">
+  <link rel="stylesheet" href="assets/css/main.css?v=h1-4-4">
   <link rel="stylesheet" href="assets/css/home-diagnostic.css">
-  <link rel="stylesheet" href="assets/css/home-daily-challenge.css?v=h1-3c-1-0">
+  <link rel="stylesheet" href="assets/css/home-daily-challenge.css?v=h1-4-4">
   <link rel="stylesheet" href="assets/css/home-referral.css?v=h1-4">
   <script type="application/ld+json">
   {
@@ -383,7 +383,33 @@
             <p id="dailyChallengeMessage">Login as a General or WTC Student to join today’s Chapter Challenge.</p>
             <span id="dailyChallengeProfile" class="daily-home-profile"></span>
             <strong id="dailyChallengeState" class="daily-home-state">Loading</strong>
-            <button id="dailyChallengeAction" class="btn btn-large" type="button">Login to Join</button>
+            <button id="dailyChallengeAction" class="btn btn-large" type="button" aria-controls="dailyChallengeLoginPanel" aria-expanded="false">Login to Join</button>
+
+            <div id="dailyChallengeLoginPanel" class="daily-challenge-login-panel" hidden>
+              <div class="daily-challenge-login-head">
+                <div>
+                  <small>Student access only</small>
+                  <strong>Login without leaving this challenge</strong>
+                </div>
+                <button type="button" class="daily-challenge-login-close" data-daily-login-close aria-label="Hide student login form">Hide</button>
+              </div>
+              <form id="dailyChallengeLoginForm" class="daily-challenge-login-form" novalidate>
+                <input type="hidden" name="role" value="Student">
+                <div class="field">
+                  <label for="dailyChallengeLoginMobile">Student mobile number</label>
+                  <input id="dailyChallengeLoginMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="username" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10-digit mobile number" required>
+                </div>
+                <div class="field">
+                  <label for="dailyChallengeLoginPassword">Password</label>
+                  <div class="password-field">
+                    <input id="dailyChallengeLoginPassword" name="password" type="password" autocomplete="current-password" required>
+                    <button class="password-toggle" type="button" data-password-toggle="dailyChallengeLoginPassword" aria-label="Show password">Show</button>
+                  </div>
+                </div>
+                <button class="btn btn-large full-button" type="submit">Login &amp; Continue</button>
+                <p id="dailyChallengeLoginStatus" class="form-status" role="status" aria-live="polite"></p>
+              </form>
+            </div>
           </aside>
         </div>
       </div>
@@ -735,12 +761,12 @@
   <script src="assets/js/api.js?v=h1-4-1"></script>
   <script src="assets/js/assessment-config.js"></script>
   <script src="assets/js/assessment-api.js"></script>
-  <script src="assets/js/auth.js?v=h1-4-1"></script>
+  <script src="assets/js/auth.js?v=h1-4-4"></script>
   <script src="assets/js/daily-challenge-launcher.js?v=h1-3c-1-0"></script>
-  <script src="assets/js/home-daily-challenge.js?v=h1-4-3"></script>
+  <script src="assets/js/home-daily-challenge.js?v=h1-4-4"></script>
   <script src="assets/js/home-campaign.js"></script>
   <script src="assets/js/home-referral.js?v=h1-4-1"></script>
-  <script src="assets/js/main.js?v=h1-4-3"></script>
+  <script src="assets/js/main.js?v=h1-4-4"></script>
   <script src="assets/js/home-diagnostic.js?v=h1-4-3"></script>
 </body>
 </html>

@@ -1,3 +1,31 @@
+# H1.4.4 — Full-Screen Free Tests & Inline Student Login
+
+- Made Daily Chapter Challenge and Targeted Test full-screen in-page experiences on mobile, tablet and desktop.
+- Added fixed full-screen toolbars, inner scrolling, safe-area spacing and hidden homepage floating controls while a test is open.
+- Corrected Daily Challenge text and badge visibility inside the full-screen experience.
+- Added a Student-only mobile/password login form inside the Daily Challenge screen.
+- Forced the inline login request and returned session validation to the Student role.
+- Kept successful inline login inside the current challenge screen and refreshed challenge status without redirecting to `student.html`.
+- Preserved normal role-based homepage login, all challenge/diagnostic APIs, IST rules, referral attribution and academic-data separation.
+- Frontend only: no Apps Script, workbook, API-route, migration or architecture changes.
+
+---
+
+# H1.4.3 — Homepage Interaction Consolidation
+
+- Plain homepage loads reset to the header and hero instead of restoring a lower scroll position.
+- Replaced the single hero login CTA with side-by-side Student Login and Student Signup buttons.
+- Moved the existing Login/Signup forms into a hidden inline drawer directly below those buttons.
+- Login and Signup open without forced page scrolling and can be hidden with a Close control.
+- Replaced the standalone Daily Challenge and Free Diagnostic homepage sections with one Free Tests card.
+- Added Daily Chapter Challenge and Targeted Test sub-cards that open accessible modal windows.
+- Preserved `#login`, `#signup`, `#daily-challenge` and `#diagnostic` deep-link behaviour.
+- Preserved Android/browser Back, Escape, backdrop close, focus containment and mobile scroll locking for test modals.
+- Preserved all H1.4.1 referral, H1.3C challenge, diagnostic, authentication and IST functionality.
+- Frontend only: no Apps Script, workbook, API-route, migration or architecture changes.
+
+---
+
 # H1.4.2 — Homepage QA & Conversion Polish
 
 - Added working `#login` and `#signup` hash routing without changing the existing login-page configuration.

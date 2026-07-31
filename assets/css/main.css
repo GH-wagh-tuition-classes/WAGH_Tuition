@@ -264,31 +264,36 @@ footer a:hover{color:#fff}
 .free-test-option-copy>span{color:#f1fbfd;line-height:1.55}
 .free-test-option-arrow{font-size:25px;font-weight:950}
 
-/* H1.4.3 — accessible modal experiences */
+/* H1.4.4 — full-screen free-test experiences */
 body.experience-modal-open{overflow:hidden}
-.experience-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px}
+body.experience-modal-open .mobile-conversion-bar,
+body.experience-modal-open .floating-whatsapp{display:none!important}
+.experience-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:stretch;padding:0;background:#f8fcfd}
 .experience-modal[hidden]{display:none!important}
-.experience-modal-backdrop{position:absolute;inset:0;background:rgba(4,15,24,.72);backdrop-filter:blur(5px)}
-.experience-modal-dialog{position:relative;z-index:1;width:min(980px,100%);max-height:calc(100dvh - 36px);display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.42);border-radius:24px;background:#f8fcfd;box-shadow:0 30px 90px rgba(0,0,0,.36)}
-.experience-modal-dialog-wide{width:min(1180px,100%)}
-.experience-modal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;background:#fff;border-bottom:1px solid var(--border)}
-.experience-modal-toolbar span{font-weight:950;color:var(--ink)}
-.experience-modal-toolbar button{border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--primary-dark);padding:9px 13px;font-weight:900;cursor:pointer}
-.experience-modal-body{min-height:0;overflow:auto;overscroll-behavior:contain}
-.experience-modal .section-block{padding:24px 0;scroll-margin-top:0}
-.experience-modal .daily-home-section,.experience-modal .diagnostic-section{background:transparent}
-.experience-modal .container{width:min(100% - 28px,1120px)}
-.experience-modal .daily-home-card{margin:0}
+.experience-modal-backdrop{position:absolute;inset:0;background:#f8fcfd}
+.experience-modal-dialog,.experience-modal-dialog-wide{position:relative;z-index:1;width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:0;border-radius:0;background:#f8fcfd;box-shadow:none}
+.experience-modal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:max(14px,env(safe-area-inset-top)) 18px 14px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 6px 20px rgba(20,73,91,.08);z-index:5}
+.experience-modal-toolbar span{font-weight:950;color:var(--ink);font-size:clamp(18px,2.5vw,24px)}
+.experience-modal-toolbar button{border:1px solid var(--border);border-radius:12px;background:var(--soft);color:var(--primary-dark);padding:10px 15px;font-weight:900;cursor:pointer;min-height:44px}
+.experience-modal-toolbar button:hover,.experience-modal-toolbar button:focus-visible{background:#dff4f7;outline:2px solid rgba(25,117,138,.25);outline-offset:2px}
+.experience-modal-body{min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.experience-modal .section-block{min-height:100%;padding:30px 0 calc(40px + env(safe-area-inset-bottom));scroll-margin-top:0}
+.experience-modal .container{width:min(100% - 28px,1180px)}
+.experience-modal .daily-home-card{margin:0 auto}
+.experience-modal[data-experience-modal="daily-challenge"] .experience-modal-body{background:linear-gradient(145deg,#431407,#7c2d12 55%,#9a3412)}
+.experience-modal[data-experience-modal="daily-challenge"] .daily-home-section{display:grid;align-items:center;background:transparent;color:#fff}
+.experience-modal[data-experience-modal="daily-challenge"] .daily-home-copy h2{color:#fff}
+.experience-modal[data-experience-modal="daily-challenge"] .daily-home-copy p{color:#ffedd5}
+.experience-modal[data-experience-modal="daily-challenge"] .daily-home-tags span{color:#fff}
+.experience-modal[data-experience-modal="diagnostic"] .experience-modal-body{background:#f8fcfd}
+.experience-modal[data-experience-modal="diagnostic"] .diagnostic-section{background:transparent}
 
 @media(max-width:1080px){
   .free-tests-grid{grid-template-columns:1fr;gap:30px}
 }
 
 @media(max-width:760px){
-  .experience-modal{padding:0;place-items:stretch}
-  .experience-modal-dialog,.experience-modal-dialog-wide{width:100%;max-height:100dvh;height:100dvh;border:0;border-radius:0}
-  .experience-modal-toolbar{padding-top:max(14px,env(safe-area-inset-top));position:sticky;top:0;z-index:4}
-  .experience-modal .section-block{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
+  .experience-modal .section-block{padding:22px 0 calc(34px + env(safe-area-inset-bottom))}
   .free-test-option{padding:17px;gap:13px}
 }
 

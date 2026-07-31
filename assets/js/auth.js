@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Authentication helpers H1.0 (backward compatible) */
+/* WAGH Tuition Classes — Authentication helpers H1.4.4 (backward compatible) */
 const WTC_AUTH = (() => {
   function deviceId() {
     let id = localStorage.getItem(WTC_CONFIG.DEVICE_KEY);
@@ -69,47 +69,87 @@ const WTC_AUTH = (() => {
     return normalizeUser(user);
   }
 
-  async function handleLogin(formId='loginForm') {
+  async function handleLogin(formId='loginForm', options={}) {
+    if (formId && typeof formId === 'object') {
+      options = formId;
+      formId = options.formId || 'loginForm';
+    }
+    options = options || {};
+
     const form = document.getElementById(formId);
-    if (!form) return;
+    if (!form) return { success:false, message:'Login form is unavailable.' };
+
     const submitButton = form.querySelector('button[type="submit"]');
+    const statusId = options.statusId || 'loginStatus';
+    const shouldRedirect = options.redirect !== false;
+    const shouldToast = options.toast !== false;
+    const forcedRole = String(options.role || '').trim();
+    const requiredRole = String(options.requiredRole || '').trim().toLowerCase();
 
     if (!form.checkValidity()) {
       form.reportValidity();
-      WTC_UI.setStatus('loginStatus', 'Please complete the required login fields.', 'error');
-      return;
+      WTC_UI.setStatus(statusId, 'Please complete the required login fields.', 'error');
+      return { success:false, message:'Please complete the required login fields.' };
     }
 
     const fd = Object.fromEntries(new FormData(form).entries());
     const mobile = normalizeMobile(fd.mobile);
     const password = String(fd.password || '').trim();
-    const role = fd.role || 'Student';
+    const role = forcedRole || fd.role || 'Student';
 
     if (!/^\d{10}$/.test(mobile)) {
-      WTC_UI.setStatus('loginStatus', 'Enter a valid 10-digit mobile number.', 'error');
-      return WTC_UI.toast('Enter a valid 10-digit mobile number.', 'error');
+      const message = 'Enter a valid 10-digit mobile number.';
+      WTC_UI.setStatus(statusId, message, 'error');
+      if (shouldToast) WTC_UI.toast(message, 'error');
+      return { success:false, message };
     }
     if (!password) {
-      WTC_UI.setStatus('loginStatus', 'Please enter your password.', 'error');
-      return WTC_UI.toast('Please enter your password.', 'error');
+      const message = 'Please enter your password.';
+      WTC_UI.setStatus(statusId, message, 'error');
+      if (shouldToast) WTC_UI.toast(message, 'error');
+      return { success:false, message };
     }
 
     WTC_UI.setBusy(submitButton, true, 'Logging in...');
-    WTC_UI.setStatus('loginStatus', 'Checking your account...', 'info');
+    WTC_UI.setStatus(statusId, 'Checking your account...', 'info');
 
     try {
       const data = await WTC_API.login(mobile, password, role);
       if (!data.success) {
-        WTC_UI.setStatus('loginStatus', data.message || 'Login failed.', 'error');
-        return WTC_UI.toast(data.message || 'Login failed.', 'error');
+        const message = data.message || 'Login failed.';
+        WTC_UI.setStatus(statusId, message, 'error');
+        if (shouldToast) WTC_UI.toast(message, 'error');
+        return { success:false, message };
       }
-      setUser(data.user);
-      WTC_UI.setStatus('loginStatus', 'Login successful. Opening your portal...', 'success');
-      WTC_UI.toast('Login successful.', 'success');
-      window.setTimeout(() => redirectByRole(normalizeUser(data.user)), 350);
+
+      const cleanUser = normalizeUser(data.user);
+      const actualRole = String(cleanUser.role || '').toLowerCase();
+      if (requiredRole && actualRole !== requiredRole) {
+        const message = `${requiredRole.charAt(0).toUpperCase()}${requiredRole.slice(1)} login is required here.`;
+        WTC_UI.setStatus(statusId, message, 'error');
+        if (shouldToast) WTC_UI.toast(message, 'error');
+        return { success:false, message };
+      }
+
+      setUser(cleanUser);
+      WTC_UI.setStatus(
+        statusId,
+        options.successMessage || (shouldRedirect ? 'Login successful. Opening your portal...' : 'Login successful. Loading your challenge...'),
+        'success'
+      );
+      if (shouldToast) WTC_UI.toast('Login successful.', 'success');
+
+      if (typeof options.onSuccess === 'function') {
+        await options.onSuccess(cleanUser, data);
+      }
+
+      if (shouldRedirect) window.setTimeout(() => redirectByRole(cleanUser), 350);
+      return { success:true, user:cleanUser, data };
     } catch (error) {
-      WTC_UI.setStatus('loginStatus', error.message || 'Login failed. Please try again.', 'error');
-      WTC_UI.toast(error.message || 'Login failed. Please try again.', 'error');
+      const message = error.message || 'Login failed. Please try again.';
+      WTC_UI.setStatus(statusId, message, 'error');
+      if (shouldToast) WTC_UI.toast(message, 'error');
+      return { success:false, message, error };
     } finally {
       WTC_UI.setBusy(submitButton, false);
     }

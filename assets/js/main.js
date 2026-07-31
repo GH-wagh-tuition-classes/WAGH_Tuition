@@ -1,4 +1,4 @@
-/* WAGH Tuition Classes — Homepage Interaction Consolidation H1.4.3 */
+/* WAGH Tuition Classes — Homepage Full-Screen Test Experience H1.4.4 */
 const WTC_HOME = (() => {
   const PHONE_DISPLAY = '95370 36383';
   let authHashRoutingInitialized = false;
@@ -185,6 +185,10 @@ const WTC_HOME = (() => {
     document.body.classList.add('experience-modal-open');
     modal.querySelector('.experience-modal-dialog')?.focus({ preventScroll:true });
 
+    if (name === 'daily-challenge') {
+      window.WTC_HOME_DAILY_CHALLENGE?.refresh?.();
+    }
+
     if (updateHash) {
       const nextHash = `#${name}`;
       if (window.location.hash.toLowerCase() !== nextHash) history.pushState({ wtcExperience:name }, '', nextHash);
@@ -197,6 +201,9 @@ const WTC_HOME = (() => {
     if (!activeExperience) return;
     const modal = experienceModal(activeExperience);
     if (modal) modal.hidden = true;
+    if (activeExperience === 'daily-challenge') {
+      window.WTC_HOME_DAILY_CHALLENGE?.hideInlineLogin?.({ focusAction:false, clearStatus:true });
+    }
     activeExperience = '';
     document.body.classList.remove('experience-modal-open');
 
